@@ -34,6 +34,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "trufflehog/ProblemInstance.h"
 #include "trufflehog/AStar.h"
+// #include "lns/inc/LNS.h"
 
 // Pricer properties
 #define PRICER_NAME     "trufflehog"
@@ -526,7 +527,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 //    }
 
     // Find the makespan.
-    Time makespan = 0;
+    Timepoint makespan = 0;
     for (auto var : vars)
     {
         // Get the path length.
@@ -572,15 +573,15 @@ SCIP_RETCODE run_trufflehog_pricer(
 
             // Update reservation table.
             Location n;
-            Time t = 0;
+            Timepoint t = 0;
             for (; t < path_length; ++t)
             {
                 n = path[t].n;
-                restab.reserve(LocationTime{n, t});
+                restab.reserve(LocationTimepoint{n, t});
             }
             for (; t < makespan; ++t)
             {
-                restab.reserve(LocationTime{n, t});
+                restab.reserve(LocationTimepoint{n, t});
             }
         }
     }
@@ -657,7 +658,7 @@ SCIP_RETCODE run_trufflehog_pricer(
     {
         // Create output.
         Vector<Edge> path;
-        Vector<LocationTime> path_vertices;
+        Vector<LocationTimepoint> path_vertices;
         SCIP_Real path_cost;
 
         // Set up start and end points.
@@ -798,7 +799,7 @@ SCIP_RETCODE run_trufflehog_pricer(
             // Enforce the decision.
             const auto branch_a = SCIPgetVertexBranchingRobot(cons);
             const auto dir = SCIPgetVertexBranchingDirection(cons);
-            const auto nt = SCIPgetVertexBranchingLocationTime(cons);
+            const auto nt = SCIPgetVertexBranchingLocationTimepoint(cons);
             if ((a == branch_a && dir == VertexBranchDirection::Forbid) ||
                 (a != branch_a && dir == VertexBranchDirection::Use))
             {
@@ -869,7 +870,7 @@ SCIP_RETCODE run_trufflehog_pricer(
             // Enforce the decision if the same agent. Disable crossing if different agent.
             const auto branch_a = SCIPgetLengthBranchingRobot(cons);
             const auto dir = SCIPgetLengthBranchingDirection(cons);
-            const auto nt = SCIPgetLengthBranchingLocationTime(cons);
+            const auto nt = SCIPgetLengthBranchingLocationTimepoint(cons);
             if (a == branch_a)
             {
                 if (dir == LengthBranchDirection::LEq)
@@ -942,15 +943,15 @@ SCIP_RETCODE run_trufflehog_pricer(
                 // Update reservation table.
                 {
                     Location n;
-                    Time t = 0;
-                    for (; t < static_cast<Time>(path.size()); ++t)
+                    Timepoint t = 0;
+                    for (; t < static_cast<Timepoint>(path.size()); ++t)
                     {
                         n = path[t].n;
-                        restab.reserve(LocationTime{n, t});
+                        restab.reserve(LocationTimepoint{n, t});
                     }
                     for (; t < makespan; ++t)
                     {
-                        restab.reserve(LocationTime{n, t});
+                        restab.reserve(LocationTimepoint{n, t});
                     }
                 }
 
@@ -1098,10 +1099,10 @@ SCIP_RETCODE add_initial_solution(
 //        edge_penalties.clear();
 //
 //        // Solve.
-//        const auto start = LocationTime{agents[a].start, 0};
+//        const auto start = LocationTimepoint{agents[a].start, 0};
 //        const auto goal = agents[a].goal;
-//        const Time earliest_finish = 0;
-//        const Time latest_finish = astar.max_path_length() - 1;
+//        const Timepoint earliest_finish = 0;
+//        const Timepoint latest_finish = astar.max_path_length() - 1;
 //        const auto [segment, path_cost] = astar.solve<false>(start,
 //                                                             goal,
 //                                                             earliest_finish,

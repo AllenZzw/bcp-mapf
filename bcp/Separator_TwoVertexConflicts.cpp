@@ -38,9 +38,9 @@ struct TwoVertexConflictData
     SCIP_Real lhs;
     Robot a1;
     Robot a2;
-    EdgeTime a1_et;
-    EdgeTime a2_et1;
-    EdgeTime a2_et2;
+    EdgeTimepoint a1_et;
+    EdgeTimepoint a2_et1;
+    EdgeTimepoint a2_et2;
 };
 
 #define MATRIX(i,j) (i * N + j)
@@ -51,9 +51,9 @@ SCIP_RETCODE twovertex_conflicts_create_cut(
     SCIP_SEPA* sepa,            // Separator
     const Robot a1,             // Robot 1
     const Robot a2,             // Robot 2
-    const EdgeTime a1_et,       // Edge of agent 1
-    const EdgeTime a2_et1,      // Edge 1 of agent 2
-    const EdgeTime a2_et2,      // Edge 2 of agent 2
+    const EdgeTimepoint a1_et,       // Edge of agent 1
+    const EdgeTimepoint a2_et1,      // Edge 1 of agent 2
+    const EdgeTimepoint a2_et2,      // Edge 2 of agent 2
     SCIP_Result* result         // Output result
 )
 {
@@ -141,11 +141,11 @@ SCIP_RETCODE twovertex_conflicts_separate(
         for (const auto [a1_et, a1_et_val] : agent_edges_a1)
         {
             // Get all potential first edge of agent 2.
-            Array<EdgeTime, 5> a2_et1s;
+            Array<EdgeTimepoint, 5> a2_et1s;
             Array<const Vector<SCIP_Real>*, 5> a2_et1_vals;
             Int a2_et1_size = 0;
             {
-                const EdgeTime et{a1_et.n, Direction::NORTH, a1_et.t};
+                const EdgeTimepoint et{a1_et.n, Direction::NORTH, a1_et.t};
                 if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
@@ -154,7 +154,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                 }
             }
             {
-                const EdgeTime et{a1_et.n, Direction::SOUTH, a1_et.t};
+                const EdgeTimepoint et{a1_et.n, Direction::SOUTH, a1_et.t};
                 if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
@@ -163,7 +163,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                 }
             }
             {
-                const EdgeTime et{a1_et.n, Direction::EAST, a1_et.t};
+                const EdgeTimepoint et{a1_et.n, Direction::EAST, a1_et.t};
                 if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
@@ -172,7 +172,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                 }
             }
             {
-                const EdgeTime et{a1_et.n, Direction::WEST, a1_et.t};
+                const EdgeTimepoint et{a1_et.n, Direction::WEST, a1_et.t};
                 if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
@@ -181,7 +181,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                 }
             }
             {
-                const EdgeTime et{a1_et.n, Direction::WAIT, a1_et.t};
+                const EdgeTimepoint et{a1_et.n, Direction::WAIT, a1_et.t};
                 if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                 {
                     a2_et1s[a2_et1_size] = et;
@@ -191,14 +191,14 @@ SCIP_RETCODE twovertex_conflicts_separate(
             }
 
             // Get all potential second edge of agent 2.
-            Array<EdgeTime, 5> a2_et2s;
+            Array<EdgeTimepoint, 5> a2_et2s;
             Array<const Vector<SCIP_Real>*, 5> a2_et2_vals;
             Int a2_et2_size = 0;
             {
                 const auto a2_et2_dest = map.get_destination(a1_et);
                 const auto a2_et1s_end = a2_et1s.begin() + a2_et1_size;
                 {
-                    const EdgeTime et{map.get_south(a2_et2_dest), Direction::NORTH, a1_et.t};
+                    const EdgeTimepoint et{map.get_south(a2_et2_dest), Direction::NORTH, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
                         if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                         {
@@ -208,7 +208,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                         }
                 }
                 {
-                    const EdgeTime et{map.get_north(a2_et2_dest), Direction::SOUTH, a1_et.t};
+                    const EdgeTimepoint et{map.get_north(a2_et2_dest), Direction::SOUTH, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
                         if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                         {
@@ -218,7 +218,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                         }
                 }
                 {
-                    const EdgeTime et{map.get_west(a2_et2_dest), Direction::EAST, a1_et.t};
+                    const EdgeTimepoint et{map.get_west(a2_et2_dest), Direction::EAST, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
                         if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                         {
@@ -228,7 +228,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                         }
                 }
                 {
-                    const EdgeTime et{map.get_east(a2_et2_dest), Direction::WEST, a1_et.t};
+                    const EdgeTimepoint et{map.get_east(a2_et2_dest), Direction::WEST, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
                         if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                         {
@@ -238,7 +238,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                         }
                 }
                 {
-                    const EdgeTime et{map.get_wait(a2_et2_dest), Direction::WAIT, a1_et.t};
+                    const EdgeTimepoint et{map.get_wait(a2_et2_dest), Direction::WAIT, a1_et.t};
                     if (std::find(a2_et1s.begin(), a2_et1s_end, et) == a2_et1s_end)
                         if (const auto it = agent_edges_vec.find(et); it != agent_edges_vec.end())
                         {

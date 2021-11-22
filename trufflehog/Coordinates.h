@@ -26,7 +26,7 @@ namespace TruffleHog
 {
 
 using Location = Int;
-using Time = Int;
+using Timepoint = Int;
 enum Direction: uint8_t
 {
     NORTH = 0,
@@ -60,59 +60,59 @@ inline bool operator!=(const Edge a, const Edge b)
     return !(a == b);
 }
 
-union LocationTime
+union LocationTimepoint
 {
     struct
     {
         Location n;
-        Time t;
+        Timepoint t;
     };
     uint64_t nt;
 
-    LocationTime() noexcept = default;
-    LocationTime(const uint64_t nt) noexcept : nt(nt) {}
-    explicit LocationTime(const Location n, const Time t) noexcept : n(n), t(t) {}
+    LocationTimepoint() noexcept = default;
+    LocationTimepoint(const uint64_t nt) noexcept : nt(nt) {}
+    explicit LocationTimepoint(const Location n, const Timepoint t) noexcept : n(n), t(t) {}
 };
-static_assert(sizeof(LocationTime) == 8);
-static_assert(std::is_trivial<LocationTime>::value);
-inline bool operator==(const LocationTime a, const LocationTime b)
+static_assert(sizeof(LocationTimepoint) == 8);
+static_assert(std::is_trivial<LocationTimepoint>::value);
+inline bool operator==(const LocationTimepoint a, const LocationTimepoint b)
 {
     return a.nt == b.nt;
 }
-inline bool operator!=(const LocationTime a, const LocationTime b)
+inline bool operator!=(const LocationTimepoint a, const LocationTimepoint b)
 {
     return a.nt != b.nt;
 }
 
-union EdgeTime
+union EdgeTimepoint
 {
     struct
     {
         Edge e;
-        Time t;
+        Timepoint t;
     } et;
     struct
     {
         Location n : 29;
         Direction d : 3;
-        Time t;
+        Timepoint t;
     };
     uint64_t id;
 
-    EdgeTime() noexcept = default;
-    explicit EdgeTime(const Edge e, const Time t) noexcept : et{e, t} {}
-    explicit EdgeTime(const LocationTime nt, const Direction d) noexcept : n{nt.n}, d{d}, t{nt.t} {}
-    explicit EdgeTime(const Location n, const Direction d, const Time t) noexcept : n{n}, d{d}, t{t} {}
+    EdgeTimepoint() noexcept = default;
+    explicit EdgeTimepoint(const Edge e, const Timepoint t) noexcept : et{e, t} {}
+    explicit EdgeTimepoint(const LocationTimepoint nt, const Direction d) noexcept : n{nt.n}, d{d}, t{nt.t} {}
+    explicit EdgeTimepoint(const Location n, const Direction d, const Timepoint t) noexcept : n{n}, d{d}, t{t} {}
 
-    inline LocationTime nt() const noexcept { return LocationTime{n, t}; }
+    inline LocationTimepoint nt() const noexcept { return LocationTimepoint{n, t}; }
 };
-static_assert(sizeof(EdgeTime) == 8);
-static_assert(std::is_trivial<EdgeTime>::value);
-inline bool operator==(const EdgeTime a, const EdgeTime b)
+static_assert(sizeof(EdgeTimepoint) == 8);
+static_assert(std::is_trivial<EdgeTimepoint>::value);
+inline bool operator==(const EdgeTimepoint a, const EdgeTimepoint b)
 {
     return a.id == b.id;
 }
-inline bool operator!=(const EdgeTime a, const EdgeTime b)
+inline bool operator!=(const EdgeTimepoint a, const EdgeTimepoint b)
 {
     return !(a == b);
 }
@@ -132,18 +132,18 @@ struct hash<TruffleHog::Edge>
 };
 
 template<>
-struct hash<TruffleHog::LocationTime>
+struct hash<TruffleHog::LocationTimepoint>
 {
-    inline std::size_t operator()(const TruffleHog::LocationTime nt) const noexcept
+    inline std::size_t operator()(const TruffleHog::LocationTimepoint nt) const noexcept
     {
         return robin_hood::hash<uint64_t>{}(nt.nt);
     }
 };
 
 template<>
-struct hash<TruffleHog::EdgeTime>
+struct hash<TruffleHog::EdgeTimepoint>
 {
-    inline std::size_t operator()(const TruffleHog::EdgeTime et) const noexcept
+    inline std::size_t operator()(const TruffleHog::EdgeTimepoint et) const noexcept
     {
         return robin_hood::hash<uint64_t>{}(et.id);
     }
@@ -188,26 +188,26 @@ struct formatter<TruffleHog::Edge>
 };
 
 template<>
-struct formatter<TruffleHog::LocationTime>
+struct formatter<TruffleHog::LocationTimepoint>
 {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const TruffleHog::LocationTime nt, FormatContext& ctx)
+    inline auto format(const TruffleHog::LocationTimepoint nt, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(n={},t={})", nt.n, nt.t);
     }
 };
 
 template<>
-struct formatter<TruffleHog::EdgeTime>
+struct formatter<TruffleHog::EdgeTimepoint>
 {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const TruffleHog::EdgeTime et, FormatContext& ctx)
+    inline auto format(const TruffleHog::EdgeTimepoint et, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(n={},d={},t={})", et.n, et.d, et.t);
     }

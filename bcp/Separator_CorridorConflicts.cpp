@@ -42,14 +42,14 @@ struct CorridorConflictData
     SCIP_Real lhs;
     Robot a1;
     Robot a2;
-    EdgeTime a1_et1;
-    EdgeTime a1_et2;
+    EdgeTimepoint a1_et1;
+    EdgeTimepoint a1_et2;
 #ifdef USE_WAITCORRIDOR_CONFLICTS
-    EdgeTime a1_et3;
-    EdgeTime a1_et4;
+    EdgeTimepoint a1_et3;
+    EdgeTimepoint a1_et4;
 #endif
-    EdgeTime a2_et1;
-    EdgeTime a2_et2;
+    EdgeTimepoint a2_et1;
+    EdgeTimepoint a2_et2;
 };
 
 #define MATRIX(i,j) (i * N + j)
@@ -60,14 +60,14 @@ SCIP_RETCODE corridor_conflicts_create_cut(
     SCIP_SEPA* sepa,            // Separator
     const Robot a1,             // Robot 1
     const Robot a2,             // Robot 2
-    const EdgeTime a1_et1,      // Edge-time 1 of agent 1
-    const EdgeTime a1_et2,      // Edge-time 2 of agent 1
+    const EdgeTimepoint a1_et1,      // Edge-time 1 of agent 1
+    const EdgeTimepoint a1_et2,      // Edge-time 2 of agent 1
 #ifdef USE_WAITCORRIDOR_CONFLICTS
-    const EdgeTime a1_et3,      // Edge-time 3 of agent 1
-    const EdgeTime a1_et4,      // Edge-time 4 of agent 1
+    const EdgeTimepoint a1_et3,      // Edge-time 3 of agent 1
+    const EdgeTimepoint a1_et4,      // Edge-time 4 of agent 1
 #endif
-    const EdgeTime a2_et1,      // Edge-time 1 of agent 2
-    const EdgeTime a2_et2,      // Edge-time 2 of agent 2
+    const EdgeTimepoint a2_et1,      // Edge-time 1 of agent 2
+    const EdgeTimepoint a2_et2,      // Edge-time 2 of agent 2
     SCIP_Result* result         // Output result
 )
 {
@@ -161,28 +161,28 @@ SCIP_RETCODE corridor_conflicts_separate(
                 const auto t = a1_et1.t;
 
                 // Get the second edge of agent 1.
-                const EdgeTime a1_et2{a1_et1.et.e, a1_et1.t + 1};
+                const EdgeTimepoint a1_et2{a1_et1.et.e, a1_et1.t + 1};
                 const auto a1_et2_it = agent_edges_a1.find(a1_et2);
                 const auto a1_et2_val = a1_et2_it != agent_edges_a1.end() ? a1_et2_it->second : 0.0;
 
                 // Get the first edge of agent 2.
-                const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), t};
+                const EdgeTimepoint a2_et1{map.get_opposite_edge(a1_et1.et.e), t};
                 const auto a2_et1_it = agent_edges_vec.find(a2_et1);
                 const auto& a2_et1_vals = a2_et1_it != agent_edges_vec.end() ? a2_et1_it->second : zeros;
 
                 // Get the second edge of agent 2.
-                const EdgeTime a2_et2{a2_et1.et.e, a2_et1.t + 1};
+                const EdgeTimepoint a2_et2{a2_et1.et.e, a2_et1.t + 1};
                 const auto a2_et2_it = agent_edges_vec.find(a2_et2);
                 const auto& a2_et2_vals = a2_et2_it != agent_edges_vec.end() ? a2_et2_it->second : zeros;
 
 #ifdef USE_WAITCORRIDOR_CONFLICTS
                 // Get the third edge of agent 1.
-                const EdgeTime a1_et3{a2_et1.n, Direction::WAIT, a2_et1.t};
+                const EdgeTimepoint a1_et3{a2_et1.n, Direction::WAIT, a2_et1.t};
                 const auto a1_et3_it = agent_edges_a1.find(a1_et3);
                 const auto a1_et3_val = a1_et3_it != agent_edges_a1.end() ? a1_et3_it->second : 0.0;
 
                 // Get the fourth edge of agent 1.
-                const EdgeTime a1_et4{a1_et2.n, Direction::WAIT, a1_et2.t};
+                const EdgeTimepoint a1_et4{a1_et2.n, Direction::WAIT, a1_et2.t};
                 const auto a1_et4_it = agent_edges_a1.find(a1_et4);
                 const auto a1_et4_val = a1_et4_it != agent_edges_a1.end() ? a1_et4_it->second : 0.0;
 #endif

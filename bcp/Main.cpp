@@ -47,7 +47,7 @@ SCIP_RETCODE start_solver(
             ("help", "Print help")
             ("f,file", "Path to instance file", cxxopts::value<Vector<String>>())
             ("a,agents-limit", "Read first N agents only", cxxopts::value<Robot>())
-            ("t,time-limit", "Time limit in seconds", cxxopts::value<SCIP_Real>())
+            ("t,time-limit", "Timepoint limit in seconds", cxxopts::value<SCIP_Real>())
             ("g,gap-limit", "Solve to an optimality gap", cxxopts::value<SCIP_Real>())
         ;
         options.parse_positional({"file"});

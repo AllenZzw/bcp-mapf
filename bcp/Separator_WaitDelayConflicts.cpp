@@ -38,10 +38,10 @@ struct WaitDelayConflictData
     SCIP_Real lhs;
     Robot a1;
     Robot a2;
-    Array<EdgeTime, 9> a1_ets;
-    EdgeTime a2_et;
+    Array<EdgeTimepoint, 9> a1_ets;
+    EdgeTimepoint a2_et;
 #ifdef DEBUG
-    LocationTime nt;
+    LocationTimepoint nt;
 #endif
 };
 
@@ -54,10 +54,10 @@ SCIP_RETCODE waitdelay_conflicts_create_cut(
     const Robot a1,                      // Robot 1
     const Robot a2,                      // Robot 2
 #ifdef DEBUG
-    const LocationTime nt,                   // Location-time of the conflict
+    const LocationTimepoint nt,                   // Location-time of the conflict
 #endif
-    const Array<EdgeTime, 9>& a1_ets,    // Edge-times of agent 1
-    const EdgeTime a2_et,                // Edge-time of the wait by agent 2
+    const Array<EdgeTimepoint, 9>& a1_ets,    // Edge-times of agent 1
+    const EdgeTimepoint a2_et,                // Edge-time of the wait by agent 2
     SCIP_Result* result                  // Output result
 )
 {
@@ -134,18 +134,18 @@ SCIP_RETCODE waitdelay_conflicts_separate(
                     {
                         // Store the edges for a1 being at n at time t.
                         const auto nt = a2_et.nt();
-                        Array<EdgeTime, 9> a1_ets;
-                        a1_ets[0] = EdgeTime(map.get_south(nt.n), Direction::NORTH, nt.t - 1);
-                        a1_ets[1] = EdgeTime(map.get_north(nt.n), Direction::SOUTH, nt.t - 1);
-                        a1_ets[2] = EdgeTime(map.get_west(nt.n), Direction::EAST, nt.t - 1);
-                        a1_ets[3] = EdgeTime(map.get_east(nt.n), Direction::WEST, nt.t - 1);
-                        a1_ets[4] = EdgeTime(map.get_wait(nt.n), Direction::WAIT, nt.t - 1);
+                        Array<EdgeTimepoint, 9> a1_ets;
+                        a1_ets[0] = EdgeTimepoint(map.get_south(nt.n), Direction::NORTH, nt.t - 1);
+                        a1_ets[1] = EdgeTimepoint(map.get_north(nt.n), Direction::SOUTH, nt.t - 1);
+                        a1_ets[2] = EdgeTimepoint(map.get_west(nt.n), Direction::EAST, nt.t - 1);
+                        a1_ets[3] = EdgeTimepoint(map.get_east(nt.n), Direction::WEST, nt.t - 1);
+                        a1_ets[4] = EdgeTimepoint(map.get_wait(nt.n), Direction::WAIT, nt.t - 1);
 
                         // Store the edges for a1 being at n at time t+1.
-                        a1_ets[5] = EdgeTime(map.get_south(nt.n), Direction::NORTH, nt.t);
-                        a1_ets[6] = EdgeTime(map.get_north(nt.n), Direction::SOUTH, nt.t);
-                        a1_ets[7] = EdgeTime(map.get_west(nt.n), Direction::EAST, nt.t);
-                        a1_ets[8] = EdgeTime(map.get_east(nt.n), Direction::WEST, nt.t);
+                        a1_ets[5] = EdgeTimepoint(map.get_south(nt.n), Direction::NORTH, nt.t);
+                        a1_ets[6] = EdgeTimepoint(map.get_north(nt.n), Direction::SOUTH, nt.t);
+                        a1_ets[7] = EdgeTimepoint(map.get_west(nt.n), Direction::EAST, nt.t);
+                        a1_ets[8] = EdgeTimepoint(map.get_east(nt.n), Direction::WEST, nt.t);
 
                         // Calculate the LHS.
                         debug_assert(a2_et_val > 0);

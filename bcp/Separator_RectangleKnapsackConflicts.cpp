@@ -47,12 +47,12 @@ SCIP_RETCODE rectangle_knapsack_conflicts_create_cut(
     SCIP_SEPA* sepa,                          // Separator
     RectangleKnapsackSepaData& sepadata,      // Separator data
 #if defined(DEBUG) or defined(PRINT_DEBUG)
-    const Time start_t,                       // Time before entry
+    const Timepoint start_t,                       // Timepoint before entry
     const Position start_x1,                  // Start coordinate of agent 1
     const Position start_y1,                  // Start coordinate of agent 1
     const Position start_x2,                  // Start coordinate of agent 2
     const Position start_y2,                  // Start coordinate of agent 2
-    const Time end_t,                         // Time after exit
+    const Timepoint end_t,                         // Timepoint after exit
     const Position end_x1,                    // End coordinate of agent 1
     const Position end_y1,                    // End coordinate of agent 1
     const Position end_x2,                    // End coordinate of agent 2
@@ -105,15 +105,15 @@ static
 RectangleConflict find_rectangle(
     SCIP* scip,                                                   // SCIP
     const Map& map,                                               // Map
-    const Vector<HashTable<EdgeTime, SCIP_Real>>& agent_edges,    // Edge weights for each agent
-    const LocationTime nt,                                            // Location-time of the conflict
+    const Vector<HashTable<EdgeTimepoint, SCIP_Real>>& agent_edges,    // Edge weights for each agent
+    const LocationTimepoint nt,                                            // Location-time of the conflict
     const Robot a1,                                               // Robot 1
     const Robot a2,                                               // Robot 2
     SCIP_VAR* var1,                                               // Path of agent 1
     SCIP_VAR* var2                                                // Path of agent 2
 #if defined(DEBUG) or defined(PRINT_DEBUG)
-  , Time& output_start_t,                                         // Time before entry
-    Time& output_end_t,                                           // Time after exit
+  , Timepoint& output_start_t,                                         // Timepoint before entry
+    Timepoint& output_end_t,                                           // Timepoint after exit
     Position& output_start_x1,                                    // Start coordinate of agent 1
     Position& output_start_y1,                                    // Start coordinate of agent 1
     Position& output_start_x2,                                    // Start coordinate of agent 2
@@ -147,7 +147,7 @@ RectangleConflict find_rectangle(
 //         auto probdata = SCIPgetProbData(scip);
 //         debugln("---------");
 //         fmt::print("                  ");
-//         for (Time t = 0; t < std::max(path_length1, path_length2); ++t)
+//         for (Timepoint t = 0; t < std::max(path_length1, path_length2); ++t)
 //             fmt::print("{:10d}", t);
 //         debugln("");
 //         debugln("   agent {:2d}, path {}",
@@ -174,7 +174,7 @@ RectangleConflict find_rectangle(
     // Get the movement directions.
     Direction y_dir = Direction::INVALID;
     Direction x_dir = Direction::INVALID;
-    for (Time t = conflict_time; t < min_path_length; ++t)
+    for (Timepoint t = conflict_time; t < min_path_length; ++t)
     {
         if (path1[t].d == Direction::NORTH || path1[t].d == Direction::SOUTH)
         {
@@ -191,7 +191,7 @@ RectangleConflict find_rectangle(
             return conflict;
         }
     }
-    for (Time t = conflict_time; t < min_path_length; ++t)
+    for (Timepoint t = conflict_time; t < min_path_length; ++t)
     {
         if (path1[t].d == Direction::EAST || path1[t].d == Direction::WEST)
         {
@@ -214,8 +214,8 @@ RectangleConflict find_rectangle(
     }
 
     // Find the first time when the direction changes.
-    Time start_t = conflict_time;
-    Time end_t = conflict_time;
+    Timepoint start_t = conflict_time;
+    Timepoint end_t = conflict_time;
     for (; start_t >= 0; --start_t)
         if ((path1[start_t].d != y_dir && path1[start_t].d != x_dir) ||
             (path2[start_t].d != y_dir && path2[start_t].d != x_dir))
@@ -243,7 +243,7 @@ RectangleConflict find_rectangle(
 
     // Check.
 #ifdef DEBUG
-    for (Time t = start_t; t < end_t; ++t)
+    for (Timepoint t = start_t; t < end_t; ++t)
     {
         debug_assert(path1[t].d != Direction::WAIT);
         debug_assert(path2[t].d != Direction::WAIT);
@@ -345,12 +345,12 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
     // Force cuts for debugging.
 //    {
 //        Vector<Robot> a1s{};
-//        Vector<Vector<EdgeTime>> a1_ins{};
-//        Vector<Vector<EdgeTime>> a1_outs{};
+//        Vector<Vector<EdgeTimepoint>> a1_ins{};
+//        Vector<Vector<EdgeTimepoint>> a1_outs{};
 //
 //        Vector<Robot> a2s{};
-//        Vector<Vector<EdgeTime>> a2_ins{};
-//        Vector<Vector<EdgeTime>> a2_outs{};
+//        Vector<Vector<EdgeTimepoint>> a2_ins{};
+//        Vector<Vector<EdgeTimepoint>> a2_outs{};
 //
 //        for (size_t idx = 0; idx < a1s.size(); ++idx)
 //        {
@@ -382,8 +382,8 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
 
     // Get conflicting paths and vertices of each agent.
     Vector<Vector<SCIP_VAR*>> agent_paths(N);
-    Vector<Vector<LocationTime>> agent_vertices(N);
-    Vector<HashTable<EdgeTime, SCIP_Real>> agent_edges(N);
+    Vector<Vector<LocationTimepoint>> agent_vertices(N);
+    Vector<HashTable<EdgeTimepoint, SCIP_Real>> agent_edges(N);
     for (Robot a = 0; a < N; ++a)
     {
         // Get agent-specific data.
@@ -409,14 +409,14 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                 agent_paths_a.push_back(var);
 
                 {
-                    const EdgeTime et{path[0], 0};
+                    const EdgeTimepoint et{path[0], 0};
                     agent_edges_a[et] += var_val;
                 }
 
-                for (Time t = 1; t < path_length; ++t)
+                for (Timepoint t = 1; t < path_length; ++t)
                 {
                     {
-                        const LocationTime nt{path[t].n, t};
+                        const LocationTimepoint nt{path[t].n, t};
                         if (std::find(agent_vertices_a.begin(),
                                       agent_vertices_a.end(),
                                       nt) == agent_vertices_a.end())
@@ -426,7 +426,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                     }
 
                     {
-                        const EdgeTime et{path[t], t};
+                        const EdgeTimepoint et{path[t], t};
                         agent_edges_a[et] += var_val;
                     }
                 }
@@ -436,7 +436,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
         // Sort.
         std::sort(agent_vertices_a.begin(),
                   agent_vertices_a.end(),
-                  [](const LocationTime a, const LocationTime b)
+                  [](const LocationTimepoint a, const LocationTimepoint b)
                   {
                       return (a.t < b.t) || (a.t == b.t && a.n < b.n);
                   });
@@ -457,7 +457,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
     }
 
     // Find conflicts.
-    Vector<LocationTime> common_vertices;
+    Vector<LocationTimepoint> common_vertices;
     for (Robot a1 = 0; a1 < N - 1; ++a1)
         for (Robot a2 = a1 + 1; a2 < N; ++a2)
         {
@@ -466,7 +466,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
             std::set_intersection(agent_vertices[a1].begin(), agent_vertices[a1].end(),
                                   agent_vertices[a2].begin(), agent_vertices[a2].end(),
                                   std::back_inserter(common_vertices),
-                                  [](const LocationTime a, const LocationTime b)
+                                  [](const LocationTimepoint a, const LocationTimepoint b)
                                   {
                                       return (a.t < b.t) || (a.t == b.t && a.n < b.n);
                                   });
@@ -482,8 +482,8 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                     for (auto p2 : agent_paths[a2])
                     {
 #if defined(DEBUG) or defined(PRINT_DEBUG)
-                        Time start_t;
-                        Time end_t;
+                        Timepoint start_t;
+                        Timepoint end_t;
                         Position start_x1;
                         Position start_y1;
                         Position start_x2;

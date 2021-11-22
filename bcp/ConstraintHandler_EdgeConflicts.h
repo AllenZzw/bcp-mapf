@@ -32,7 +32,7 @@ struct EdgeConflict
 #else
     Array<Edge, 2> edges;    // Edges in the conflict
 #endif
-    Time t;                  // Time of the conflict
+    Timepoint t;                  // Timepoint of the conflict
 };
 
 // Create the constraint handler for edge conflicts and include it
@@ -62,11 +62,11 @@ SCIP_RETCODE edge_conflicts_add_var(
     SCIP* scip,                // SCIP
     SCIP_CONS* cons,           // Edge conflicts constraint
     SCIP_VAR* var,             // Variable
-    const Time path_length,    // Path length
+    const Timepoint path_length,    // Path length
     const Edge* const path     // Path
 );
 
-const HashTable<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
+const HashTable<EdgeTimepoint, EdgeConflict>& edge_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 );
 

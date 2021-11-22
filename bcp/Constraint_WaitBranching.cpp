@@ -41,7 +41,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //{
 //    WaitBranchDirection dir;    // Branch direction
 //    Robot a;                    // Robot
-//    Time t;                     // Time
+//    Timepoint t;                     // Timepoint
 //    Count npropagatedvars;      // Number of variables that existed when the related node
 //                                // was propagated the last time. Used to determine whether
 //                                // the constraint should be repropagated
@@ -56,7 +56,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //    WaitBranchingConsData** consdata,    // Pointer to the constraint data
 //    const WaitBranchDirection dir,       // Branch direction
 //    const Robot a,                       // Robot
-//    const Time t,                        // Time
+//    const Timepoint t,                        // Timepoint
 //    SCIP_NODE* node                      // Location of the branch-and-bound tree for this constraint
 //)
 //{
@@ -85,7 +85,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //    SCIP* scip,                       // SCIP
 //    const WaitBranchDirection dir,    // Branch direction
 //    const Robot a,                    // Robot
-//    const Time t,                     // Time
+//    const Timepoint t,                     // Timepoint
 //    SCIP_VAR* var,                    // Variable to check
 //    Count& nfixedvars,                // Pointer to store the number of fixed variables
 //    SCIP_Bool* cutoff                 // Pointer to store if a cutoff was detected
@@ -494,7 +494,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //    const char* name,                 // Name of constraint
 //    const WaitBranchDirection dir,    // Branch direction
 //    const Robot a,                    // Robot
-//    const Time t,                     // Time
+//    const Timepoint t,                     // Timepoint
 //    SCIP_NODE* node,                  // The node of the branch-and-bound tree for this constraint
 //    SCIP_Bool local                   // Is this constraint only valid locally?
 //)
@@ -564,7 +564,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //}
 //
 //// Get time
-//Time SCIPgetWaitBranchingTime(
+//Timepoint SCIPgetWaitBranchingTimepoint(
 //    SCIP_CONS* cons    // Constraint enforcing wait branching
 //)
 //{

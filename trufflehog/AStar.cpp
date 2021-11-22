@@ -113,7 +113,7 @@ bool AStar::Data::can_be_better(const Data& previous_data)
     {
         return true;
     }
-    for (Time t = 0; t < static_cast<Time>(finish_time_penalties.size()); ++t)
+    for (Timepoint t = 0; t < static_cast<Timepoint>(finish_time_penalties.size()); ++t)
         if (finish_time_penalties[t] < previous_data.finish_time_penalties[t])
         {
             return true;
@@ -168,7 +168,7 @@ AStar::Label* AStar::dominated(Label* const new_label)
 //#endif
 
     // Try to put in the new label.
-    auto [it, success] = frontier_.try_emplace(LocationTime{new_label->nt}, new_label);
+    auto [it, success] = frontier_.try_emplace(LocationTimepoint{new_label->nt}, new_label);
 
     // Check for dominance if a label already exists.
     if (!success)
@@ -251,7 +251,7 @@ void AStar::generate_start()
     debug_assert(h_goal_to_finish >= 0);
     new_label->g = cost_offset;
     new_label->f = cost_offset + h;
-    new_label->nt = LocationTime{start, start_time}.nt;
+    new_label->nt = LocationTimepoint{start, start_time}.nt;
 
     // Store the label.
     debug_assert(open_.empty());
@@ -364,7 +364,7 @@ void AStar::generate(Label* const current,
                      const Waypoint w,
                      const Location next_n,
                      const Cost cost,
-                     const Time waypoint_time)
+                     const Timepoint waypoint_time)
 {
     // Get data.
     const auto& [start, 
@@ -383,7 +383,7 @@ void AStar::generate(Label* const current,
 
     // Compute the vertex (node-time) of the new label.
     const auto next_t = current->t + 1;
-    const LocationTime next_nt{next_n, next_t};
+    const LocationTimepoint next_nt{next_n, next_t};
 
     // Check if time-infeasible.
     const auto h_node_to_waypoint = std::max((*h_node_to_waypoint_)[next_nt.n], waypoint_time - next_t);
@@ -396,7 +396,7 @@ void AStar::generate(Label* const current,
 #ifdef DEBUG
         if (verbose)
         {
-            println("    Time-infeasible label (n {}, t {}, nt {}, xy ({},{}))",
+            println("    Timepoint-infeasible label (n {}, t {}, nt {}, xy ({},{}))",
                     next_nt.n,
                     next_nt.t,
                     next_nt.nt,
@@ -551,7 +551,7 @@ void AStar::generate_last_segment(Label* const current,
 
     // Compute the vertex (node-time) of the new label.
     const auto next_t = current->t + 1;
-    const LocationTime next_nt{next_n, next_t};
+    const LocationTimepoint next_nt{next_n, next_t};
 
     // Check if time-infeasible.
     const auto h_node_to_waypoint = std::max((*h_node_to_waypoint_)[next_nt.n], earliest_goal_time - next_t);
@@ -562,7 +562,7 @@ void AStar::generate_last_segment(Label* const current,
 #ifdef DEBUG
         if (verbose)
         {
-            println("    Time-infeasible label (n {}, t {}, nt {}, xy ({},{}))",
+            println("    Timepoint-infeasible label (n {}, t {}, nt {}, xy ({},{}))",
                     next_nt.n,
                     next_nt.t,
                     next_nt.nt,
@@ -697,7 +697,7 @@ void AStar::generate_last_segment(Label* const current,
 }
 
 template<IntCost default_cost>
-void AStar::generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time)
+void AStar::generate_neighbours(Label* const current, const Waypoint w, const Timepoint waypoint_time)
 {
     // Get data.
     auto& [start, 
@@ -770,11 +770,11 @@ void AStar::generate_neighbours(Label* const current, const Waypoint w, const Ti
 template
 void AStar::generate_neighbours<0>(Label* const current,
                                    const Waypoint w,
-                                   const Time waypoint_time);
+                                   const Timepoint waypoint_time);
 template
 void AStar::generate_neighbours<1>(Label* const current,
                                    const Waypoint w,
-                                   const Time waypoint_time);
+                                   const Timepoint waypoint_time);
 
 template<IntCost default_cost>
 void AStar::generate_neighbours_last_segment(Label* const current)
@@ -871,11 +871,11 @@ void AStar::preprocess_input()
 
     // Append the goal as a waypoint.
     debug_assert(earliest_goal_time <= latest_goal_time);
-    waypoints.push_back(LocationTime{goal, earliest_goal_time});
+    waypoints.push_back(LocationTimepoint{goal, earliest_goal_time});
 }
 
 template<bool is_farkas>
-Pair<Vector<LocationTime>, Cost> AStar::solve()
+Pair<Vector<LocationTimepoint>, Cost> AStar::solve()
 {
     // Get data.
     const auto& [start, 
@@ -920,7 +920,7 @@ Pair<Vector<LocationTime>, Cost> AStar::solve()
 #endif
 
     // Create output.
-    Pair<Vector<LocationTime>, Cost> output;
+    Pair<Vector<LocationTimepoint>, Cost> output;
     auto& path = output.first;
     auto& path_cost = output.second;
 
@@ -982,7 +982,7 @@ Pair<Vector<LocationTime>, Cost> AStar::solve()
                 if (verbose)
                 {
                     // Store the path.
-                    Vector<LocationTime> path;
+                    Vector<LocationTimepoint> path;
                     for (auto l = current; l; l = l->parent)
                     {
                         path.push_back(l->nt);
@@ -1109,11 +1109,11 @@ Pair<Vector<LocationTime>, Cost> AStar::solve()
     // Return.
     return output;
 }
-template Pair<Vector<LocationTime>, Cost> AStar::solve<false>();
-template Pair<Vector<LocationTime>, Cost> AStar::solve<true>();
+template Pair<Vector<LocationTimepoint>, Cost> AStar::solve<false>();
+template Pair<Vector<LocationTimepoint>, Cost> AStar::solve<true>();
 
 #ifdef DEBUG
-Pair<Vector<LocationTime>, Cost> AStar::calculate_cost(const Vector<Edge>& input_path)
+Pair<Vector<LocationTimepoint>, Cost> AStar::calculate_cost(const Vector<Edge>& input_path)
 {
     static Int iter = 0;
 #ifdef DEBUG
@@ -1125,7 +1125,7 @@ Pair<Vector<LocationTime>, Cost> AStar::calculate_cost(const Vector<Edge>& input
 #endif
     iter++;
 
-//    const LocationTime start{input_path.front().n, 0};
+//    const LocationTimepoint start{input_path.front().n, 0};
 //    const auto goal = input_path.back().n;
 //    const Int goal_earliest = input_path.size() - 1;
 //    const Int goal_latest = input_path.size() - 1;
@@ -1136,7 +1136,7 @@ Pair<Vector<LocationTime>, Cost> AStar::calculate_cost(const Vector<Edge>& input
 //    ------------------------------------
 
     // Create output.
-    Pair<Vector<LocationTime>, Cost> output;
+    Pair<Vector<LocationTimepoint>, Cost> output;
 //    auto& path = output.first;
 //    auto& path_cost = output.second;
 //

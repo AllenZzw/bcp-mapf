@@ -41,7 +41,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Data for edge conflicts
 struct EdgeConflictsConsData
 {
-    HashTable<EdgeTime, EdgeConflict> conflicts;
+    HashTable<EdgeTimepoint, EdgeConflict> conflicts;
 };
 
 // Create a constraint for edge conflicts and include it
@@ -98,7 +98,7 @@ SCIP_RETCODE edge_conflicts_create_cut(
     SCIP* scip,                         // SCIP
     SCIP_CONS* cons,                    // Constraint
     EdgeConflictsConsData* consdata,    // Constraint data
-    const Time t,                       // Time
+    const Timepoint t,                       // Timepoint
 #ifdef USE_WAITEDGE_CONFLICTS
     const Array<Edge, 3> edges,         // Edges in the conflict
 #else
@@ -211,7 +211,7 @@ SCIP_RETCODE edge_conflicts_create_cut(
 
     // Store the constraint.
     {
-        const auto et = EdgeTime{edges[0], t};
+        const auto et = EdgeTimepoint{edges[0], t};
         debug_assert(consdata->conflicts.find(et) == consdata->conflicts.end());
         consdata->conflicts[et] = {row, edges, t};
     }
@@ -240,7 +240,7 @@ SCIP_RETCODE edge_conflicts_check(
     const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Calculate the number of times an edge is used by summing the columns.
-    HashTable<EdgeTime, SCIP_Real> edge_times_used;
+    HashTable<EdgeTimepoint, SCIP_Real> edge_times_used;
     for (auto var : vars)
     {
         // Get the path.
@@ -256,11 +256,11 @@ SCIP_RETCODE edge_conflicts_check(
         if (SCIPisPositive(scip, var_val))
         {
             // Wait action cannot be in a conflict.
-            for (Time t = 0; t < path_length - 1; ++t)
+            for (Timepoint t = 0; t < path_length - 1; ++t)
                 if (path[t].d != Direction::WAIT)
                 {
                     const auto e = map.get_undirected_edge(path[t]);
-                    const EdgeTime et(e, t);
+                    const EdgeTimepoint et(e, t);
                     edge_times_used[et] += var_val;
                 }
         }
@@ -321,7 +321,7 @@ SCIP_RETCODE edge_conflicts_separate(
     const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Find the makespan.
-    Time makespan = 0;
+    Timepoint makespan = 0;
     for (auto var : vars)
     {
         // Get the path length.
@@ -340,7 +340,7 @@ SCIP_RETCODE edge_conflicts_separate(
     }
 
     // Calculate the number of times an edge is used by summing the columns.
-    HashTable<EdgeTime, SCIP_Real> edge_used;
+    HashTable<EdgeTimepoint, SCIP_Real> edge_used;
     for (auto var : vars)
     {
         // Get the path.
@@ -355,14 +355,14 @@ SCIP_RETCODE edge_conflicts_separate(
         // Sum edge value.
         if (SCIPisPositive(scip, var_val))
         {
-            Time t = 0;
+            Timepoint t = 0;
             for (; t < path_length - 1; ++t)
             {
 #ifndef USE_WAITEDGE_CONFLICTS
                 if (path[t].d != Direction::WAIT)
 #endif
                 {
-                    const EdgeTime et{path[t], t};
+                    const EdgeTimepoint et{path[t], t};
                     edge_used[et] += var_val;
                 }
             }
@@ -370,7 +370,7 @@ SCIP_RETCODE edge_conflicts_separate(
             const Edge e{path[path_length - 1].n, Direction::WAIT};
             for (; t < makespan - 1; ++t)
             {
-                const EdgeTime et{e, t};
+                const EdgeTimepoint et{e, t};
                 edge_used[et] += var_val;
             }
 #endif
@@ -382,7 +382,7 @@ SCIP_RETCODE edge_conflicts_separate(
         if (et1.d == Direction::NORTH || et1.d == EAST)
         {
             // Get the opposite edge.
-            const EdgeTime et2{map.get_opposite_edge(et1.et.e), et1.t};
+            const EdgeTimepoint et2{map.get_opposite_edge(et1.et.e), et1.t};
             const auto it2 = edge_used.find(et2);
             if (it2 == edge_used.end())
             {
@@ -396,8 +396,8 @@ SCIP_RETCODE edge_conflicts_separate(
 
             // Get the wait edge and compute the LHS.
 #ifdef USE_WAITEDGE_CONFLICTS
-            const EdgeTime et3a{et1.n, Direction::WAIT, et1.t};
-            const EdgeTime et3b{et2.n, Direction::WAIT, et2.t};
+            const EdgeTimepoint et3a{et1.n, Direction::WAIT, et1.t};
+            const EdgeTimepoint et3b{et2.n, Direction::WAIT, et2.t};
             const auto it3a = edge_used.find(et3a);
             const auto it3b = edge_used.find(et3b);
             const auto val3a = it3a != edge_used.end() ? it3a->second : 0.0;
@@ -458,7 +458,7 @@ SCIP_RETCODE edge_conflicts_separate(
 
                 // Reactive the cut if it already exists. Otherwise create the cut.
                 const auto t = et1.t;
-                if (auto it = consdata->conflicts.find(EdgeTime{edges[0], t}); it != consdata->conflicts.end())
+                if (auto it = consdata->conflicts.find(EdgeTimepoint{edges[0], t}); it != consdata->conflicts.end())
                 {
                     // Reactivate the row if it is not in the LP.
                     const auto& [row, _, __] = it->second;
@@ -882,7 +882,7 @@ SCIP_RETCODE edge_conflicts_add_var(
     SCIP* scip,                 // SCIP
     SCIP_CONS* cons,            // Edge conflicts constraint
     SCIP_VAR* var,              // Variable
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path      // Path
 )
 {
@@ -918,7 +918,7 @@ SCIP_RETCODE edge_conflicts_add_var(
     return SCIP_OKAY;
 }
 
-const HashTable<EdgeTime, EdgeConflict>& edge_conflicts_get_constraints(
+const HashTable<EdgeTimepoint, EdgeConflict>& edge_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 )
 {

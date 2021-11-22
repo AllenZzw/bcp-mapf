@@ -39,10 +39,10 @@ SCIP_RETCODE fouredge_conflicts_create_cut(
     SCIP_SEPA* sepa,            // Separator
     const Robot a1,             // Robot 1
     const Robot a2,             // Robot 2
-    const EdgeTime a1_et1,      // Edge 1 of agent 1
-    const EdgeTime a1_et2,      // Edge 2 of agent 1
-    const EdgeTime a2_et1,      // Edge 1 of agent 2
-    const EdgeTime a2_et2,      // Edge 2 of agent 2
+    const EdgeTimepoint a1_et1,      // Edge 1 of agent 1
+    const EdgeTimepoint a1_et2,      // Edge 2 of agent 1
+    const EdgeTimepoint a2_et1,      // Edge 1 of agent 2
+    const EdgeTimepoint a2_et2,      // Edge 2 of agent 2
     SCIP_Result* result         // Output result
 )
 {

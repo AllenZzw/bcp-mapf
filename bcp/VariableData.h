@@ -26,7 +26,7 @@ Author: Edward Lam <ed@ed-lam.com>
 SCIP_RETCODE SCIPvardataCreate(
     SCIP* scip,                // SCIP
     const Robot a,             // Robot of the path
-    const Time path_length,    // Length of the path
+    const Timepoint path_length,    // Length of the path
     const Edge* const path,    // Edges in the path
     SCIP_VARDATA** vardata     // Output variable data
 );
@@ -46,7 +46,7 @@ Robot SCIPvardataGetRobot(
 );
 
 // Get the length of the path
-Time SCIPvardataGetPathLength(
+Timepoint SCIPvardataGetPathLength(
     SCIP_VARDATA* vardata    // Variable data
 );
 

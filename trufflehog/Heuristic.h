@@ -73,7 +73,7 @@ class Heuristic
 
     // Lower bounds
     HashTable<Location, Vector<IntCost>> h_;
-    Time max_path_length_;
+    Timepoint max_path_length_;
 
     // Solver data structures
     LabelPool label_pool_;

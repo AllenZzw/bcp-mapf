@@ -41,7 +41,7 @@ struct LengthBranchingConsData
 {
     LengthBranchDirection dir;    // Branch direction
     Robot a;                      // Robot
-    LocationTime nt;                  // Location-time
+    LocationTimepoint nt;                  // Location-time
     Int npropagatedvars;          // Number of variables that existed when the related node
                                   // was propagated the last time. Used to determine whether
                                   // the constraint should be repropagated
@@ -56,7 +56,7 @@ SCIP_RETCODE consdataCreate(
     LengthBranchingConsData** consdata,    // Pointer to the constraint data
     const LengthBranchDirection dir,       // Branch direction
     const Robot a,                         // Robot
-    const LocationTime nt,                     // Location-time
+    const LocationTimepoint nt,                     // Location-time
     SCIP_NODE* node                        // Location of the branch-and-bound tree for this constraint
 )
 {
@@ -85,7 +85,7 @@ SCIP_RETCODE check_variable(
     SCIP* scip,                         // SCIP
     const LengthBranchDirection dir,    // Branch direction
     const Robot a,                      // Robot
-    const LocationTime nt,                  // Location-time
+    const LocationTimepoint nt,                  // Location-time
     SCIP_VAR* var,                      // Variable to check
     Int& nfixedvars,                    // Pointer to store the number of fixed variables
     SCIP_Bool* cutoff                   // Pointer to store if a cutoff was detected
@@ -117,7 +117,7 @@ SCIP_RETCODE check_variable(
     auto disable_path_of_diff_agent = false;
     if (path_a != a && dir == LengthBranchDirection::LEq)
     {
-        for (Time t = nt.t; t < path_length; ++t)
+        for (Timepoint t = nt.t; t < path_length; ++t)
             if (path[t].n == nt.n)
             {
                 disable_path_of_diff_agent = true;
@@ -247,7 +247,7 @@ void check_propagation(
         auto disable_path_of_diff_agent = false;
         if (path_a != a && dir == LengthBranchDirection::LEq)
         {
-            for (Time t = nt.t; t < path_length; ++t)
+            for (Timepoint t = nt.t; t < path_length; ++t)
                 if (path[t].n == nt.n)
                 {
                     disable_path_of_diff_agent = true;
@@ -551,7 +551,7 @@ SCIP_RETCODE SCIPcreateConsLengthBranching(
     const char* name,                   // Name of constraint
     const LengthBranchDirection dir,    // Branch direction
     const Robot a,                      // Robot
-    const LocationTime nt,                  // Location-time
+    const LocationTimepoint nt,                  // Location-time
     SCIP_NODE* node,                    // The node of the branch-and-bound tree for this constraint
     SCIP_Bool local                     // Is this constraint only valid locally?
 )
@@ -627,7 +627,7 @@ Robot SCIPgetLengthBranchingRobot(
 }
 
 // Get node-time
-LocationTime SCIPgetLengthBranchingLocationTime(
+LocationTimepoint SCIPgetLengthBranchingLocationTimepoint(
     SCIP_CONS* cons    // Constraint enforcing length branching
 )
 {

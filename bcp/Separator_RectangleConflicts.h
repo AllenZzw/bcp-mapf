@@ -28,7 +28,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 struct RectangleConflict
 {
-    Vector<EdgeTime> edges;    // Edges of the rectangle
+    Vector<EdgeTimepoint> edges;    // Edges of the rectangle
     Robot a1;                  // Robot 1 in the conflict
     Robot a2;                  // Robot 2 in the conflict
     uint16_t out1_begin_;      // Index of the first out edge for agent 1
@@ -46,11 +46,11 @@ struct RectangleConflict
     inline auto out2_begin() const { return edges.begin() + out2_begin_; }
     inline auto out2_end() const { return edges.end(); }
 
-    using ETIteratorPair = Pair<Vector<EdgeTime>::const_iterator,
-                                Vector<EdgeTime>::const_iterator>;
-    using ETIteratorTriple = Tuple<Vector<EdgeTime>::const_iterator,
-                                   Vector<EdgeTime>::const_iterator,
-                                   Vector<EdgeTime>::const_iterator>;
+    using ETIteratorPair = Pair<Vector<EdgeTimepoint>::const_iterator,
+                                Vector<EdgeTimepoint>::const_iterator>;
+    using ETIteratorTriple = Tuple<Vector<EdgeTimepoint>::const_iterator,
+                                   Vector<EdgeTimepoint>::const_iterator,
+                                   Vector<EdgeTimepoint>::const_iterator>;
 
     inline auto agent1_edges() const { return ETIteratorPair{in1_begin(), out1_end()}; }
     inline auto agent2_edges() const { return ETIteratorPair{in2_begin(), out2_end()}; }
@@ -70,8 +70,8 @@ struct RectangleConflict
 
 void compute_rectangle(
     const Map& map,                // Map
-    const Time start_t,            // Time before entry
-    const Time end_t,              // Time after exit
+    const Timepoint start_t,            // Timepoint before entry
+    const Timepoint end_t,              // Timepoint after exit
     const Position start_x1,       // Start coordinate of agent 1
     const Position start_y1,       // Start coordinate of agent 1
     const Position start_x2,       // Start coordinate of agent 2

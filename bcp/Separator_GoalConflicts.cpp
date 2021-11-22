@@ -38,7 +38,7 @@ struct GoalConflictData
     SCIP_Real lhs;
     Robot a1;
     Robot a2;
-    LocationTime nt;
+    LocationTimepoint nt;
 };
 
 #define MATRIX(i,j) (i * N + j)
@@ -49,7 +49,7 @@ SCIP_RETCODE goal_conflicts_create_cut(
     Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
     const Robot a1,                          // Robot of the goal
     const Robot a2,                          // Robot trying to use the goal vertex
-    const LocationTime nt,                       // Location-time of the conflict
+    const LocationTimepoint nt,                       // Location-time of the conflict
     const Vector<SCIP_VAR*>& a1_vars,        // Array of variables for agent 1
     const Vector<SCIP_VAR*>& a2_vars,        // Array of variables for agent 2
     SCIP_Result* result                      // Output result
@@ -120,7 +120,7 @@ SCIP_RETCODE goal_conflicts_create_cut(
         const auto path = SCIPvardataGetPath(vardata);
 
         // Add coefficients.
-        for (Time t = nt.t; t < path_length - 1; ++t)
+        for (Timepoint t = nt.t; t < path_length - 1; ++t)
             if (path[t].n == nt.n)
             {
                 // Print.
@@ -211,13 +211,13 @@ SCIP_RETCODE goal_conflicts_separate(
 //        Vector<Robot> a2s{};
 //        Vector<Position> xs{};
 //        Vector<Position> ys{};
-//        Vector<Time> ts{};
+//        Vector<Timepoint> ts{};
 //
 //        for (size_t idx = 0; idx < a1s.size(); ++idx)
 //        {
 //            const auto a1 = a1s[idx];
 //            const auto a2 = a2s[idx];
-//            const auto nt = LocationTime(map.get_id(xs[idx], ys[idx]), ts[idx]);
+//            const auto nt = LocationTimepoint(map.get_id(xs[idx], ys[idx]), ts[idx]);
 //
 //            SCIP_CALL(goal_conflicts_create_cut(scip,
 //                                                sepa,
@@ -232,7 +232,7 @@ SCIP_RETCODE goal_conflicts_separate(
 //    }
 
     // Get the times that each agent finishes.
-    Vector<Vector<Time>> finish_times(N);
+    Vector<Vector<Timepoint>> finish_times(N);
     for (Robot a = 0; a < N; ++a)
         for (auto var : agent_vars[a])
         {
@@ -264,7 +264,7 @@ SCIP_RETCODE goal_conflicts_separate(
         for (const auto conflict_time : finish_times[a1])
         {
             // Make the node-time of the conflict.
-            const LocationTime nt{conflict_node, conflict_time};
+            const LocationTimepoint nt{conflict_node, conflict_time};
 
             // Sum paths belonging to the agent of the conflicting goal.
             SCIP_Real lhs1 = 0.0;
@@ -308,7 +308,7 @@ SCIP_RETCODE goal_conflicts_separate(
                             const auto path = SCIPvardataGetPath(vardata);
 
                             // Check for conflicts.
-                            for (Time t = nt.t; t < path_length - 1; ++t)
+                            for (Timepoint t = nt.t; t < path_length - 1; ++t)
                                 if (path[t].n == nt.n)
                                 {
                                     lhs2 += var_val;
@@ -445,7 +445,7 @@ SCIP_RETCODE goal_conflicts_add_var(
     Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
     SCIP_VAR* var,                           // Variable
     const Robot a,                           // Robot
-    const Time path_length,                  // Path length
+    const Timepoint path_length,                  // Path length
     const Edge* const path                   // Path
 )
 {
@@ -466,7 +466,7 @@ SCIP_RETCODE goal_conflicts_add_var(
         }
         else if (a == a2)
         {
-            for (Time t = nt.t; t < path_length - 1; ++t)
+            for (Timepoint t = nt.t; t < path_length - 1; ++t)
                 if (path[t].n == nt.n)
                 {
                     SCIP_CALL(SCIPaddVarToRow(scip, row, var, 1.0));

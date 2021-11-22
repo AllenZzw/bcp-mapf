@@ -23,56 +23,56 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "trufflehog/Coordinates.h"
 
-union RobotTime
+union RobotTimepoint
 {
     struct
     {
         Robot a{-1};
-        Time t{0};
+        Timepoint t{0};
     };
     uint64_t id;
 };
-static_assert(sizeof(RobotTime) == 8);
-static_assert(std::is_trivially_copyable<RobotTime>::value);
-inline bool operator==(const RobotTime a, const RobotTime b)
+static_assert(sizeof(RobotTimepoint) == 8);
+static_assert(std::is_trivially_copyable<RobotTimepoint>::value);
+inline bool operator==(const RobotTimepoint a, const RobotTimepoint b)
 {
     return a.a == b.a && a.t == b.t; // TODO
 }
-inline bool operator!=(const RobotTime a, const RobotTime b)
+inline bool operator!=(const RobotTimepoint a, const RobotTimepoint b)
 {
     return !(a == b);
 }
 
-struct RobotLocationTime
+struct RobotLocationTimepoint
 {
     Robot a{-1};
     Location n{0};
-    Time t{0};
+    Timepoint t{0};
 };
-static_assert(sizeof(RobotLocationTime) == 12);
-static_assert(std::is_trivially_copyable<RobotLocationTime>::value);
-inline bool operator==(const RobotLocationTime a, const RobotLocationTime b)
+static_assert(sizeof(RobotLocationTimepoint) == 12);
+static_assert(std::is_trivially_copyable<RobotLocationTimepoint>::value);
+inline bool operator==(const RobotLocationTimepoint a, const RobotLocationTimepoint b)
 {
     return a.a == b.a && a.n == b.n && a.t == b.t;
 }
-inline bool operator!=(const RobotLocationTime a, const RobotLocationTime b)
+inline bool operator!=(const RobotLocationTimepoint a, const RobotLocationTimepoint b)
 {
     return !(a == b);
 }
 
-struct RobotEdgeTime
+struct RobotEdgeTimepoint
 {
     Robot a{-1};
     Edge e;
-    Time t{0};
+    Timepoint t{0};
 };
-static_assert(sizeof(RobotEdgeTime) == 12);
-static_assert(std::is_trivially_copyable<RobotEdgeTime>::value);
-inline bool operator==(const RobotEdgeTime a, const RobotEdgeTime b)
+static_assert(sizeof(RobotEdgeTimepoint) == 12);
+static_assert(std::is_trivially_copyable<RobotEdgeTimepoint>::value);
+inline bool operator==(const RobotEdgeTimepoint a, const RobotEdgeTimepoint b)
 {
     return a.a == b.a && a.e == b.e && a.t == b.t;
 }
-inline bool operator!=(const RobotEdgeTime a, const RobotEdgeTime b)
+inline bool operator!=(const RobotEdgeTimepoint a, const RobotEdgeTimepoint b)
 {
     return !(a == b);
 }
@@ -88,18 +88,18 @@ namespace robin_hood
 {
 
 template<>
-struct hash<RobotTime>
+struct hash<RobotTimepoint>
 {
-    inline std::size_t operator()(const RobotTime at) const noexcept
+    inline std::size_t operator()(const RobotTimepoint at) const noexcept
     {
         return robin_hood::hash<uint64_t>{}(at.id);
     }
 };
 
 template<>
-struct hash<RobotLocationTime>
+struct hash<RobotLocationTimepoint>
 {
-    inline std::size_t operator()(const RobotLocationTime ant) const noexcept
+    inline std::size_t operator()(const RobotLocationTimepoint ant) const noexcept
     {
         auto x = robin_hood::hash<Robot>{}(ant.a);
         hash_combine(x, ant.n);
@@ -109,9 +109,9 @@ struct hash<RobotLocationTime>
 };
 
 template<>
-struct hash<RobotEdgeTime>
+struct hash<RobotEdgeTimepoint>
 {
-    inline std::size_t operator()(const RobotEdgeTime ant) const noexcept
+    inline std::size_t operator()(const RobotEdgeTimepoint ant) const noexcept
     {
         auto x = robin_hood::hash<Robot>{}(ant.a);
         hash_combine(x, ant.e);
@@ -126,13 +126,13 @@ namespace fmt
 {
 
 template<>
-struct formatter<RobotLocationTime>
+struct formatter<RobotLocationTimepoint>
 {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const RobotLocationTime& ant, FormatContext& ctx)
+    inline auto format(const RobotLocationTimepoint& ant, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(a={},n={},t={})", ant.a, ant.n, ant.t);
     }

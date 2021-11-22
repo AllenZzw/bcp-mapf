@@ -39,11 +39,11 @@ SCIP_RETCODE threevertex_conflicts_create_cut(
     SCIP_SEPA* sepa,            // Separator
     const Robot a1,             // Robot 1
     const Robot a2,             // Robot 2
-    const EdgeTime a1_et1,      // Edge 1 of agent 1
-    const EdgeTime a1_et2,      // Edge 2 of agent 1
-    const LocationTime a2_v1,       // Vertex 1 of agent 2
-    const LocationTime a2_v2,       // Vertex 2 of agent 2
-    const LocationTime a2_v3,       // Vertex 3 of agent 2
+    const EdgeTimepoint a1_et1,      // Edge 1 of agent 1
+    const EdgeTimepoint a1_et2,      // Edge 2 of agent 1
+    const LocationTimepoint a2_v1,       // Vertex 1 of agent 2
+    const LocationTimepoint a2_v2,       // Vertex 2 of agent 2
+    const LocationTimepoint a2_v3,       // Vertex 3 of agent 2
     SCIP_Result* result         // Output result
 )
 {
@@ -89,29 +89,29 @@ SCIP_RETCODE threevertex_conflicts_create_cut(
     {
         debug_assert(a2_v1.t >= 1);
         const auto prev_time = a2_v1.t - 1;
-        cut.a2_edge_time(0) = EdgeTime{map.get_south(a2_v1.n), Direction::NORTH, prev_time};
-        cut.a2_edge_time(1) = EdgeTime{map.get_north(a2_v1.n), Direction::SOUTH, prev_time};
-        cut.a2_edge_time(2) = EdgeTime{map.get_west(a2_v1.n), Direction::EAST, prev_time};
-        cut.a2_edge_time(3) = EdgeTime{map.get_east(a2_v1.n), Direction::WEST, prev_time};
-        cut.a2_edge_time(4) = EdgeTime{map.get_wait(a2_v1.n), Direction::WAIT, prev_time};
+        cut.a2_edge_time(0) = EdgeTimepoint{map.get_south(a2_v1.n), Direction::NORTH, prev_time};
+        cut.a2_edge_time(1) = EdgeTimepoint{map.get_north(a2_v1.n), Direction::SOUTH, prev_time};
+        cut.a2_edge_time(2) = EdgeTimepoint{map.get_west(a2_v1.n), Direction::EAST, prev_time};
+        cut.a2_edge_time(3) = EdgeTimepoint{map.get_east(a2_v1.n), Direction::WEST, prev_time};
+        cut.a2_edge_time(4) = EdgeTimepoint{map.get_wait(a2_v1.n), Direction::WAIT, prev_time};
     }
     {
         debug_assert(a2_v2.t >= 1);
         const auto prev_time = a2_v2.t - 1;
-        cut.a2_edge_time(5) = EdgeTime{map.get_south(a2_v2.n), Direction::NORTH, prev_time};
-        cut.a2_edge_time(6) = EdgeTime{map.get_north(a2_v2.n), Direction::SOUTH, prev_time};
-        cut.a2_edge_time(7) = EdgeTime{map.get_west(a2_v2.n), Direction::EAST, prev_time};
-        cut.a2_edge_time(8) = EdgeTime{map.get_east(a2_v2.n), Direction::WEST, prev_time};
-        cut.a2_edge_time(9) = EdgeTime{map.get_wait(a2_v2.n), Direction::WAIT, prev_time};
+        cut.a2_edge_time(5) = EdgeTimepoint{map.get_south(a2_v2.n), Direction::NORTH, prev_time};
+        cut.a2_edge_time(6) = EdgeTimepoint{map.get_north(a2_v2.n), Direction::SOUTH, prev_time};
+        cut.a2_edge_time(7) = EdgeTimepoint{map.get_west(a2_v2.n), Direction::EAST, prev_time};
+        cut.a2_edge_time(8) = EdgeTimepoint{map.get_east(a2_v2.n), Direction::WEST, prev_time};
+        cut.a2_edge_time(9) = EdgeTimepoint{map.get_wait(a2_v2.n), Direction::WAIT, prev_time};
     }
     {
         debug_assert(a2_v3.t >= 1);
         const auto prev_time = a2_v3.t - 1;
-        cut.a2_edge_time(10) = EdgeTime{map.get_south(a2_v3.n), Direction::NORTH, prev_time};
-        cut.a2_edge_time(11) = EdgeTime{map.get_north(a2_v3.n), Direction::SOUTH, prev_time};
-        cut.a2_edge_time(12) = EdgeTime{map.get_west(a2_v3.n), Direction::EAST, prev_time};
-        cut.a2_edge_time(13) = EdgeTime{map.get_east(a2_v3.n), Direction::WEST, prev_time};
-        cut.a2_edge_time(14) = EdgeTime{map.get_wait(a2_v3.n), Direction::WAIT, prev_time};
+        cut.a2_edge_time(10) = EdgeTimepoint{map.get_south(a2_v3.n), Direction::NORTH, prev_time};
+        cut.a2_edge_time(11) = EdgeTimepoint{map.get_north(a2_v3.n), Direction::SOUTH, prev_time};
+        cut.a2_edge_time(12) = EdgeTimepoint{map.get_west(a2_v3.n), Direction::EAST, prev_time};
+        cut.a2_edge_time(13) = EdgeTimepoint{map.get_east(a2_v3.n), Direction::WEST, prev_time};
+        cut.a2_edge_time(14) = EdgeTimepoint{map.get_wait(a2_v3.n), Direction::WAIT, prev_time};
     }    
 
     // Store the cut.
@@ -185,8 +185,8 @@ SCIP_RETCODE threevertex_conflicts_separate(
                             const auto& agent_vertices_a2 = agent_vertices[a2];
 
                             // Check if agent 2 uses the two vertices of agent 1.
-                            const LocationTime a2_v1{a1_et1_orig, a1_et1.t};
-                            const LocationTime a2_v2{a1_et2_dest, a1_et2.t + 1};
+                            const LocationTimepoint a2_v1{a1_et1_orig, a1_et1.t};
+                            const LocationTimepoint a2_v2{a1_et2_dest, a1_et2.t + 1};
                             const auto a2_v1_it = agent_vertices_a2.find(a2_v1);
                             const auto a2_v2_it = agent_vertices_a2.find(a2_v2);
                             if (a2_v1_it != agent_vertices_a2.end() && a2_v2_it != agent_vertices_a2.end())
@@ -196,7 +196,7 @@ SCIP_RETCODE threevertex_conflicts_separate(
                                 const auto a2_v2_val = a2_v2_it->second;
 
                                 // Find the third vertex.
-                                LocationTime final_a2_v3{Location(), std::numeric_limits<Time>::max()};
+                                LocationTimepoint final_a2_v3{Location(), std::numeric_limits<Timepoint>::max()};
 #ifdef PRINT_DEBUG
                                 Float final_lhs = std::numeric_limits<Float>::quiet_NaN();
 #endif
@@ -229,7 +229,7 @@ SCIP_RETCODE threevertex_conflicts_separate(
                                     }
 
                                     // Create the cut if the third vertex of agent 2 is found.
-                                    if (final_a2_v3.t < std::numeric_limits<Time>::max())
+                                    if (final_a2_v3.t < std::numeric_limits<Timepoint>::max())
                                     {
                                         // Print.
 #ifdef PRINT_DEBUG

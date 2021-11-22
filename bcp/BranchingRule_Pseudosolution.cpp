@@ -26,7 +26,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Constraint_VertexBranching.h"
 #include <iterator>
 
-HashTable<RobotLocationTime, Int>
+HashTable<RobotLocationTimepoint, Int>
 get_pseudosolution_branch_candidates(
     SCIP* scip    // SCIP
 )
@@ -38,7 +38,7 @@ get_pseudosolution_branch_candidates(
     debug_assert(nb_candidate_vars > 0);
 
     // Calculate branching candidates.
-    HashTable<RobotLocationTime, Int> candidates;
+    HashTable<RobotLocationTimepoint, Int> candidates;
     for (Int v = 0; v < nb_candidate_vars; ++v)
     {
         // Get the variable.
@@ -55,9 +55,9 @@ get_pseudosolution_branch_candidates(
             const auto path = SCIPvardataGetPath(vardata);
 
             // Update candidates data.
-            for (Time t = 1; t < path_length - 1; ++t)
+            for (Timepoint t = 1; t < path_length - 1; ++t)
             {
-                candidates[RobotLocationTime{a, path[t].n, t}]++;
+                candidates[RobotLocationTimepoint{a, path[t].n, t}]++;
             }
         }
     }
@@ -103,8 +103,8 @@ SCIP_RETCODE branch_pseudosolution(
 
             // Get the decision.
             const auto a = SCIPgetVertexBranchingRobot(cons);
-            const auto nt = SCIPgetVertexBranchingLocationTime(cons);
-            const RobotLocationTime decision{.a = a, .n = nt.n, .t = nt.t};
+            const auto nt = SCIPgetVertexBranchingLocationTimepoint(cons);
+            const RobotLocationTimepoint decision{.a = a, .n = nt.n, .t = nt.t};
 
             // Skip the vertex if already branched on.
             if (decision == ant)

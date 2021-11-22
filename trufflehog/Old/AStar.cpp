@@ -60,7 +60,7 @@ bool AStar::dominated_with_resources(Label* const new_label)
 #ifdef DEBUG
     bool dominated_existing = false;
 #endif
-    auto& existing_labels = frontier_with_resources_[LocationTime{new_label->nt}];
+    auto& existing_labels = frontier_with_resources_[LocationTimepoint{new_label->nt}];
     for (auto it = existing_labels.begin(); it != existing_labels.end();)
     {
         auto existing_label = *it;
@@ -102,10 +102,10 @@ bool AStar::dominated_with_resources(Label* const new_label)
 #endif
 
 template<bool is_farkas>
-Pair<Vector<LocationTime>, Cost> AStar::solve(const LocationTime start,
+Pair<Vector<LocationTimepoint>, Cost> AStar::solve(const LocationTimepoint start,
                                           const Location goal,
-                                          const Time goal_earliest,
-                                          const Time goal_latest,
+                                          const Timepoint goal_earliest,
+                                          const Timepoint goal_latest,
                                           const Cost max_cost)
 {
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS

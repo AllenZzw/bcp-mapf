@@ -26,8 +26,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct RobotRobustCut
 {
     SCIP_ROW* row;
-    const EdgeTime* begin;
-    const EdgeTime* end;
+    const EdgeTimepoint* begin;
+    const EdgeTimepoint* end;
 };
 
 class TwoRobotRobustCut
@@ -40,7 +40,7 @@ class TwoRobotRobustCut
     Robot a2_;
     Int a1_end;
     Int a2_end_;
-    EdgeTime* ets_;
+    EdgeTimepoint* ets_;
 
   public:
     // Constructors
@@ -75,25 +75,25 @@ class TwoRobotRobustCut
     inline auto a2() const { return a2_; }
     inline auto begin() const { return ets_; }
     inline auto size() const { return a2_end_; }
-    inline const EdgeTime* a1_edge_times_begin() const { return &ets_[0]; }
-    inline const EdgeTime* a1_edge_times_end() const { return &ets_[a1_end]; }
-    inline const EdgeTime* a2_edge_times_begin() const { return &ets_[a1_end]; }
-    inline const EdgeTime* a2_edge_times_end() const { return &ets_[a2_end_]; }
-    inline Pair<const EdgeTime*, const EdgeTime*> a1_edge_times() const
+    inline const EdgeTimepoint* a1_edge_times_begin() const { return &ets_[0]; }
+    inline const EdgeTimepoint* a1_edge_times_end() const { return &ets_[a1_end]; }
+    inline const EdgeTimepoint* a2_edge_times_begin() const { return &ets_[a1_end]; }
+    inline const EdgeTimepoint* a2_edge_times_end() const { return &ets_[a2_end_]; }
+    inline Pair<const EdgeTimepoint*, const EdgeTimepoint*> a1_edge_times() const
     {
         return {a1_edge_times_begin(), a1_edge_times_end()};
     }
-    inline Pair<const EdgeTime*, const EdgeTime*> a2_edge_times() const
+    inline Pair<const EdgeTimepoint*, const EdgeTimepoint*> a2_edge_times() const
     {
         return {a2_edge_times_begin(), a2_edge_times_end()};
     }
-    inline Array<Tuple<Robot, const EdgeTime*, const EdgeTime*>, 2> iterators() const
+    inline Array<Tuple<Robot, const EdgeTimepoint*, const EdgeTimepoint*>, 2> iterators() const
     {
-        using T = Tuple<Robot, const EdgeTime*, const EdgeTime*>;
+        using T = Tuple<Robot, const EdgeTimepoint*, const EdgeTimepoint*>;
         return {T{a1(), a1_edge_times_begin(), a1_edge_times_end()},
                 T{a2(), a2_edge_times_begin(), a2_edge_times_end()}};
     };
-    inline Pair<const EdgeTime*, const EdgeTime*> edge_times(const Robot a) const
+    inline Pair<const EdgeTimepoint*, const EdgeTimepoint*> edge_times(const Robot a) const
     {
         debug_assert(a == a1_ || a == a2_);
         return a == a1_ ? a1_edge_times() : a2_edge_times();
@@ -101,8 +101,8 @@ class TwoRobotRobustCut
 
     // Setters
     inline void set_row(SCIP_ROW* row) { row_ = row; }
-    inline EdgeTime& a1_edge_time(const Int idx) { return ets_[idx]; }
-    inline EdgeTime& a2_edge_time(const Int idx) { return ets_[a1_end + idx]; }
+    inline EdgeTimepoint& a1_edge_time(const Int idx) { return ets_[idx]; }
+    inline EdgeTimepoint& a2_edge_time(const Int idx) { return ets_[a1_end + idx]; }
 };
 
 #endif

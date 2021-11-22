@@ -41,7 +41,7 @@ SCIP_RETCODE SCIPcreateConsLengthBranching(
     const char* name,                   // Name of constraint
     const LengthBranchDirection dir,    // Branch direction
     const Robot a,                      // Robot
-    const LocationTime nt,                  // Location-time
+    const LocationTimepoint nt,                  // Location-time
     SCIP_NODE* node,                    // The node of the branch-and-bound tree for this constraint
     SCIP_Bool local                     // Is this constraint only valid locally?
 );
@@ -57,7 +57,7 @@ Robot SCIPgetLengthBranchingRobot(
 );
 
 // Get node-time
-LocationTime SCIPgetLengthBranchingLocationTime(
+LocationTimepoint SCIPgetLengthBranchingLocationTimepoint(
     SCIP_CONS* cons    // Constraint enforcing goal branching
 );
 

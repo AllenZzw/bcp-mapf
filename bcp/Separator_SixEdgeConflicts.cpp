@@ -39,12 +39,12 @@ SCIP_RETCODE sixedge_conflicts_create_cut(
     SCIP_SEPA* sepa,            // Separator
     const Robot a1,             // Robot 1
     const Robot a2,             // Robot 2
-    const EdgeTime a1_et1,      // Edge 1 of agent 1
-    const EdgeTime a1_et2,      // Edge 2 of agent 1
-    const EdgeTime a1_et3,      // Edge 3 of agent 1
-    const EdgeTime a2_et1,      // Edge 1 of agent 2
-    const EdgeTime a2_et2,      // Edge 2 of agent 2
-    const EdgeTime a2_et3,      // Edge 3 of agent 2
+    const EdgeTimepoint a1_et1,      // Edge 1 of agent 1
+    const EdgeTimepoint a1_et2,      // Edge 2 of agent 1
+    const EdgeTimepoint a1_et3,      // Edge 3 of agent 1
+    const EdgeTimepoint a2_et1,      // Edge 1 of agent 2
+    const EdgeTimepoint a2_et2,      // Edge 2 of agent 2
+    const EdgeTimepoint a2_et3,      // Edge 3 of agent 2
     SCIP_Result* result         // Output result
 )
 {
@@ -158,8 +158,8 @@ SCIP_RETCODE sixedge_conflicts_separate(
                 map.get_destination(a1_et2) != a1_et1.n)
             {
                 // Get the edges of agent 2.
-                const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
-                const EdgeTime a2_et2{map.get_opposite_edge(a1_et2.et.e), a1_et2.t};
+                const EdgeTimepoint a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
+                const EdgeTimepoint a2_et2{map.get_opposite_edge(a1_et2.et.e), a1_et2.t};
 
                 // Loop through the second agent.
                 for (Robot a2 = 0; a2 < N; ++a2)

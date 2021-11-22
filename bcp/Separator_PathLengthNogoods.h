@@ -36,7 +36,7 @@ SCIP_RETCODE path_length_nogoods_add_var(
     Vector<PathLengthNogood>& path_length_nogoods,    // Data for the nogoods
     SCIP_VAR* var,                                    // Variable
     const Robot a,                                    // Robot
-    const Time path_length                            // Path length
+    const Timepoint path_length                            // Path length
 );
 
 #endif

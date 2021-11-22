@@ -38,8 +38,8 @@ struct StepAsideConflictData
     SCIP_Real lhs;
     Robot a1;
     Robot a2;
-    Array<EdgeTime, 4> a1_ets;
-    Array<EdgeTime, 4> a2_ets;
+    Array<EdgeTimepoint, 4> a1_ets;
+    Array<EdgeTimepoint, 4> a2_ets;
 };
 
 #define MATRIX(i,j) (i * N + j)
@@ -50,8 +50,8 @@ SCIP_RETCODE stepaside_conflicts_create_cut(
     SCIP_SEPA* sepa,                     // Separator
     const Robot a1,                      // Robot 1
     const Robot a2,                      // Robot 2
-    const Array<EdgeTime, 4>& a1_ets,    // Edge-times of agent 1
-    const Array<EdgeTime, 4>& a2_ets,    // Edge-times of agent 2
+    const Array<EdgeTimepoint, 4>& a1_ets,    // Edge-times of agent 1
+    const Array<EdgeTimepoint, 4>& a2_ets,    // Edge-times of agent 2
     SCIP_Result* result                  // Output result
 )
 {
@@ -130,7 +130,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
     const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Get edges of each agent.
-    Array<Vector<HashTable<EdgeTime, SCIP_Real>>, 4> agent_dir_edges;
+    Array<Vector<HashTable<EdgeTimepoint, SCIP_Real>>, 4> agent_dir_edges;
     agent_dir_edges[Direction::NORTH].resize(N);
     agent_dir_edges[Direction::SOUTH].resize(N);
     agent_dir_edges[Direction::EAST].resize(N);
@@ -152,10 +152,10 @@ SCIP_RETCODE stepaside_conflicts_separate(
             // Store the edge.
             if (!SCIPisIntegral(scip, var_val))
             {
-                for (Time t = 0; t < path_length - 1; ++t)
+                for (Timepoint t = 0; t < path_length - 1; ++t)
                     if (path[t].d != Direction::WAIT)
                     {
-                        const EdgeTime et{path[t], t};
+                        const EdgeTimepoint et{path[t], t};
                         agent_dir_edges[path[t].d][a][et] += var_val;
                     }
             }
@@ -224,7 +224,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
             for (const auto [a1_et1, a1_et1_val] : a1_dir_edges)
             {
                 // Get the second edge of agent 1.
-                const EdgeTime a1_et2{a1_et1.et.e, a1_et1.t + 1};
+                const EdgeTimepoint a1_et2{a1_et1.et.e, a1_et1.t + 1};
                 const auto a1_et2_it = a1_dir_edges.find(a1_et2);
                 const auto a1_et2_val = a1_et2_it != a1_dir_edges.end() ? a1_et2_it->second : 0.0;
 
@@ -240,7 +240,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
                         if (a2_et3.n == a2_et3_orig && a2_et3.t > a1_et1.t)
                         {
                             // Get the fourth edge of agent 2.
-                            const EdgeTime a2_et4{a2_et3.et.e, a2_et3.t + 1};
+                            const EdgeTimepoint a2_et4{a2_et3.et.e, a2_et3.t + 1};
                             const auto a2_et4_it = a2_dir_edges.find(a2_et4);
                             const auto a2_et4_val = a2_et4_it != a2_dir_edges.end() ? a2_et4_it->second : 0.0;
 
@@ -263,22 +263,22 @@ SCIP_RETCODE stepaside_conflicts_separate(
 
                             // Get the third edge of agent 1.
                             const auto a1_et3_orig = map.get_id(x, y);
-                            const EdgeTime a1_et3{a1_et3_orig, d1, a1_et1.t + h};
+                            const EdgeTimepoint a1_et3{a1_et3_orig, d1, a1_et1.t + h};
                             const auto a1_et3_it = a1_dir_edges.find(a1_et3);
                             const auto a1_et3_val = a1_et3_it != a1_dir_edges.end() ? a1_et3_it->second : 0.0;
 
                             // Get the fourth edge of agent 1.
-                            const EdgeTime a1_et4{a1_et3.et.e, a1_et3.t + 1};
+                            const EdgeTimepoint a1_et4{a1_et3.et.e, a1_et3.t + 1};
                             const auto a1_et4_it = a1_dir_edges.find(a1_et4);
                             const auto a1_et4_val = a1_et4_it != a1_dir_edges.end() ? a1_et4_it->second : 0.0;
 
                             // Get the first edge of agent 2.
-                            const EdgeTime a2_et1{map.get_destination(a1_et3), d2, a1_et1.t};
+                            const EdgeTimepoint a2_et1{map.get_destination(a1_et3), d2, a1_et1.t};
                             const auto a2_et1_it = a2_dir_edges.find(a2_et1);
                             const auto a2_et1_val = a2_et1_it != a2_dir_edges.end() ? a2_et1_it->second : 0.0;
 
                             // Get the second edge of agent 2.
-                            const EdgeTime a2_et2{a2_et1.et.e, a2_et1.t + 1};
+                            const EdgeTimepoint a2_et2{a2_et1.et.e, a2_et1.t + 1};
                             const auto a2_et2_it = a2_dir_edges.find(a2_et2);
                             const auto a2_et2_val = a2_et2_it != a2_dir_edges.end() ? a2_et2_it->second : 0.0;
 

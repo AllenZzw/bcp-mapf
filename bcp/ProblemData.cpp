@@ -107,10 +107,10 @@ struct SCIP_ProbData
     Vector<SCIP_VAR*> vars;                                                     // Array of variables
     Vector<SCIP_VAR*> dummy_vars;                                               // Array of dummy variables
     Vector<Vector<SCIP_VAR*>> agent_vars;                                       // Array of variables for each agent
-    Vector<HashTable<LocationTime, SCIP_Real>> fractional_vertices;                 // Fractional vertices
-    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;                    // Fractional edges
-    Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges_no_waits;           // Fractional edges without waits
-    HashTable<EdgeTime, Vector<SCIP_Real>> fractional_edges_vec;                // Fractional edges by edge-time
+    Vector<HashTable<LocationTimepoint, SCIP_Real>> fractional_vertices;                 // Fractional vertices
+    Vector<HashTable<EdgeTimepoint, SCIP_Real>> fractional_edges;                    // Fractional edges
+    Vector<HashTable<EdgeTimepoint, SCIP_Real>> fractional_edges_no_waits;           // Fractional edges without waits
+    HashTable<EdgeTimepoint, Vector<SCIP_Real>> fractional_edges_vec;                // Fractional edges by edge-time
 
     // Constraints
     Vector<SCIP_CONS*> agent_part;                                              // Robot partition constraints
@@ -132,13 +132,13 @@ struct SCIP_ProbData
 
     // Constraints separated by agent for fast retrieval
     Vector<Vector<RobotRobustCut>> agent_robust_cuts;                           // Two-agent robust cuts grouped by agent
-    Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_vertex_conflicts;          // Vertex conflicts at the goal of an agent
+    Vector<Vector<Pair<Timepoint, SCIP_ROW*>>> agent_goal_vertex_conflicts;          // Vertex conflicts at the goal of an agent
 #ifdef USE_WAITEDGE_CONFLICTS
-    Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_edge_conflicts;            // Edge conflicts at the goal of an agent
+    Vector<Vector<Pair<Timepoint, SCIP_ROW*>>> agent_goal_edge_conflicts;            // Edge conflicts at the goal of an agent
 #endif
 #ifdef USE_GOAL_CONFLICTS
-    Vector<Vector<Pair<Time, SCIP_ROW*>>> goal_agent_goal_conflicts;            // Goal conflicts of an agent whose goal is in conflict
-    Vector<Vector<Pair<LocationTime, SCIP_ROW*>>> crossing_agent_goal_conflicts;    // Goal conflicts of an agent crossing the goal of another agent
+    Vector<Vector<Pair<Timepoint, SCIP_ROW*>>> goal_agent_goal_conflicts;            // Goal conflicts of an agent whose goal is in conflict
+    Vector<Vector<Pair<LocationTimepoint, SCIP_ROW*>>> crossing_agent_goal_conflicts;    // Goal conflicts of an agent crossing the goal of another agent
 #endif
 };
 
@@ -477,7 +477,7 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     const Robot a,              // Robot
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path,     // Path
     SCIP_VAR** var              // Output new variable
 )
@@ -616,7 +616,7 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     const Robot a,              // Robot
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path,     // Path
     SCIP_VAR** var              // Output new variable
 )
@@ -1328,7 +1328,7 @@ Vector<Vector<RobotRobustCut>>& SCIPprobdataGetRobotRobustCuts(
 }
 
 // Get array of vertex conflicts at the goal of an agent
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalVertexConflicts(
+Vector<Vector<Pair<Timepoint, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalVertexConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1338,7 +1338,7 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalVertexConflicts(
 
 // Get array of edge conflicts at the goal of an agent
 #ifdef USE_WAITEDGE_CONFLICTS
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalEdgeConflicts(
+Vector<Vector<Pair<Timepoint, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalEdgeConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1349,7 +1349,7 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalEdgeConflicts(
 
 // Get array of goal conflicts of an agent whose goal is in conflict
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
+Vector<Vector<Pair<Timepoint, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1360,7 +1360,7 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
 
 // Get array of goal conflicts of an agent crossing the goal of another agent
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<LocationTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
+Vector<Vector<Pair<LocationTimepoint, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1370,7 +1370,7 @@ Vector<Vector<Pair<LocationTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalC
 #endif
 
 // Get the vertices fractionally used by each agent
-const Vector<HashTable<LocationTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
+const Vector<HashTable<LocationTimepoint, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1379,7 +1379,7 @@ const Vector<HashTable<LocationTime, SCIP_Real>>& SCIPprobdataGetRobotFractional
 }
 
 // Get the edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdges(
+const Vector<HashTable<EdgeTimepoint, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdges(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1388,7 +1388,7 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdge
 }
 
 // Get the non-wait edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesNoWaits(
+const Vector<HashTable<EdgeTimepoint, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesNoWaits(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1397,7 +1397,7 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdge
 }
 
 // Get the edges fractionally used by each agent grouped by edge-time
-const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesVec(
+const HashTable<EdgeTimepoint, Vector<SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesVec(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1421,7 +1421,7 @@ void update_fractional_vertices_and_edges(
     const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Find the makespan.
-    Time makespan = 0;
+    Timepoint makespan = 0;
     for (auto var : vars)
     {
         // Get the path length.
@@ -1478,18 +1478,18 @@ void update_fractional_vertices_and_edges(
             if (!SCIPisIntegral(scip, var_val))
             {
                 // Store everything except the last vertex.
-                Time t = 0;
+                Timepoint t = 0;
                 for (; t < path_length - 1; ++t)
                 {
                     // Store the vertex.
                     {
-                        const LocationTime nt{path[t].n, t};
+                        const LocationTimepoint nt{path[t].n, t};
                         agent_vertices[nt] += var_val;
                     }
 
                     // Store the edge.
                     {
-                        const EdgeTime et{path[t], t};
+                        const EdgeTimepoint et{path[t], t};
                         agent_edges[et] += var_val;
 
                         auto [it, _] = fractional_edges_vec.emplace(std::piecewise_construct,
@@ -1501,7 +1501,7 @@ void update_fractional_vertices_and_edges(
                     // Store the edge if not a wait edge.
                     if (path[t].d != Direction::WAIT)
                     {
-                        const EdgeTime et{path[t], t};
+                        const EdgeTimepoint et{path[t], t};
                         agent_edges_no_waits[et] += var_val;
                     }
                 }
@@ -1512,13 +1512,13 @@ void update_fractional_vertices_and_edges(
                 {
                     // Store the vertex.
                     {
-                        const LocationTime nt{n, t};
+                        const LocationTimepoint nt{n, t};
                         agent_vertices[nt] += var_val;
                     }
 
                     // Store the edge.
                     {
-                        const EdgeTime et{n, Direction::WAIT, t};
+                        const EdgeTimepoint et{n, Direction::WAIT, t};
                         agent_edges[et] += var_val;
 
                         auto [it, _] = fractional_edges_vec.emplace(std::piecewise_construct,
@@ -1530,7 +1530,7 @@ void update_fractional_vertices_and_edges(
 
                 // Store the last vertex.
                 {
-                    const LocationTime nt{n, t};
+                    const LocationTimepoint nt{n, t};
                     agent_vertices[nt] += var_val;
                 }
             }
@@ -1688,14 +1688,14 @@ AStar& SCIPprobdataGetAStar(
 // Format path
 String format_path(
     SCIP_ProbData* probdata,    // Problem data
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path      // Path
 )
 {
     const auto& map = SCIPprobdataGetMap(probdata);
 
     String str;
-    Time t = 0;
+    Timepoint t = 0;
     for (; t < path_length - 1; ++t)
     {
         auto [x, y] = map.get_xy(path[t].n);
@@ -1719,14 +1719,14 @@ String format_path(
 // Format path
 String format_path_spaced(
     SCIP_ProbData* probdata,    // Problem data
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path      // Path
 )
 {
     const auto& map = SCIPprobdataGetMap(probdata);
 
     String str;
-    for (Time t = 0; t < path_length; ++t)
+    for (Timepoint t = 0; t < path_length; ++t)
     {
         auto [x, y] = map.get_xy(path[t].n);
 #ifdef REMOVE_PADDING
@@ -1791,7 +1791,7 @@ void print_used_paths(
     const auto& dummy_vars = SCIPprobdataGetDummyVars(probdata);
 
     // Calculate makespan.
-    Time makespan = 0;
+    Timepoint makespan = 0;
     for (Robot a = 0; a < N; ++a)
         for (auto var : agent_vars[a])
         {
@@ -1808,8 +1808,8 @@ void print_used_paths(
         }
 
     // Get fractional vertices.
-    HashTable<LocationTime, HashTable<Robot, SCIP_Real>> vertex_times_used;
-    HashTable<EdgeTime, HashTable<Robot, SCIP_Real>> edge_times_used;
+    HashTable<LocationTimepoint, HashTable<Robot, SCIP_Real>> vertex_times_used;
+    HashTable<EdgeTimepoint, HashTable<Robot, SCIP_Real>> edge_times_used;
     if (!sol &&
         SCIPgetStage(scip) == SCIP_STAGE_SOLVING &&
         SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL)
@@ -1832,26 +1832,26 @@ void print_used_paths(
             {
                 // Vertices.
                 {
-                    Time t = 1;
+                    Timepoint t = 1;
                     for (; t < path_length; ++t)
                     {
-                        const LocationTime nt{path[t].n, t};
+                        const LocationTimepoint nt{path[t].n, t};
                         vertex_times_used[nt][a] += var_val;
                     }
                     const auto n = path[path_length - 1].n;
                     for (; t < makespan; ++t)
                     {
-                        const LocationTime nt{n, t};
+                        const LocationTimepoint nt{n, t};
                         vertex_times_used[nt][a] += var_val;
                     }
                 }
 
                 // Edges.
                 {
-                    for (Time t = 0; t < path_length - 1; ++t)
+                    for (Timepoint t = 0; t < path_length - 1; ++t)
                     {
                         const auto e = map.get_undirected_edge(path[t]);
-                        const EdgeTime et(e, t);
+                        const EdgeTimepoint et(e, t);
                         edge_times_used[et][a] += var_val;
                     }
                 }
@@ -1896,7 +1896,7 @@ void print_used_paths(
 
     // Print time horizon.
     fmt::print("                                      ");
-    for (Time t = 0; t < makespan; ++t)
+    for (Timepoint t = 0; t < makespan; ++t)
     {
         fmt::print("{:10d}", t);
     }
@@ -1951,7 +1951,7 @@ void print_used_paths(
                 }
                 fmt::print("Robot: {:3d}, Val: {:7.4f}, Path: ", a, std::abs(var_val));
 
-                for (Time t = 0; t < path_length; ++t)
+                for (Timepoint t = 0; t < path_length; ++t)
                 {
                     const auto e = path[t];
                     auto [x, y] = map.get_xy(e.n);
@@ -1961,7 +1961,7 @@ void print_used_paths(
 #endif
 
                     fmt::terminal_color colour = fmt::terminal_color::black;
-                    if (auto it = vertex_times_used.find(LocationTime(e.n, t)); it != vertex_times_used.end())
+                    if (auto it = vertex_times_used.find(LocationTimepoint(e.n, t)); it != vertex_times_used.end())
                     {
                         const auto n = it->second.size();
                         if (n > 1)
@@ -1969,7 +1969,7 @@ void print_used_paths(
                             colour = fmt::terminal_color::blue;
                         }
                     }
-                    if (auto it = edge_times_used.find(EdgeTime(map.get_undirected_edge(path[t]), t)); it != edge_times_used.end())
+                    if (auto it = edge_times_used.find(EdgeTimepoint(map.get_undirected_edge(path[t]), t)); it != edge_times_used.end())
                     {
                         const auto n = it->second.size();
                         if (n > 1)

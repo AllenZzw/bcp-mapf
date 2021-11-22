@@ -53,7 +53,7 @@ static_assert(sizeof(EdgeCosts) == 6 * 8);
 // Penalties for crossing an edge
 class EdgePenalties
 {
-    HashTable<LocationTime, EdgeCosts> edge_penalties_;
+    HashTable<LocationTimepoint, EdgeCosts> edge_penalties_;
 
   public:
     // Constructors
@@ -69,12 +69,12 @@ class EdgePenalties
     inline auto begin() const { return edge_penalties_.begin(); }
     inline auto end() { return edge_penalties_.end(); }
     inline auto end() const { return edge_penalties_.end(); }
-    inline auto find(const LocationTime nt) { return edge_penalties_.find(nt); }
-    inline auto find(const LocationTime nt) const { return edge_penalties_.find(nt); }
+    inline auto find(const LocationTimepoint nt) { return edge_penalties_.find(nt); }
+    inline auto find(const LocationTimepoint nt) const { return edge_penalties_.find(nt); }
 
     // Return the edge costs of a node-time
     template<IntCost default_cost>
-    inline EdgeCosts get_edge_costs(const LocationTime nt)
+    inline EdgeCosts get_edge_costs(const LocationTimepoint nt)
     {
         // Make default edge costs.
         EdgeCosts costs(default_cost);
@@ -105,13 +105,13 @@ class EdgePenalties
     }
 
     // Create or return the outgoing edge penalties of a node-time
-    inline EdgeCosts& get_edge_penalties(const LocationTime nt)
+    inline EdgeCosts& get_edge_penalties(const LocationTimepoint nt)
     {
         return edge_penalties_[nt];
     }
-    inline EdgeCosts& get_edge_penalties(const Location n, const Time t)
+    inline EdgeCosts& get_edge_penalties(const Location n, const Timepoint t)
     {
-        return get_edge_penalties(LocationTime{n, t});
+        return get_edge_penalties(LocationTimepoint{n, t});
     }
 
     // Clear for next run
@@ -140,42 +140,42 @@ class EdgePenalties
     // Debug
     void print(const Map& map)
     {
-        HashTable<LocationTime, EdgeCosts> incoming_penalties;
+        HashTable<LocationTimepoint, EdgeCosts> incoming_penalties;
         for (const auto [outgoing_nt, penalties] : edge_penalties_)
         {
             if (penalties.north != 0)
             {
                 const auto incoming_n = map.get_north(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const LocationTime incoming_nt{incoming_n, incoming_t};
+                const LocationTimepoint incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].south += penalties.north;
             }
             if (penalties.south != 0)
             {
                 const auto incoming_n = map.get_south(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const LocationTime incoming_nt{incoming_n, incoming_t};
+                const LocationTimepoint incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].north += penalties.south;
             }
             if (penalties.east != 0)
             {
                 const auto incoming_n = map.get_east(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const LocationTime incoming_nt{incoming_n, incoming_t};
+                const LocationTimepoint incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].west += penalties.east;
             }
             if (penalties.west != 0)
             {
                 const auto incoming_n = map.get_west(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const LocationTime incoming_nt{incoming_n, incoming_t};
+                const LocationTimepoint incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].east += penalties.west;
             }
             if (penalties.wait != 0)
             {
                 const auto incoming_n = map.get_wait(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const LocationTime incoming_nt{incoming_n, incoming_t};
+                const LocationTimepoint incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].wait += penalties.wait;
             }
         }
@@ -194,7 +194,7 @@ class EdgePenalties
     }
     void print_used(const Map& map)
     {
-        Vector<Pair<LocationTime, EdgeCosts>> all_penalties;
+        Vector<Pair<LocationTimepoint, EdgeCosts>> all_penalties;
         for (const auto [nt, penalties] : edge_penalties_)
             if (penalties.used)
             {
@@ -202,7 +202,7 @@ class EdgePenalties
             }
         std::sort(all_penalties.begin(),
                   all_penalties.end(),
-                  [](const Pair<LocationTime, EdgeCosts>& a, const Pair<LocationTime, EdgeCosts>& b)
+                  [](const Pair<LocationTimepoint, EdgeCosts>& a, const Pair<LocationTimepoint, EdgeCosts>& b)
                   {
                       return a.first.t < b.first.t;
                   });
@@ -228,7 +228,7 @@ class GoalPenalties
   public:
     struct GoalPenalty
     {
-        LocationTime nt;
+        LocationTimepoint nt;
         Cost cost;
     };
     static_assert(sizeof(GoalPenalty) == 2*8);
@@ -264,7 +264,7 @@ class GoalPenalties
     }
 
     // Add a goal penalty for crossing the goal of another agent
-    void add(const LocationTime nt, const Cost cost)
+    void add(const LocationTimepoint nt, const Cost cost)
     {
         debug_assert(cost >= 0);
         goal_penalties_.push_back({nt, cost});
@@ -292,19 +292,19 @@ class GoalPenalties
 #endif
 
 // Penalties finishing at a particular time
-class FinishTimePenalties
+class FinishTimepointPenalties
 {
     Vector<Cost> finish_time_penalties_;
     Vector<Cost> finish_time_h_;
 
   public:
     // Constructors
-    FinishTimePenalties() noexcept = default;
-    FinishTimePenalties(const FinishTimePenalties& other) = default;
-    FinishTimePenalties(FinishTimePenalties&& other) noexcept = default;
-    FinishTimePenalties& operator=(const FinishTimePenalties& other) = default;
-    FinishTimePenalties& operator=(FinishTimePenalties&& other) noexcept = default;
-    ~FinishTimePenalties() noexcept = default;
+    FinishTimepointPenalties() noexcept = default;
+    FinishTimepointPenalties(const FinishTimepointPenalties& other) = default;
+    FinishTimepointPenalties(FinishTimepointPenalties&& other) noexcept = default;
+    FinishTimepointPenalties& operator=(const FinishTimepointPenalties& other) = default;
+    FinishTimepointPenalties& operator=(FinishTimepointPenalties&& other) noexcept = default;
+    ~FinishTimepointPenalties() noexcept = default;
 
     // Iterators
     inline auto begin() { return finish_time_penalties_.begin(); }
@@ -313,10 +313,10 @@ class FinishTimePenalties
     inline auto end() const { return finish_time_penalties_.end(); }
 
     // Getters
-    inline Time size() const { return finish_time_penalties_.size(); }
+    inline Timepoint size() const { return finish_time_penalties_.size(); }
     inline bool empty() const { return !size(); }
     inline const auto& data() const { return finish_time_penalties_; }
-    auto operator[](const Time t) const { return finish_time_penalties_[t]; }
+    auto operator[](const Timepoint t) const { return finish_time_penalties_[t]; }
 
     // Clear for next run
     inline void clear()
@@ -326,7 +326,7 @@ class FinishTimePenalties
     }
 
     // Add a finish time penalty for finishing at or before time t_max
-    void add(const Time t_max, const Cost cost)
+    void add(const Timepoint t_max, const Cost cost)
     {
         debug_assert(cost >= 0);
 
@@ -334,7 +334,7 @@ class FinishTimePenalties
         {
             finish_time_penalties_.resize(t_max + 1);
         }
-        for (Time t = 0; t <= t_max; ++t)
+        for (Timepoint t = 0; t <= t_max; ++t)
         {
             finish_time_penalties_[t] += cost;
         }
@@ -345,13 +345,13 @@ class FinishTimePenalties
     {
         debug_assert(finish_time_h_.empty());
         finish_time_h_.resize(finish_time_penalties_.size());
-        for (Time t = 0; t < static_cast<Time>(finish_time_h_.size()); ++t)
+        for (Timepoint t = 0; t < static_cast<Timepoint>(finish_time_h_.size()); ++t)
         {
             // Wait until after all finish time penalties have elapsed and then finish at no cost.
             finish_time_h_[t] = finish_time_penalties_.size() - t;
 
             // Wait until time i and then finish with a penalty.
-            for (Time i = t; i < static_cast<Time>(finish_time_penalties_.size()); ++i)
+            for (Timepoint i = t; i < static_cast<Timepoint>(finish_time_penalties_.size()); ++i)
             {
                 finish_time_h_[t] = std::min(finish_time_h_[t], i - t + finish_time_penalties_[i]);
             }
@@ -359,13 +359,13 @@ class FinishTimePenalties
     }
 
     // Get the lower bound (h value) at the current time (assuming the agent is already at the goal location)
-    inline Cost get_h(const Time t) const
+    inline Cost get_h(const Timepoint t) const
     {
-        return t < static_cast<Time>(finish_time_h_.size()) ? finish_time_h_[t] : 0.0;
+        return t < static_cast<Timepoint>(finish_time_h_.size()) ? finish_time_h_[t] : 0.0;
     }
-    inline Cost get_penalty(const Time t) const
+    inline Cost get_penalty(const Timepoint t) const
     {
-        return t < static_cast<Time>(finish_time_penalties_.size()) ? finish_time_penalties_[t] : 0.0;
+        return t < static_cast<Timepoint>(finish_time_penalties_.size()) ? finish_time_penalties_[t] : 0.0;
     }
 };
 

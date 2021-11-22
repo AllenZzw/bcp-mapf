@@ -33,7 +33,7 @@ struct GoalConflict
     SCIP_ROW* row;    // LP row
     Robot a1;         // Robot of the goal
     Robot a2;         // Robot trying to use the goal vertex
-    LocationTime nt;      // Location-time of the conflict
+    LocationTimepoint nt;      // Location-time of the conflict
 };
 #endif
 
@@ -41,7 +41,7 @@ struct GoalConflict
 struct PathLengthNogood
 {
     SCIP_ROW* row;                                    // LP row
-    Vector<Pair<Robot, Time>> latest_finish_times;    // Latest time for an agent to reach its target
+    Vector<Pair<Robot, Timepoint>> latest_finish_times;    // Latest time for an agent to reach its target
 };
 #endif
 
@@ -58,7 +58,7 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     const Robot a,              // Robot
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path,     // Path
     SCIP_VAR** var              // Output new variable
 );
@@ -68,7 +68,7 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     const Robot a,              // Robot
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path,     // Path
     SCIP_VAR** var              // Output new variable
 );
@@ -153,48 +153,48 @@ Vector<Vector<RobotRobustCut>>& SCIPprobdataGetRobotRobustCuts(
 );
 
 // Get array of vertex conflicts at the goal of an agent
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalVertexConflicts(
+Vector<Vector<Pair<Timepoint, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalVertexConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get array of edge conflicts at the goal of an agent
 #ifdef USE_WAITEDGE_CONFLICTS
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalEdgeConflicts(
+Vector<Vector<Pair<Timepoint, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalEdgeConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif
 
 // Get array of goal conflicts of an agent whose goal is in conflict
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
+Vector<Vector<Pair<Timepoint, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif
 
 // Get array of goal conflicts of an agent crossing the goal of another agent
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<LocationTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
+Vector<Vector<Pair<LocationTimepoint, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif
 
 // Get the vertices fractionally used by each agent
-const Vector<HashTable<LocationTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
+const Vector<HashTable<LocationTimepoint, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdges(
+const Vector<HashTable<EdgeTimepoint, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdges(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the non-wait edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesNoWaits(
+const Vector<HashTable<EdgeTimepoint, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesNoWaits(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the edges fractionally used by each agent grouped by edge-time
-const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesVec(
+const HashTable<EdgeTimepoint, Vector<SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesVec(
     SCIP_ProbData* probdata    // Problem data
 );
 
@@ -242,14 +242,14 @@ AStar& SCIPprobdataGetAStar(
 // Format path
 String format_path(
     SCIP_ProbData* probdata,    // Problem data
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path      // Path
 );
 
 // Format path
 String format_path_spaced(
     SCIP_ProbData* probdata,    // Problem data
-    const Time path_length,     // Path length
+    const Timepoint path_length,     // Path length
     const Edge* const path      // Path
 );
 

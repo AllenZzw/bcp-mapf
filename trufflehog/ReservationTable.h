@@ -32,7 +32,7 @@ namespace TruffleHog
 class ReservationTable
 {
     char* table_;
-    Time timesteps_;
+    Timepoint timesteps_;
     const Location map_size_;
 
   public:
@@ -59,7 +59,7 @@ class ReservationTable
     {
         return map_size_;
     }
-    bool is_reserved(const LocationTime nt) const
+    bool is_reserved(const LocationTimepoint nt) const
     {
         // Check.
         debug_assert(0 <= nt.n && nt.n < map_size_);
@@ -79,7 +79,7 @@ class ReservationTable
         const auto val = (table_[idx] & mask) != 0b0;
         return val;
     }
-    void reserve(const LocationTime nt)
+    void reserve(const LocationTimepoint nt)
     {
         // Check.
         debug_assert(0 <= nt.n && nt.n < map_size_);
@@ -109,7 +109,7 @@ class ReservationTable
         const char mask = 0b1 << (elem % CHAR_BIT);
         table_[idx] |= mask;
     }
-    inline void unreserve(const LocationTime nt)
+    inline void unreserve(const LocationTimepoint nt)
     {
         // Check.
         debug_assert(0 <= nt.n && nt.n < map_size_);
@@ -132,7 +132,7 @@ class ReservationTable
 
   private:
     // Calculate the size of the reservation table in memory
-    inline size_t table_size(const Time timesteps) const
+    inline size_t table_size(const Timepoint timesteps) const
     {
         const auto tn_size = static_cast<size_t>(timesteps) * static_cast<size_t>(map_size_);
         const auto size = (tn_size + CHAR_BIT - 1) / CHAR_BIT;

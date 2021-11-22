@@ -39,14 +39,14 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
     SCIP_SEPA* sepa,            // Separator
     const Robot a1,             // Robot 1
     const Robot a2,             // Robot 2
-    const EdgeTime a1_et1,      // Edge 1 of agent 1
-    const EdgeTime a1_et2,      // Edge 2 of agent 1
-    const EdgeTime a2_et1,      // Edge 1 of agent 2
-    const EdgeTime a2_et2,      // Edge 2 of agent 2
-    const EdgeTime a2_et3,      // Edge 3 of agent 2
-    const EdgeTime a2_et4,      // Edge 4 of agent 2
-    const EdgeTime a2_et5,      // Edge 5 of agent 2
-    const EdgeTime a2_et6,      // Edge 6 of agent 2
+    const EdgeTimepoint a1_et1,      // Edge 1 of agent 1
+    const EdgeTimepoint a1_et2,      // Edge 2 of agent 1
+    const EdgeTimepoint a2_et1,      // Edge 1 of agent 2
+    const EdgeTimepoint a2_et2,      // Edge 2 of agent 2
+    const EdgeTimepoint a2_et3,      // Edge 3 of agent 2
+    const EdgeTimepoint a2_et4,      // Edge 4 of agent 2
+    const EdgeTimepoint a2_et5,      // Edge 5 of agent 2
+    const EdgeTimepoint a2_et6,      // Edge 6 of agent 2
     SCIP_Result* result         // Output result
 )
 {
@@ -122,14 +122,14 @@ SCIP_RETCODE agentwaitedge_conflicts_create_cut(
     return SCIP_OKAY;
 }
 
-Vector<Array<EdgeTime, 5>>
+Vector<Array<EdgeTimepoint, 5>>
 get_a2_et23456(
-    const EdgeTime a1_et2,
-    const EdgeTime a2_et1,
+    const EdgeTimepoint a1_et2,
+    const EdgeTimepoint a2_et1,
     const Map& map
 )
 {
-    Vector<Array<EdgeTime, 5>> a2_et23456;
+    Vector<Array<EdgeTimepoint, 5>> a2_et23456;
 
     const auto n = a1_et2.n;
     const auto t = a1_et2.t;
@@ -138,36 +138,36 @@ get_a2_et23456(
         // One timestep before.
         if (t > 0)
         {
-            a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{map.get_south(n), Direction::NORTH, t - 1},
-                                                    EdgeTime{map.get_north(n), Direction::SOUTH, t - 1},
-                                                    EdgeTime{map.get_west(n), Direction::EAST, t - 1},
-                                                    EdgeTime{map.get_east(n), Direction::WEST, t - 1},
-                                                    EdgeTime{map.get_wait(n), Direction::WAIT, t - 1}});
+            a2_et23456.push_back(Array<EdgeTimepoint, 5>{EdgeTimepoint{map.get_south(n), Direction::NORTH, t - 1},
+                                                    EdgeTimepoint{map.get_north(n), Direction::SOUTH, t - 1},
+                                                    EdgeTimepoint{map.get_west(n), Direction::EAST, t - 1},
+                                                    EdgeTimepoint{map.get_east(n), Direction::WEST, t - 1},
+                                                    EdgeTimepoint{map.get_wait(n), Direction::WAIT, t - 1}});
         }
 
         // Same timestep.
-        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{n, Direction::NORTH, t},
-                                                EdgeTime{n, Direction::SOUTH, t},
-                                                EdgeTime{n, Direction::EAST, t},
-                                                EdgeTime{n, Direction::WEST, t},
-                                                EdgeTime{n, Direction::WAIT, t}});
+        a2_et23456.push_back(Array<EdgeTimepoint, 5>{EdgeTimepoint{n, Direction::NORTH, t},
+                                                EdgeTimepoint{n, Direction::SOUTH, t},
+                                                EdgeTimepoint{n, Direction::EAST, t},
+                                                EdgeTimepoint{n, Direction::WEST, t},
+                                                EdgeTimepoint{n, Direction::WAIT, t}});
     }
 
     if (n != map.get_destination(a2_et1))
     {
         // Same timestep.
-        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{map.get_south(n), Direction::NORTH, t},
-                                                EdgeTime{map.get_north(n), Direction::SOUTH, t},
-                                                EdgeTime{map.get_west(n), Direction::EAST, t},
-                                                EdgeTime{map.get_east(n), Direction::WEST, t},
-                                                EdgeTime{map.get_wait(n), Direction::WAIT, t}});
+        a2_et23456.push_back(Array<EdgeTimepoint, 5>{EdgeTimepoint{map.get_south(n), Direction::NORTH, t},
+                                                EdgeTimepoint{map.get_north(n), Direction::SOUTH, t},
+                                                EdgeTimepoint{map.get_west(n), Direction::EAST, t},
+                                                EdgeTimepoint{map.get_east(n), Direction::WEST, t},
+                                                EdgeTimepoint{map.get_wait(n), Direction::WAIT, t}});
 
         // One timestep after.
-        a2_et23456.push_back(Array<EdgeTime, 5>{EdgeTime{n, Direction::NORTH, t + 1},
-                                                EdgeTime{n, Direction::SOUTH, t + 1},
-                                                EdgeTime{n, Direction::EAST, t + 1},
-                                                EdgeTime{n, Direction::WEST, t + 1},
-                                                EdgeTime{n, Direction::WAIT, t + 1}});
+        a2_et23456.push_back(Array<EdgeTimepoint, 5>{EdgeTimepoint{n, Direction::NORTH, t + 1},
+                                                EdgeTimepoint{n, Direction::SOUTH, t + 1},
+                                                EdgeTimepoint{n, Direction::EAST, t + 1},
+                                                EdgeTimepoint{n, Direction::WEST, t + 1},
+                                                EdgeTimepoint{n, Direction::WAIT, t + 1}});
     }
 
     return a2_et23456;
@@ -217,7 +217,7 @@ SCIP_RETCODE agentwaitedge_conflicts_separate(
             debug_assert(a1_et1.d != Direction::WAIT);
 
             // Get the first edge of agent 2.
-            const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
+            const EdgeTimepoint a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
 
             // Loop through the second agent.
             for (Robot a2 = 0; a2 < N; ++a2)
@@ -236,8 +236,8 @@ SCIP_RETCODE agentwaitedge_conflicts_separate(
                     const auto a2_et1_val = a2_et1_it->second;
 
                     // Loop through the second edge of agent 1.
-                    const Array<EdgeTime, 2> a1_et2s{EdgeTime{a1_et1.n, Direction::WAIT, a1_et1.t},
-                                                     EdgeTime{map.get_destination(a1_et1), Direction::WAIT, a1_et1.t}};
+                    const Array<EdgeTimepoint, 2> a1_et2s{EdgeTimepoint{a1_et1.n, Direction::WAIT, a1_et1.t},
+                                                     EdgeTimepoint{map.get_destination(a1_et1), Direction::WAIT, a1_et1.t}};
                     for (const auto a1_et2 : a1_et2s)
                     {
                         // Get the values of the second edge of agent 1.

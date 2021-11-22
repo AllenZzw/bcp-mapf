@@ -35,7 +35,7 @@ struct Score
 {
     Robot a;
     SCIP_Real val;
-    Time shortest_path_length;
+    Timepoint shortest_path_length;
 };
 
 struct SuccessorDirection
@@ -44,17 +44,17 @@ struct SuccessorDirection
     bool has_wait{false};
 };
 
-struct GoalTimeBound
+struct GoalTimepointBound
 {
     Location n;
-    Time first;
-    Time last;
+    Timepoint first;
+    Timepoint last;
 };
 
-Tuple<HashTable<LocationTime, Pair<Vector<Score>, Vector<Score>>>,
-      HashTable<RobotTime, SuccessorDirection>,
+Tuple<HashTable<LocationTimepoint, Pair<Vector<Score>, Vector<Score>>>,
+      HashTable<RobotTimepoint, SuccessorDirection>,
       Vector<Int>,
-      Vector<GoalTimeBound>>
+      Vector<GoalTimepointBound>>
 get_lp_branch_candidates(
     SCIP* scip,                 // SCIP
     SCIP_PROBDATA* probdata,    // Problem data
@@ -62,10 +62,10 @@ get_lp_branch_candidates(
 )
 {
     // Create output.
-    Tuple<HashTable<LocationTime, Pair<Vector<Score>, Vector<Score>>>,
-          HashTable<RobotTime, SuccessorDirection>,
+    Tuple<HashTable<LocationTimepoint, Pair<Vector<Score>, Vector<Score>>>,
+          HashTable<RobotTimepoint, SuccessorDirection>,
           Vector<Int>,
-          Vector<GoalTimeBound>> output;
+          Vector<GoalTimepointBound>> output;
     auto& [candidates, succ_dirs, nb_paths, goal_time_bounds] = output;
 
     // Get candidate variables.
@@ -82,7 +82,7 @@ get_lp_branch_candidates(
     release_assert(nb_candidate_vars > 0, "LP is not fractional");
 
     // Find the makespan.
-    Time makespan = 0;
+    Timepoint makespan = 0;
     for (Int v = 0; v < nb_candidate_vars; ++v)
     {
         // Get the variable.
@@ -124,10 +124,10 @@ get_lp_branch_candidates(
 
             // Update candidates data.
             nb_paths[a]++;
-            for (Time t = 1; t < path_length; ++t)
+            for (Timepoint t = 1; t < path_length; ++t)
             {
                 // Store the candidate vertex.
-                const LocationTime nt{path[t].n, t};
+                const LocationTimepoint nt{path[t].n, t};
                 auto& scores = candidates[nt].first;
                 auto it = std::find_if(scores.begin(),
                                        scores.end(),
@@ -145,7 +145,7 @@ get_lp_branch_candidates(
                 }
 
                 // Store whether the vertex is reached by waiting.
-                auto& prev = succ_dirs[RobotTime{{a, t - 1}}];
+                auto& prev = succ_dirs[RobotTimepoint{{a, t - 1}}];
                 prev.has_move |= (path[t - 1].d != Direction::WAIT);
                 prev.has_wait |= (path[t - 1].d == Direction::WAIT);
             }
@@ -213,7 +213,7 @@ get_lp_branch_candidates(
     const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Find the earliest and latest time an agent reaches its goal.
-    goal_time_bounds.resize(N, {0, std::numeric_limits<Time>::max(), 0});
+    goal_time_bounds.resize(N, {0, std::numeric_limits<Timepoint>::max(), 0});
     for (auto var : vars)
     {
         // Get the path.
@@ -248,17 +248,17 @@ get_lp_branch_candidates(
     return output;
 }
 
-Pair<RobotLocationTime, bool> find_decision_early_goal(
+Pair<RobotLocationTimepoint, bool> find_decision_early_goal(
     SCIP* scip,                                      // SCIP
     SCIP_PROBDATA* probdata,                         // Problem data
     const Robot N,                                   // Number of agents
-    const Vector<GoalTimeBound>& goal_time_bounds    // Earliest and latest time an agent reaches its goal
+    const Vector<GoalTimepointBound>& goal_time_bounds    // Earliest and latest time an agent reaches its goal
 )
 {
     // Create output.
-    RobotLocationTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
+    RobotLocationTimepoint best_ant{-1, 0, std::numeric_limits<Timepoint>::max()};
     bool prefer_branch_0 = false;
-    Time best_diff = 1;
+    Timepoint best_diff = 1;
 
     // Get agent variables.
 #ifdef DEBUG
@@ -497,7 +497,7 @@ Pair<RobotLocationTime, bool> find_decision_early_goal(
 #endif
 
     // Select any other agent.
-    best_ant.t = std::numeric_limits<Time>::max();
+    best_ant.t = std::numeric_limits<Timepoint>::max();
     best_diff = 0;
     for (Robot a = 0; a < N; ++a)
     {
@@ -521,15 +521,15 @@ Pair<RobotLocationTime, bool> find_decision_early_goal(
     return {best_ant, prefer_branch_0};
 }
 
-//Pair<RobotTime, bool> find_decision_wait(
+//Pair<RobotTimepoint, bool> find_decision_wait(
 //    SCIP* scip,                                             // SCIP
 //    SCIP_PROBDATA* probdata,                                // Problem data
-//    const HashTable<RobotTime, SuccessorDirection>& succ_dirs,    // Vertices with a wait
-//    const Vector<GoalTimeBound>& goal_time_bounds           // Earliest and latest time an agent reaches its goal
+//    const HashTable<RobotTimepoint, SuccessorDirection>& succ_dirs,    // Vertices with a wait
+//    const Vector<GoalTimepointBound>& goal_time_bounds           // Earliest and latest time an agent reaches its goal
 //)
 //{
 //    // Create output.
-//    RobotTime best_at{-1, std::numeric_limits<Time>::max()};
+//    RobotTimepoint best_at{-1, std::numeric_limits<Timepoint>::max()};
 //    bool prefer_branch_0 = false;
 //
 //    // Get agent variables.
@@ -541,7 +541,7 @@ Pair<RobotLocationTime, bool> find_decision_early_goal(
 //
 //    // Find a wait decision.
 //    SCIP_Real best_lhs = 2.01;
-//    Time best_path_length = std::numeric_limits<Time>::max();
+//    Timepoint best_path_length = std::numeric_limits<Timepoint>::max();
 //    for (const auto& conflict : rectangle_conflicts_conss)
 //    {
 //        // Get variables in this row.
@@ -636,7 +636,7 @@ Pair<RobotLocationTime, bool> find_decision_early_goal(
 //                        continue;
 //
 //                    // Find the time of entry and exit from the rectangle.
-//                    Time entry = -1, exit = -1;
+//                    Timepoint entry = -1, exit = -1;
 //                    auto [it, out_begin, out_end] = conflict.agent_in_out_edges(a);
 //                    for (; it != out_begin; ++it)
 //                    {
@@ -659,9 +659,9 @@ Pair<RobotLocationTime, bool> find_decision_early_goal(
 //                    release_assert(entry >= 0 && exit > entry);
 //
 //                    // Find a wait between the entry and exit times.
-//                    for (Time t = entry; t < std::min(exit, best_at.t); ++t)
+//                    for (Timepoint t = entry; t < std::min(exit, best_at.t); ++t)
 //                    {
-//                        const RobotTime at{a, t};
+//                        const RobotTimepoint at{a, t};
 //                        auto it = succ_dirs.find(at);
 //                        if (it != succ_dirs.end() &&
 //                            it->second.has_move && it->second.has_wait)
@@ -685,16 +685,16 @@ Pair<RobotLocationTime, bool> find_decision_early_goal(
 //    return {best_at, prefer_branch_0};
 //}
 
-Pair<RobotLocationTime, bool> find_decision_vertex(
+Pair<RobotLocationTimepoint, bool> find_decision_vertex(
     SCIP* scip,                                                                   // SCIP
     SCIP_PROBDATA* probdata,                                                      // Problem data
-    const HashTable<LocationTime, Pair<Vector<Score>, Vector<Score>>>& candidates,    // Candidate agent-time-nodes
-    const Vector<GoalTimeBound>& goal_time_bounds,                                // Earliest and latest time an agent reaches its goal
+    const HashTable<LocationTimepoint, Pair<Vector<Score>, Vector<Score>>>& candidates,    // Candidate agent-time-nodes
+    const Vector<GoalTimepointBound>& goal_time_bounds,                                // Earliest and latest time an agent reaches its goal
     const Vector<Int>& nb_paths                                                   // Number of paths used by an agent
 )
 {
     // Create output.
-    RobotLocationTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
+    RobotLocationTimepoint best_ant{-1, 0, std::numeric_limits<Timepoint>::max()};
     bool prefer_branch_0 = false;
 
     // Get agent variables.
@@ -708,7 +708,7 @@ Pair<RobotLocationTime, bool> find_decision_vertex(
         const auto& rectangle_clique_conflicts_conss =
             rectangle_clique_conflicts_get_constraints(probdata);
         SCIP_Real best_lhs = 1.0 - 0.99;
-        Time best_path_length = std::numeric_limits<Time>::max();
+        Timepoint best_path_length = std::numeric_limits<Timepoint>::max();
         for (const auto& conflict : rectangle_clique_conflicts_conss)
         {
             // Get variables in this row.
@@ -812,7 +812,7 @@ Pair<RobotLocationTime, bool> find_decision_vertex(
                         continue;
 
                     // Find the time of entry and exit from the rectangle.
-                    Time entry = 0, exit = path_length;
+                    Timepoint entry = 0, exit = path_length;
                     auto [it, out_begin, out_end] = conflict.agent_in_out_edges(a);
                     for (; it != out_begin; ++it)
                     {
@@ -837,9 +837,9 @@ Pair<RobotLocationTime, bool> find_decision_vertex(
                     release_assert(entry >= 0 && exit > entry && exit <= path_length);
 
                     // Find a candidate between the entry and exit times.
-                    for (Time t = entry; t < std::min(exit, best_ant.t); ++t)
+                    for (Timepoint t = entry; t < std::min(exit, best_ant.t); ++t)
                     {
-                        const LocationTime nt{path[t].n, t};
+                        const LocationTimepoint nt{path[t].n, t};
                         auto it = candidates.find(nt);
                         if (it != candidates.end())
                         {
@@ -875,7 +875,7 @@ Pair<RobotLocationTime, bool> find_decision_vertex(
     const auto& two_agent_robust_cuts = SCIPprobdataGetTwoRobotRobustCuts(probdata);
     {
         SCIP_Real best_lhs = 3.0 - 0.99;
-        Time best_path_length = std::numeric_limits<Time>::max();
+        Timepoint best_path_length = std::numeric_limits<Timepoint>::max();
         for (const auto [idx, out1_begin, in2_begin, out2_begin] : rectangle_knapsack_cuts)
         {
             // Get the cut.
@@ -953,7 +953,7 @@ Pair<RobotLocationTime, bool> find_decision_vertex(
                         continue;
 
                     // Find the time of entry and exit from the rectangle.
-                    Time entry = 0, exit = path_length;
+                    Timepoint entry = 0, exit = path_length;
                     auto [it, out_end] = cut.edge_times(a);
                     auto out_begin = cut.a1_edge_times_begin() + (a == cut.a1() ? out1_begin : out2_begin);
                     for (; it != out_begin; ++it)
@@ -979,9 +979,9 @@ Pair<RobotLocationTime, bool> find_decision_vertex(
                     release_assert(entry >= 0 && exit > entry && exit <= path_length);
 
                     // Find a candidate between the entry and exit times.
-                    for (Time t = entry; t < std::min(exit, best_ant.t); ++t)
+                    for (Timepoint t = entry; t < std::min(exit, best_ant.t); ++t)
                     {
-                        const LocationTime nt{path[t].n, t};
+                        const LocationTimepoint nt{path[t].n, t};
                         auto it = candidates.find(nt);
                         if (it != candidates.end())
                         {
@@ -1013,9 +1013,9 @@ Pair<RobotLocationTime, bool> find_decision_vertex(
 #endif
 
     // Prefer a vertex allowing an agent to reach its goal the earliest.
-    Time best_diff = 0;
+    Timepoint best_diff = 0;
     Int best_nb_paths = 0;
-    Time best_shortest_path_length = std::numeric_limits<Time>::max();
+    Timepoint best_shortest_path_length = std::numeric_limits<Timepoint>::max();
     SCIP_Real best_val = 0.0;
     for (const auto& [nt, scores] : candidates)
         for (const auto& [a, val, shortest_path_length] : scores.first)
@@ -1042,7 +1042,7 @@ Pair<RobotLocationTime, bool> find_decision_vertex(
     // conflicts.
     best_diff = 0;
     best_nb_paths = 0;
-    best_shortest_path_length = std::numeric_limits<Time>::max();
+    best_shortest_path_length = std::numeric_limits<Timepoint>::max();
     best_val = 0.0;
     for (const auto& [nt, scores] : candidates)
         for (const auto& [a, val, shortest_path_length] : scores.second)

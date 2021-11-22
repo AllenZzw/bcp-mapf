@@ -54,14 +54,14 @@ class AStar
             struct
             {
                 Location n : 32;
-                Time t : 31;
+                Timepoint t : 31;
             };
 #else
             uint64_t nt;
             struct
             {
                 Location n;
-                Time t;
+                Timepoint t;
             };
 #endif
         };
@@ -160,16 +160,16 @@ class AStar
     {
         // Waypoints
         Location start;
-        Vector<LocationTime> waypoints;
+        Vector<LocationTimepoint> waypoints;
         Location goal;
-        Time earliest_goal_time;
-        Time latest_goal_time;
+        Timepoint earliest_goal_time;
+        Timepoint latest_goal_time;
 
         // Costs
         Cost cost_offset;
-        Vector<Time> latest_visit_time;
+        Vector<Timepoint> latest_visit_time;
         EdgePenalties edge_penalties;
-        FinishTimePenalties finish_time_penalties;
+        FinishTimepointPenalties finish_time_penalties;
 #ifdef USE_GOAL_CONFLICTS
         GoalPenalties goal_penalties;
 #endif
@@ -191,7 +191,7 @@ class AStar
     Heuristic heuristic_;
     LabelPool label_pool_;
     AStarPriorityQueue open_;
-    HashTable<LocationTime, Label*> frontier_;
+    HashTable<LocationTimepoint, Label*> frontier_;
 #ifdef DEBUG
     size_t nb_labels_;
 #endif
@@ -218,11 +218,11 @@ class AStar
     inline void compute_h(const Location goal) { heuristic_.get_h(goal); }
     void preprocess_input();
     template<bool is_farkas>
-    Pair<Vector<LocationTime>, Cost> solve();
+    Pair<Vector<LocationTimepoint>, Cost> solve();
 
     // Debug
 #ifdef DEBUG
-    Pair<Vector<LocationTime>, Cost> calculate_cost(const Vector<Edge>& input_path);
+    Pair<Vector<LocationTimepoint>, Cost> calculate_cost(const Vector<Edge>& input_path);
     void set_verbose(const bool on = true);
 #endif
 
@@ -233,12 +233,12 @@ class AStar
     // Solve
     void generate_start();
     template<IntCost default_cost>
-    void generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time);
+    void generate_neighbours(Label* const current, const Waypoint w, const Timepoint waypoint_time);
     void generate(Label* const current,
                   const Waypoint w,
                   const Location next_n,
                   const Cost cost,
-                  const Time waypoint_time);
+                  const Timepoint waypoint_time);
     template<IntCost default_cost>
     void generate_neighbours_last_segment(Label* const current);
     void generate_last_segment(Label* const current, const Location next_n, const Cost cost);

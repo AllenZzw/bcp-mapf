@@ -56,11 +56,11 @@ SCIP_RETCODE vertex_conflicts_add_var(
     SCIP* scip,                // SCIP
     SCIP_CONS* cons,           // Vertex conflicts constraint
     SCIP_VAR* var,             // Variable
-    const Time path_length,    // Path length
+    const Timepoint path_length,    // Path length
     const Edge* const path     // Path
 );
 
-const HashTable<LocationTime, VertexConflict>& vertex_conflicts_get_constraints(
+const HashTable<LocationTimepoint, VertexConflict>& vertex_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 );
 

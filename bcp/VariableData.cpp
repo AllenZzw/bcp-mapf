@@ -24,7 +24,7 @@ Author: Edward Lam <ed@ed-lam.com>
 struct SCIP_VarData
 {
     Robot a;             // Robot of the path
-    Time path_length;    // Length of the path
+    Timepoint path_length;    // Length of the path
     Edge path[0];        // Edges in the path
 };
 
@@ -32,7 +32,7 @@ struct SCIP_VarData
 SCIP_RETCODE SCIPvardataCreate(
     SCIP* scip,                // SCIP
     const Robot a,             // Robot of the path
-    const Time path_length,    // Length of the path
+    const Timepoint path_length,    // Length of the path
     const Edge* const path,    // Edges in the path
     SCIP_VARDATA** vardata     // Output variable data
 )
@@ -53,7 +53,7 @@ SCIP_RETCODE SCIPvardataCreate(
     // Check.
 #ifdef DEBUG
     const auto& map = SCIPprobdataGetMap(SCIPgetProbData(scip));
-    for (Time t = 0; t < path_length - 1; ++t)
+    for (Timepoint t = 0; t < path_length - 1; ++t)
     {
         const auto i = path[t].n;
         const auto j = path[t + 1].n;
@@ -152,7 +152,7 @@ Robot SCIPvardataGetRobot(
 }
 
 // Get the length of the path
-Time SCIPvardataGetPathLength(
+Timepoint SCIPvardataGetPathLength(
     SCIP_VARDATA* vardata    // Variable data
 )
 {

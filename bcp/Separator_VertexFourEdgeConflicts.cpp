@@ -39,11 +39,11 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
     SCIP_SEPA* sepa,                   // Separator
     const Robot a1,                    // Robot 1
     const Robot a2,                    // Robot 2
-    const EdgeTime a1_et1,             // Edge-time 1 of agent 1
-    const EdgeTime a1_et2,             // Edge-time 2 of agent 1
-    const Vector<LocationTime>& a1_nts,    // Location-times of agent 1
-    const EdgeTime a2_et1,             // Edge-time 1 of agent 2
-    const EdgeTime a2_et2,             // Edge-time 2 of agent 2
+    const EdgeTimepoint a1_et1,             // Edge-time 1 of agent 1
+    const EdgeTimepoint a1_et2,             // Edge-time 2 of agent 1
+    const Vector<LocationTimepoint>& a1_nts,    // Location-times of agent 1
+    const EdgeTimepoint a2_et1,             // Edge-time 1 of agent 2
+    const EdgeTimepoint a2_et2,             // Edge-time 2 of agent 2
     SCIP_Result* result                // Output result
 )
 {
@@ -97,11 +97,11 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
         {
             debug_assert(a1_nt.t >= 1);
             const auto prev_time = a1_nt.t - 1;
-            cut.a1_edge_time(idx + 0) = EdgeTime{map.get_south(a1_nt.n), Direction::NORTH, prev_time};
-            cut.a1_edge_time(idx + 1) = EdgeTime{map.get_north(a1_nt.n), Direction::SOUTH, prev_time};
-            cut.a1_edge_time(idx + 2) = EdgeTime{map.get_west(a1_nt.n), Direction::EAST, prev_time};
-            cut.a1_edge_time(idx + 3) = EdgeTime{map.get_east(a1_nt.n), Direction::WEST, prev_time};
-            cut.a1_edge_time(idx + 4) = EdgeTime{map.get_wait(a1_nt.n), Direction::WAIT, prev_time};
+            cut.a1_edge_time(idx + 0) = EdgeTimepoint{map.get_south(a1_nt.n), Direction::NORTH, prev_time};
+            cut.a1_edge_time(idx + 1) = EdgeTimepoint{map.get_north(a1_nt.n), Direction::SOUTH, prev_time};
+            cut.a1_edge_time(idx + 2) = EdgeTimepoint{map.get_west(a1_nt.n), Direction::EAST, prev_time};
+            cut.a1_edge_time(idx + 3) = EdgeTimepoint{map.get_east(a1_nt.n), Direction::WEST, prev_time};
+            cut.a1_edge_time(idx + 4) = EdgeTimepoint{map.get_wait(a1_nt.n), Direction::WAIT, prev_time};
             idx += 5;
         }
     }
@@ -164,7 +164,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
             const auto a1_et1_dest = map.get_destination(a1_et1);
 
             // Get the first edge of agent 2.
-            const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
+            const EdgeTimepoint a2_et1{map.get_opposite_edge(a1_et1.et.e), a1_et1.t};
 
             // Loop through the second edge of agent 1.
             for (const auto [a1_et2, a1_et2_val] : agent_edges_a1)
@@ -177,7 +177,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                     if (a1_et2.n == a1_et1_dest)
                     {
                         // Get the second edge of agent 2.
-                        const EdgeTime a2_et2{map.get_opposite_edge(a1_et2.et.e), a1_et2.t};
+                        const EdgeTimepoint a2_et2{map.get_opposite_edge(a1_et2.et.e), a1_et2.t};
                         if (a2_et2.n != a1_et1.n)
                         {
                             // Found the four edges. Look for an agent 2 that uses these edges.
@@ -196,10 +196,10 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                                     const auto a2_et2_val = a2_et2_it->second;
 
                                     // Get the vertices of agent 1.
-                                    for (Time t = 1; t <= a1_et1.t; ++t)
+                                    for (Timepoint t = 1; t <= a1_et1.t; ++t)
                                     {
                                         // Get all incompatible vertices at time t.
-                                        Vector<LocationTime> a1_nts;
+                                        Vector<LocationTimepoint> a1_nts;
                                         Float a1_nts_val = 0;
                                         for (const auto [a1_nt, a1_nt_val] : agent_vertices_a1)
                                             if (a1_nt.t == t)
@@ -276,7 +276,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                     else if (a1_et2.et.e == a1_et1.et.e)
                     {
                         // Get the second edge of agent 2.
-                        const EdgeTime a2_et2{a2_et1.n, Direction::WAIT, a2_et1.t + 1};
+                        const EdgeTimepoint a2_et2{a2_et1.n, Direction::WAIT, a2_et1.t + 1};
 
                         // Found the four edges. Look for an agent 2 that uses these edges.
                         for (Robot a2 = 0; a2 < N; ++a2)
@@ -295,10 +295,10 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                                 const auto a2_et2_val = a2_et2_it->second;
 
                                 // Get a vertex of agent 1.
-                                for (Time t = 1; t <= a1_et1.t; ++t)
+                                for (Timepoint t = 1; t <= a1_et1.t; ++t)
                                 {
                                     // Get all vertices at time t.
-                                    Vector<LocationTime> a1_nts;
+                                    Vector<LocationTimepoint> a1_nts;
                                     Float a1_nts_val = 0;
                                     for (const auto [a1_nt, a1_nt_val] : agent_vertices_a1)
                                         if (a1_nt.t == t)

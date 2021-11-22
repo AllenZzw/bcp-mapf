@@ -48,7 +48,7 @@ extern "C" {
 struct CliqueItem
 {
     Robot a;
-    Time t;
+    Timepoint t;
     union
     {
         struct
@@ -67,8 +67,8 @@ struct CliqueItem
         };
         int64_t l2;
     };
-    LocationTime nt;
-    EdgeTime et;
+    LocationTimepoint nt;
+    EdgeTimepoint et;
     SCIP_Real val;
 
     static_assert(2 * sizeof(Position) == sizeof(int64_t));
@@ -83,15 +83,15 @@ struct CliqueItem
     }
 };
 
-inline bool vertex_collision(const int64_t l1, const Time t1, const int64_t l2, const Time t2)
+inline bool vertex_collision(const int64_t l1, const Timepoint t1, const int64_t l2, const Timepoint t2)
 {
     debug_assert(l1 != -1);
     debug_assert(l2 != -1);
     return l1 == l2 && t1 == t2;
 }
 
-inline bool edge_collision(const int64_t o1, const int64_t d1, const Time t1,
-                           const int64_t o2, const int64_t d2, const Time t2)
+inline bool edge_collision(const int64_t o1, const int64_t d1, const Timepoint t1,
+                           const int64_t o2, const int64_t d2, const Timepoint t2)
 {
     debug_assert(o1 != -1);
     debug_assert(d1 != -1);
@@ -100,8 +100,8 @@ inline bool edge_collision(const int64_t o1, const int64_t d1, const Time t1,
     return o1 == d2 && d1 == o2 && t1 == t2;
 }
 
-inline bool time_incompatible(const Position x1, const Position y1, const Time t1,
-                              const Position x2, const Position y2, const Time t2)
+inline bool time_incompatible(const Position x1, const Position y1, const Timepoint t1,
+                              const Position x2, const Position y2, const Timepoint t2)
 {
     const auto time_diff = abs(t2 - t1);
     const auto dist_diff = abs(x2 - x1) + abs(y2 - y1);
@@ -201,8 +201,8 @@ SCIP_RETCODE clique_conflicts_create_cut(
     const auto& map = SCIPprobdataGetMap(probdata);
 
     // Get the edges representing the items in the clique.
-    Vector<EdgeTime> ets1;
-    Vector<EdgeTime> ets2;
+    Vector<EdgeTimepoint> ets1;
+    Vector<EdgeTimepoint> ets2;
     for (const auto& item : clique_items)
     {
         auto& ets = item.a == a1 ? ets1 : ets2;
@@ -430,10 +430,10 @@ SCIP_RETCODE clique_conflicts_separate(
     const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Calculate the number of times a vertex or edge is used by summing the columns.
-    HashTable<RobotLocationTime, SCIP_Real> vertex_val;
-    HashTable<RobotEdgeTime, SCIP_Real> edge_val;
-    HashTable<LocationTime, Vector<bool>> vertex_agents;
-    HashTable<EdgeTime, Vector<bool>> edge_agents;
+    HashTable<RobotLocationTimepoint, SCIP_Real> vertex_val;
+    HashTable<RobotEdgeTimepoint, SCIP_Real> edge_val;
+    HashTable<LocationTimepoint, Vector<bool>> vertex_agents;
+    HashTable<EdgeTimepoint, Vector<bool>> edge_agents;
     for (auto var : vars)
     {
         // Get the path.
@@ -449,23 +449,23 @@ SCIP_RETCODE clique_conflicts_separate(
         // Sum variable values.
         if (!SCIPisIntegral(scip, var_val))
         {
-            for (Time t = 1; t < path_length; ++t)
+            for (Timepoint t = 1; t < path_length; ++t)
             {
-                const RobotLocationTime ant{a, path[t].n, t};
+                const RobotLocationTimepoint ant{a, path[t].n, t};
                 vertex_val[ant] += var_val;
 
-                const LocationTime nt{path[t].n, t};
+                const LocationTimepoint nt{path[t].n, t};
                 auto [it, _] = vertex_agents.emplace(std::piecewise_construct,
                                                      std::forward_as_tuple(nt),
                                                      std::forward_as_tuple(N));
                 it->second[a] = true;
             }
-            for (Time t = 0; t < path_length - 1; ++t)
+            for (Timepoint t = 0; t < path_length - 1; ++t)
             {
-                const RobotEdgeTime aet{a, path[t], t};
+                const RobotEdgeTimepoint aet{a, path[t], t};
                 edge_val[aet] += var_val;
 
-                const EdgeTime et{path[t], t};
+                const EdgeTimepoint et{path[t], t};
                 auto [it, _] = edge_agents.emplace(std::piecewise_construct,
                                                    std::forward_as_tuple(et),
                                                    std::forward_as_tuple(N));
@@ -480,8 +480,8 @@ SCIP_RETCODE clique_conflicts_separate(
         const auto [ant, val] = *it;
         if (SCIPisIntegral(scip, val))
         {
-            debug_assert(vertex_agents.find(LocationTime{ant.n, ant.t}) != vertex_agents.end());
-            vertex_agents.erase(vertex_agents.find(LocationTime{ant.n, ant.t}));
+            debug_assert(vertex_agents.find(LocationTimepoint{ant.n, ant.t}) != vertex_agents.end());
+            vertex_agents.erase(vertex_agents.find(LocationTimepoint{ant.n, ant.t}));
             it = vertex_val.erase(it);
         }
         else
@@ -494,8 +494,8 @@ SCIP_RETCODE clique_conflicts_separate(
         const auto [aet, val] = *it;
         if (SCIPisIntegral(scip, val))
         {
-            debug_assert(edge_agents.find(EdgeTime{aet.e, aet.t}) != edge_agents.end());
-            edge_agents.erase(edge_agents.find(EdgeTime{aet.e, aet.t}));
+            debug_assert(edge_agents.find(EdgeTimepoint{aet.e, aet.t}) != edge_agents.end());
+            edge_agents.erase(edge_agents.find(EdgeTimepoint{aet.e, aet.t}));
             it = edge_val.erase(it);
         }
         else

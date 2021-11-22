@@ -106,7 +106,7 @@ set(BCP_MAPF_SOURCE_FILES
     )
 
 # Create target.
-add_executable(bcp-mapf ${BCP_MAPF_SOURCE_FILES} ${TRUFFLEHOG_SOURCE_FILES} ${CLIQUER_SOURCE_FILES})
+add_executable(bcp-mapf ${BCP_MAPF_SOURCE_FILES} ${TRUFFLEHOG_SOURCE_FILES} ${CLIQUER_SOURCE_FILES} ${LNS_SOURCES})
 add_executable(trufflehog EXCLUDE_FROM_ALL ${TRUFFLEHOG_SOURCE_FILES} trufflehog/Main.cpp)
 target_include_directories(bcp-mapf PUBLIC ./ bcp/)
 target_include_directories(trufflehog PUBLIC ./ bcp/)
@@ -213,14 +213,23 @@ set(CLIQUER_SOURCE_FILES
     )
 add_library(cliquer STATIC ${CLIQUER_SOURCE_FILES})
 
+# Find Boost
+find_package(Boost REQUIRED COMPONENTS program_options system filesystem)
+
+# Find Eigen3 for PIBT
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+
 # Link to math library.
 find_library(LIBM m)
 if (NOT LIBM)
     set(LIBM "")
 endif ()
 
+include_directories("lns/inc" "lns/inc/CBS" "lns/inc/PIBT")
+file(GLOB LNS_SOURCES "lns/src/*.cpp" "lns/src/CBS/*.cpp" "lns/src/PIBT/*.cpp")
+
 # Link to libraries.
-target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LIBM})
+target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LIBM} ${Boost_LIBRARIES} Eigen3::Eigen)
 target_link_libraries(trufflehog fmt::fmt-header-only)
 
 # Set options.

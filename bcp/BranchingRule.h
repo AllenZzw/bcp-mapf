@@ -41,7 +41,7 @@ SCIP_RETCODE branch_pseudosolution(
 );
 
 // Get the earliest time an agent reaches its goal
-Vector<LocationTime> get_time_of_earliest_goal(
+Vector<LocationTimepoint> get_time_of_earliest_goal(
     SCIP* scip,                 // SCIP
     SCIP_PROBDATA* probdata,    // Problem data
     const Robot N               // Number of agents
@@ -51,19 +51,19 @@ Vector<LocationTime> get_time_of_earliest_goal(
 SCIP_RETCODE
 branch_on_vertex(
     SCIP* scip,                   // SCIP
-    const RobotLocationTime ant,      // Branch decision
+    const RobotLocationTimepoint ant,      // Branch decision
     const bool prefer_branch_0    // Preferred branch direction
 );
 //SCIP_RETCODE
 //branch_on_wait(
 //    SCIP* scip,                   // SCIP
-//    const RobotTime at,           // Branch decision
+//    const RobotTimepoint at,           // Branch decision
 //    const bool prefer_branch_0    // Preferred branch direction
 //);
 SCIP_RETCODE
 branch_on_length(
     SCIP* scip,                   // SCIP
-    const RobotLocationTime ant,      // Branch decision
+    const RobotLocationTimepoint ant,      // Branch decision
     const bool prefer_branch_0    // Preferred branch direction
 );
 

@@ -52,7 +52,7 @@ struct TwoEdgeConflictData
 #ifdef USE_WAITTWOEDGE_CONFLICTS
     Edge a2_e3;
 #endif
-    Time t;
+    Timepoint t;
 };
 
 #define MATRIX(i,j) (i * N + j)
@@ -73,7 +73,7 @@ SCIP_RETCODE twoedge_conflicts_create_cut(
 #ifdef USE_WAITTWOEDGE_CONFLICTS
     const Edge a2_e3,           // Edge 3 of agent 2
 #endif
-    const Time t,               // Time
+    const Timepoint t,               // Timepoint
     SCIP_Result* result         // Output result
 )
 {
@@ -108,15 +108,15 @@ SCIP_RETCODE twoedge_conflicts_create_cut(
                           , std::move(name)
 #endif
     );
-    cut.a1_edge_time(0) = EdgeTime{a1_e1, t};
-    cut.a1_edge_time(1) = EdgeTime{a1_e2, t};
+    cut.a1_edge_time(0) = EdgeTimepoint{a1_e1, t};
+    cut.a1_edge_time(1) = EdgeTimepoint{a1_e2, t};
 #ifdef USE_WAITTWOEDGE_CONFLICTS
-    cut.a1_edge_time(2) = EdgeTime{a1_e3, t};
+    cut.a1_edge_time(2) = EdgeTimepoint{a1_e3, t};
 #endif
-    cut.a2_edge_time(0) = EdgeTime{a2_e1, t};
-    cut.a2_edge_time(1) = EdgeTime{a2_e2, t};
+    cut.a2_edge_time(0) = EdgeTimepoint{a2_e1, t};
+    cut.a2_edge_time(1) = EdgeTimepoint{a2_e2, t};
 #ifdef USE_WAITTWOEDGE_CONFLICTS
-    cut.a2_edge_time(2) = EdgeTime{a2_e3, t};
+    cut.a2_edge_time(2) = EdgeTimepoint{a2_e3, t};
 #endif
 
     // Store the cut.
@@ -171,7 +171,7 @@ SCIP_RETCODE twoedge_conflicts_separate(
             const auto t = a1_et1.t;
 
             // Get the first edge of agent 2.
-            const EdgeTime a2_et1{map.get_opposite_edge(a1_et1.et.e), t};
+            const EdgeTimepoint a2_et1{map.get_opposite_edge(a1_et1.et.e), t};
             const auto a2_et1_it = agent_edges_vec.find(a2_et1);
             const auto& a2_et1_vals = a2_et1_it != agent_edges_vec.end() ? a2_et1_it->second : zeros;
 
@@ -202,7 +202,7 @@ SCIP_RETCODE twoedge_conflicts_separate(
 
             // Get the wait edge of both agents.
 #ifdef USE_WAITTWOEDGE_CONFLICTS
-            const EdgeTime a12_et3{a1_e2_orig, Direction::WAIT, t};
+            const EdgeTimepoint a12_et3{a1_e2_orig, Direction::WAIT, t};
             const auto a12_et3_it = agent_edges_vec.find(a12_et3);
             const auto& a12_et3_vals = a12_et3_it != agent_edges_vec.end() ? a12_et3_it->second : zeros;
 #endif
@@ -211,12 +211,12 @@ SCIP_RETCODE twoedge_conflicts_separate(
             for (Int idx = 0; idx < a1_e2_size; ++idx)
             {
                 // Get the second edge of agent 1.
-                const auto a1_et2 = EdgeTime{a1_e2s[idx], t};
+                const auto a1_et2 = EdgeTimepoint{a1_e2s[idx], t};
                 const auto a1_et2_it = agent_edges_a1.find(a1_et2);
                 const auto a1_et2_val = a1_et2_it != agent_edges_a1.end() ? a1_et2_it->second : 0;
 
                 // Get the second edge of agent 2.
-                const EdgeTime a2_et2{map.get_opposite_edge(a1_et2.et.e), t};
+                const EdgeTimepoint a2_et2{map.get_opposite_edge(a1_et2.et.e), t};
                 const auto a2_et2_it = agent_edges_vec.find(a2_et2);
                 const auto& a2_et2_vals = a2_et2_it != agent_edges_vec.end() ? a2_et2_it->second : zeros;
 

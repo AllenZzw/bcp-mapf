@@ -29,7 +29,7 @@ namespace TruffleHog
 class Map
 {
     Vector<bool> passable_;  // Row-major matrix
-    Vector<Time> latest_visit_time_;
+    Vector<Timepoint> latest_visit_time_;
     Position width_ = 0;
     Position height_ = 0;
 
@@ -64,7 +64,7 @@ class Map
         debug_assert(n < size());
         return passable_[n];
     }
-    inline const Vector<Time>& latest_visit_time() const { return latest_visit_time_; }
+    inline const Vector<Timepoint>& latest_visit_time() const { return latest_visit_time_; }
     inline Location get_id(const Position x, const Position y) const
     {
         return y * width_ + x;
@@ -128,7 +128,7 @@ class Map
             default: { return get_wait(e.n); }
         }
     }
-    inline Location get_destination(const EdgeTime et) const
+    inline Location get_destination(const EdgeTimepoint et) const
     {
         return get_destination(et.et.e);
     }
@@ -136,7 +136,7 @@ class Map
     {
         return get_xy(get_destination(e));
     }
-    inline Pair<Position, Position> get_destination_xy(const EdgeTime et) const
+    inline Pair<Position, Position> get_destination_xy(const EdgeTimepoint et) const
     {
         return get_xy(get_destination(et));
     }
@@ -174,7 +174,7 @@ class Map
     {
         debug_assert(n < size());
         passable_[n] = true;
-        latest_visit_time_[n] = std::numeric_limits<Time>::max();
+        latest_visit_time_[n] = std::numeric_limits<Timepoint>::max();
     }
     void set_obstacle(const Location n)
     {

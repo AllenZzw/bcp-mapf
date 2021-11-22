@@ -34,11 +34,11 @@ inline T signum(const T val)
 
 inline void append_edge(
     const Map& map,            // Map
-    const Time t,              // Time of the edge
+    const Timepoint t,              // Timepoint of the edge
     const Position x,          // Coordinate
     const Position y,          // Coordinate
     const Direction d,         // Direction
-    Vector<EdgeTime>& edges    // Output edges of the rectangle
+    Vector<EdgeTimepoint>& edges    // Output edges of the rectangle
 )
 {
     edges.emplace_back(map.get_id(x, y), d, t);
@@ -48,13 +48,13 @@ inline void append_edge(
 
 inline bool append_vertical_boundary(
     const Map& map,            // Map
-    const Time t0,             // Time at reference location
+    const Timepoint t0,             // Timepoint at reference location
     const Position x0,         // Coordinate of reference location
     const Position y0,         // Coordinate of reference location
     const Direction d,         // Direction
     const Position y1,         // Start coordinate of the vertical boundary
     const Position y2,         // End coordinate of the vertical boundary
-    Vector<EdgeTime>& edges    // Output edges of the rectangle
+    Vector<EdgeTimepoint>& edges    // Output edges of the rectangle
 )
 {
     // Calculate the direction the agent is moving.
@@ -79,13 +79,13 @@ inline bool append_vertical_boundary(
 
 inline bool append_horizontal_boundary(
     const Map& map,            // Map
-    const Time t0,             // Time at reference location
+    const Timepoint t0,             // Timepoint at reference location
     const Position x0,         // Coordinate of reference location
     const Position y0,         // Coordinate of reference location
     const Direction d,         // Direction
     const Position x1,         // Start coordinate of the horizontal boundary
     const Position x2,         // End coordinate of the horizontal boundary
-    Vector<EdgeTime>& edges    // Output edges of the rectangle
+    Vector<EdgeTimepoint>& edges    // Output edges of the rectangle
 )
 {
     // Calculate the direction the agent is moving.
@@ -210,8 +210,8 @@ Pair<Direction, Direction> compute_direction(
 
 void compute_rectangle(
     const Map& map,                // Map
-    const Time start_t,            // Time before entry
-    const Time end_t,              // Time after exit
+    const Timepoint start_t,            // Timepoint before entry
+    const Timepoint end_t,              // Timepoint after exit
     const Position start_x1,       // Start coordinate of agent 1
     const Position start_y1,       // Start coordinate of agent 1
     const Position start_x2,       // Start coordinate of agent 2

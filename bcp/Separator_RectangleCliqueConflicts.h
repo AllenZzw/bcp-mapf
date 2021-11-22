@@ -38,7 +38,7 @@ SCIP_RETCODE rectangle_clique_conflicts_add_var(
     SCIP_SEPA* sepa,           // Separator for rectangle clique conflicts
     SCIP_VAR* var,             // Variable
     const Robot a,             // Robot
-    const Time path_length,    // Path length
+    const Timepoint path_length,    // Path length
     const Edge* const path     // Path
 );
 

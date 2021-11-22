@@ -41,7 +41,7 @@ struct ExitEntryConflictData
     Edge a1_e;
     Int a2_es_size;
     Array<Edge, 11> a2_es;
-    Time t;
+    Timepoint t;
 };
 
 #define MATRIX(i,j) (i * N + j)
@@ -55,7 +55,7 @@ SCIP_RETCODE exitentry_conflicts_create_cut(
     const Edge a1_e,                 // Edge of agent 1
     const Int a2_es_size,            // Number of edges for agent 2
     const Array<Edge, 11>& a2_es,    // Edges of agent 2
-    const Time t,                    // Time
+    const Timepoint t,                    // Timepoint
     SCIP_Result* result              // Output result
 )
 {
@@ -70,10 +70,10 @@ SCIP_RETCODE exitentry_conflicts_create_cut(
         , std::move(name)
 #endif
     };
-    cut.a1_edge_time(0) = EdgeTime{a1_e, t};
+    cut.a1_edge_time(0) = EdgeTimepoint{a1_e, t};
     for (Int idx = 0; idx < a2_es_size; ++idx)
     {
-        cut.a2_edge_time(idx) = EdgeTime{a2_es[idx], t};
+        cut.a2_edge_time(idx) = EdgeTimepoint{a2_es[idx], t};
     }
     // std::copy(a2_es.begin(), a2_es.begin() + a2_es_size, cut.edges_a2().first);
 
@@ -173,7 +173,7 @@ SCIP_RETCODE exitentry_conflicts_separate(
             for (Int idx = 0; idx < a2_es_size; ++idx)
             {
                 const auto e = a2_es[idx];
-                if (auto it = agent_edges_vec.find(EdgeTime{e, t}); it != agent_edges_vec.end())
+                if (auto it = agent_edges_vec.find(EdgeTimepoint{e, t}); it != agent_edges_vec.end())
                 {
                     a2_es_vals[a2_es_vals_size] = &it->second;
                     ++a2_es_vals_size;
