@@ -23,56 +23,56 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "trufflehog/Coordinates.h"
 
-union AgentTime
+union RobotTime
 {
     struct
     {
-        Agent a{-1};
+        Robot a{-1};
         Time t{0};
     };
     uint64_t id;
 };
-static_assert(sizeof(AgentTime) == 8);
-static_assert(std::is_trivially_copyable<AgentTime>::value);
-inline bool operator==(const AgentTime a, const AgentTime b)
+static_assert(sizeof(RobotTime) == 8);
+static_assert(std::is_trivially_copyable<RobotTime>::value);
+inline bool operator==(const RobotTime a, const RobotTime b)
 {
     return a.a == b.a && a.t == b.t; // TODO
 }
-inline bool operator!=(const AgentTime a, const AgentTime b)
+inline bool operator!=(const RobotTime a, const RobotTime b)
 {
     return !(a == b);
 }
 
-struct AgentNodeTime
+struct RobotNodeTime
 {
-    Agent a{-1};
+    Robot a{-1};
     Node n{0};
     Time t{0};
 };
-static_assert(sizeof(AgentNodeTime) == 12);
-static_assert(std::is_trivially_copyable<AgentNodeTime>::value);
-inline bool operator==(const AgentNodeTime a, const AgentNodeTime b)
+static_assert(sizeof(RobotNodeTime) == 12);
+static_assert(std::is_trivially_copyable<RobotNodeTime>::value);
+inline bool operator==(const RobotNodeTime a, const RobotNodeTime b)
 {
     return a.a == b.a && a.n == b.n && a.t == b.t;
 }
-inline bool operator!=(const AgentNodeTime a, const AgentNodeTime b)
+inline bool operator!=(const RobotNodeTime a, const RobotNodeTime b)
 {
     return !(a == b);
 }
 
-struct AgentEdgeTime
+struct RobotEdgeTime
 {
-    Agent a{-1};
+    Robot a{-1};
     Edge e;
     Time t{0};
 };
-static_assert(sizeof(AgentEdgeTime) == 12);
-static_assert(std::is_trivially_copyable<AgentEdgeTime>::value);
-inline bool operator==(const AgentEdgeTime a, const AgentEdgeTime b)
+static_assert(sizeof(RobotEdgeTime) == 12);
+static_assert(std::is_trivially_copyable<RobotEdgeTime>::value);
+inline bool operator==(const RobotEdgeTime a, const RobotEdgeTime b)
 {
     return a.a == b.a && a.e == b.e && a.t == b.t;
 }
-inline bool operator!=(const AgentEdgeTime a, const AgentEdgeTime b)
+inline bool operator!=(const RobotEdgeTime a, const RobotEdgeTime b)
 {
     return !(a == b);
 }
@@ -88,20 +88,20 @@ namespace robin_hood
 {
 
 template<>
-struct hash<AgentTime>
+struct hash<RobotTime>
 {
-    inline std::size_t operator()(const AgentTime at) const noexcept
+    inline std::size_t operator()(const RobotTime at) const noexcept
     {
         return robin_hood::hash<uint64_t>{}(at.id);
     }
 };
 
 template<>
-struct hash<AgentNodeTime>
+struct hash<RobotNodeTime>
 {
-    inline std::size_t operator()(const AgentNodeTime ant) const noexcept
+    inline std::size_t operator()(const RobotNodeTime ant) const noexcept
     {
-        auto x = robin_hood::hash<Agent>{}(ant.a);
+        auto x = robin_hood::hash<Robot>{}(ant.a);
         hash_combine(x, ant.n);
         hash_combine(x, ant.t);
         return x;
@@ -109,11 +109,11 @@ struct hash<AgentNodeTime>
 };
 
 template<>
-struct hash<AgentEdgeTime>
+struct hash<RobotEdgeTime>
 {
-    inline std::size_t operator()(const AgentEdgeTime ant) const noexcept
+    inline std::size_t operator()(const RobotEdgeTime ant) const noexcept
     {
-        auto x = robin_hood::hash<Agent>{}(ant.a);
+        auto x = robin_hood::hash<Robot>{}(ant.a);
         hash_combine(x, ant.e);
         hash_combine(x, ant.t);
         return x;
@@ -126,13 +126,13 @@ namespace fmt
 {
 
 template<>
-struct formatter<AgentNodeTime>
+struct formatter<RobotNodeTime>
 {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const AgentNodeTime& ant, FormatContext& ctx)
+    inline auto format(const RobotNodeTime& ant, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(a={},n={},t={})", ant.a, ant.n, ant.t);
     }

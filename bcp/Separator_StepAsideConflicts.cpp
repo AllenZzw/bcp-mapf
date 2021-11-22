@@ -36,8 +36,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct StepAsideConflictData
 {
     SCIP_Real lhs;
-    Agent a1;
-    Agent a2;
+    Robot a1;
+    Robot a2;
     Array<EdgeTime, 4> a1_ets;
     Array<EdgeTime, 4> a2_ets;
 };
@@ -48,8 +48,8 @@ SCIP_RETCODE stepaside_conflicts_create_cut(
     SCIP* scip,                          // SCIP
     SCIP_ProbData* probdata,             // Problem data
     SCIP_SEPA* sepa,                     // Separator
-    const Agent a1,                      // Agent 1
-    const Agent a2,                      // Agent 2
+    const Robot a1,                      // Robot 1
+    const Robot a2,                      // Robot 2
     const Array<EdgeTime, 4>& a1_ets,    // Edge-times of agent 1
     const Array<EdgeTime, 4>& a2_ets,    // Edge-times of agent 2
     SCIP_Result* result                  // Output result
@@ -77,7 +77,7 @@ SCIP_RETCODE stepaside_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut(scip, a1, a2, 4, 4
+    TwoRobotRobustCut cut(scip, a1, a2, 4, 4
 #ifdef DEBUG
         , std::move(name)
 #endif
@@ -86,7 +86,7 @@ SCIP_RETCODE stepaside_conflicts_create_cut(
     std::copy(a2_ets.begin(), a2_ets.end(), &cut.a2_edge_time(0));
 
     // Store the cut.
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 3, result));
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip, probdata, sepa, std::move(cut), 3, result));
 
     // Done.
     return SCIP_OKAY;
@@ -127,7 +127,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
         return SCIP_OKAY;
 
     // Get variables.
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Get edges of each agent.
     Array<Vector<HashTable<EdgeTime, SCIP_Real>>, 4> agent_dir_edges;
@@ -135,7 +135,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
     agent_dir_edges[Direction::SOUTH].resize(N);
     agent_dir_edges[Direction::EAST].resize(N);
     agent_dir_edges[Direction::WEST].resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         // Calculate the number of times an edge is used by summing the columns.
         for (auto var : agent_vars[a])
@@ -215,7 +215,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
     for (const auto& [d1, d2] : directions)
     {
         // Loop through the first agent.
-        for (Agent a1 = 0; a1 < N; ++a1)
+        for (Robot a1 = 0; a1 < N; ++a1)
         {
             // Get the edges of the first agent.
             const auto& a1_dir_edges = agent_dir_edges[d1][a1];
@@ -230,7 +230,7 @@ SCIP_RETCODE stepaside_conflicts_separate(
 
                 // Loop through the second agent.
                 const auto a2_et3_orig = map.get_destination(a1_et1);
-                for (Agent a2 = a1 + 1; a2 < N; ++a2)
+                for (Robot a2 = a1 + 1; a2 < N; ++a2)
                 {
                     // Get the edges of the second agent.
                     const auto& a2_dir_edges = agent_dir_edges[d2][a2];

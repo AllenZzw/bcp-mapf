@@ -23,7 +23,7 @@ Author: Edward Lam <ed@ed-lam.com>
 namespace TruffleHog
 {
 
-struct AgentMapData
+struct RobotMapData
 {
     String map_path;
     Position map_width;
@@ -126,10 +126,10 @@ void read_map(const char* const map_path, Map& map)
     map_file.close();
 }
 
-ProblemInstance::ProblemInstance(const char* scenario_path, const Agent nb_agents)
+ProblemInstance::ProblemInstance(const char* scenario_path, const Robot nb_agents)
 {
     // Read agents.
-    Vector<AgentMapData> agents_map_data;
+    Vector<RobotMapData> agents_map_data;
     {
         // Open scenario file.
         std::ifstream scen_file;
@@ -150,7 +150,7 @@ ProblemInstance::ProblemInstance(const char* scenario_path, const Agent nb_agent
             Position goal_x;
             Position goal_y;
             Float tmp;
-            AgentMapData agent_map_data;
+            RobotMapData agent_map_data;
             while (agents.size() < nb_agents &&
                    (scen_file >> tmp >>
                     agent_map_data.map_path >>
@@ -198,13 +198,13 @@ ProblemInstance::ProblemInstance(const char* scenario_path, const Agent nb_agent
     }
 
     // Check.
-    for (Agent a = 0; a < agents.size(); ++a)
+    for (Robot a = 0; a < agents.size(); ++a)
     {
         const auto [start_id, goal_id, start_x, start_y, goal_x, goal_y] = agents[a];
         const auto [map_path, map_width2, map_height2] = agents_map_data[a];
 
         release_assert(map_path == agents_map_data[0].map_path,
-                       "Agent {} uses a different map");
+                       "Robot {} uses a different map");
         release_assert(map_width2 == map.width(),
                        "Map width of agent {} does not match actual map size", a);
         release_assert(map_height2 == map.height(),
@@ -212,11 +212,11 @@ ProblemInstance::ProblemInstance(const char* scenario_path, const Agent nb_agent
 
         const auto start_tile = start_y * map.width() + start_x;
         release_assert(start_tile < map.size() && map[start_tile],
-                       "Agent {} starts at an obstacle", a);
+                       "Robot {} starts at an obstacle", a);
 
         const auto goal_tile = goal_y * map.width() + goal_x;
         release_assert(goal_tile < map.size() && map[goal_tile],
-                       "Agent {} ends at an obstacle", a);
+                       "Robot {} ends at an obstacle", a);
     }
 }
 

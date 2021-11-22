@@ -36,8 +36,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct GoalConflictData
 {
     SCIP_Real lhs;
-    Agent a1;
-    Agent a2;
+    Robot a1;
+    Robot a2;
     NodeTime nt;
 };
 
@@ -47,8 +47,8 @@ SCIP_RETCODE goal_conflicts_create_cut(
     SCIP* scip,                              // SCIP
     SCIP_SEPA* sepa,                         // Separator
     Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
-    const Agent a1,                          // Agent of the goal
-    const Agent a2,                          // Agent trying to use the goal vertex
+    const Robot a1,                          // Robot of the goal
+    const Robot a2,                          // Robot trying to use the goal vertex
     const NodeTime nt,                       // Node-time of the conflict
     const Vector<SCIP_VAR*>& a1_vars,        // Array of variables for agent 1
     const Vector<SCIP_VAR*>& a2_vars,        // Array of variables for agent 2
@@ -89,7 +89,7 @@ SCIP_RETCODE goal_conflicts_create_cut(
         // Get the path length.
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
-        debug_assert(a1 == SCIPvardataGetAgent(vardata));
+        debug_assert(a1 == SCIPvardataGetRobot(vardata));
         const auto path_length = SCIPvardataGetPathLength(vardata);
 #ifdef DEBUG
         const auto path = SCIPvardataGetPath(vardata);
@@ -115,7 +115,7 @@ SCIP_RETCODE goal_conflicts_create_cut(
         // Get the path.
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
-        debug_assert(a2 == SCIPvardataGetAgent(vardata));
+        debug_assert(a2 == SCIPvardataGetRobot(vardata));
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
@@ -154,14 +154,14 @@ SCIP_RETCODE goal_conflicts_create_cut(
 
     // Store the constraint by agent.
     {
-        debug_assert(nt.n == SCIPprobdataGetAgentsData(probdata)[a1].goal);
+        debug_assert(nt.n == SCIPprobdataGetRobotsData(probdata)[a1].goal);
 
-        auto& goal_agent_goal_conflicts = SCIPprobdataGetGoalAgentGoalConflicts(probdata);
+        auto& goal_agent_goal_conflicts = SCIPprobdataGetGoalRobotGoalConflicts(probdata);
         goal_agent_goal_conflicts[a1].push_back({nt.t, row});
     }
     {
 
-        auto& crossing_agent_goal_conflicts = SCIPprobdataGetCrossingAgentGoalConflicts(probdata);
+        auto& crossing_agent_goal_conflicts = SCIPprobdataGetCrossingRobotGoalConflicts(probdata);
         crossing_agent_goal_conflicts[a2].push_back({nt, row});
     }
 
@@ -192,7 +192,7 @@ SCIP_RETCODE goal_conflicts_separate(
     // Get problem data.
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
-    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+    const auto& agents = SCIPprobdataGetRobotsData(probdata);
     auto& goal_conflicts = SCIPprobdataGetGoalConflicts(probdata);
 
     // Skip this separator if an earlier separator found cuts.
@@ -201,14 +201,14 @@ SCIP_RETCODE goal_conflicts_separate(
         return SCIP_OKAY;
 
     // Get variables.
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Force cuts for debugging.
 //    {
 //        const auto& map = SCIPprobdataGetMap(probdata);
 //
-//        Vector<Agent> a1s{};
-//        Vector<Agent> a2s{};
+//        Vector<Robot> a1s{};
+//        Vector<Robot> a2s{};
 //        Vector<Position> xs{};
 //        Vector<Position> ys{};
 //        Vector<Time> ts{};
@@ -233,7 +233,7 @@ SCIP_RETCODE goal_conflicts_separate(
 
     // Get the times that each agent finishes.
     Vector<Vector<Time>> finish_times(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
         for (auto var : agent_vars[a])
         {
             // Get the path length.
@@ -258,7 +258,7 @@ SCIP_RETCODE goal_conflicts_separate(
 
     // Find conflicts.
     Vector<GoalConflictData> cuts;
-    for (Agent a1 = 0; a1 < N; ++a1)
+    for (Robot a1 = 0; a1 < N; ++a1)
     {
         const auto conflict_node = agents[a1].goal;
         for (const auto conflict_time : finish_times[a1])
@@ -289,7 +289,7 @@ SCIP_RETCODE goal_conflicts_separate(
             }
 
             // Check if any agent is trying to cross the goal.
-            for (Agent a2 = 0; a2 < N; ++a2)
+            for (Robot a2 = 0; a2 < N; ++a2)
                 if (a2 != a1)
                 {
                     // Sum paths belonging to the agent trying to cross the goal.
@@ -303,7 +303,7 @@ SCIP_RETCODE goal_conflicts_separate(
                         {
                             // Get the path.
                             auto vardata = SCIPvarGetData(var);
-                            debug_assert(a2 == SCIPvardataGetAgent(vardata));
+                            debug_assert(a2 == SCIPvardataGetRobot(vardata));
                             const auto path_length = SCIPvardataGetPathLength(vardata);
                             const auto path = SCIPvardataGetPath(vardata);
 
@@ -444,7 +444,7 @@ SCIP_RETCODE goal_conflicts_add_var(
     SCIP* scip,                              // SCIP
     Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
     SCIP_VAR* var,                           // Variable
-    const Agent a,                           // Agent
+    const Robot a,                           // Robot
     const Time path_length,                  // Path length
     const Edge* const path                   // Path
 )

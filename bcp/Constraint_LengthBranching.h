@@ -40,7 +40,7 @@ SCIP_RETCODE SCIPcreateConsLengthBranching(
     SCIP_CONS** cons,                   // Pointer to the created constraint
     const char* name,                   // Name of constraint
     const LengthBranchDirection dir,    // Branch direction
-    const Agent a,                      // Agent
+    const Robot a,                      // Robot
     const NodeTime nt,                  // Node-time
     SCIP_NODE* node,                    // The node of the branch-and-bound tree for this constraint
     SCIP_Bool local                     // Is this constraint only valid locally?
@@ -52,7 +52,7 @@ LengthBranchDirection SCIPgetLengthBranchingDirection(
 );
 
 // Get agent
-Agent SCIPgetLengthBranchingAgent(
+Robot SCIPgetLengthBranchingRobot(
     SCIP_CONS* cons    // Constraint enforcing goal branching
 );
 

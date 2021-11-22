@@ -36,7 +36,7 @@ SCIP_RETCODE write_best_solution(
 
     // Get variables.
     const auto& dummy_vars = SCIPprobdataGetDummyVars(probdata);
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Create output folder.
     struct stat st{0};
@@ -71,7 +71,7 @@ SCIP_RETCODE write_best_solution(
     print_used_paths(scip, sol);
 
     // Check if dummy variables are used.
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         // Get the variable.
         auto var = dummy_vars[a];
@@ -93,7 +93,7 @@ SCIP_RETCODE write_best_solution(
     fmt::print(f, "{:.0f}\n\n", SCIPround(scip, obj));
 
     // Write paths.
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         bool found = false;
         for (auto var : agent_vars[a])
@@ -111,18 +111,18 @@ SCIP_RETCODE write_best_solution(
                 const auto path = SCIPvardataGetPath(vardata);
 
                 // Write.
-                fmt::print(f, "Agent {}, cost {:.0f}, path {}\n",
+                fmt::print(f, "Robot {}, cost {:.0f}, path {}\n",
                            a,
                            SCIPround(scip, SCIPvarGetObj(var)),
                            format_path(probdata, path_length, path));
 
                 // Move to next agent.
-                release_assert(!found, "Agent {} is using more than one path");
+                release_assert(!found, "Robot {} is using more than one path");
                 found = true;
                 break;
             }
         }
-        release_assert(found, "Agent {} has no path in the solution", a);
+        release_assert(found, "Robot {} has no path in the solution", a);
     }
 
     // Close file.

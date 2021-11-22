@@ -31,7 +31,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "Coordinates.h"
 #include "LabelPool.h"
-#include "AgentsData.h"
+#include "RobotsData.h"
 #include "Map.h"
 #include "ProblemInstance.h"
 #include "Penalties.h"
@@ -182,9 +182,9 @@ int main()
 ////    79
 ////    93
 ////    97
-////    for (Agent a = 0; a < A; ++a)
+////    for (Robot a = 0; a < A; ++a)
 //    {
-//        println("Agent {}", a);
+//        println("Robot {}", a);
 //
 //        const auto start = NodeTime(agents[a].start, 0);
 //        const auto goal = agents[a].goal;

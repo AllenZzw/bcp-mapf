@@ -75,7 +75,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_create_cut(
     // Create data for the cut.
     const auto [a1_begin, a1_end] = conflict.agent1_edges();
     const auto [a2_begin, a2_end] = conflict.agent2_edges();
-    TwoAgentRobustCut cut(scip, 
+    TwoRobotRobustCut cut(scip, 
                           conflict.a1, 
                           conflict.a2,
                           a1_end - a1_begin,
@@ -88,7 +88,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_create_cut(
 
     // Store the cut.
     Int idx;
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip,
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip,
                                                probdata,
                                                sepa,
                                                std::move(cut),
@@ -107,8 +107,8 @@ RectangleConflict find_rectangle(
     const Map& map,                                               // Map
     const Vector<HashTable<EdgeTime, SCIP_Real>>& agent_edges,    // Edge weights for each agent
     const NodeTime nt,                                            // Node-time of the conflict
-    const Agent a1,                                               // Agent 1
-    const Agent a2,                                               // Agent 2
+    const Robot a1,                                               // Robot 1
+    const Robot a2,                                               // Robot 2
     SCIP_VAR* var1,                                               // Path of agent 1
     SCIP_VAR* var2                                                // Path of agent 2
 #if defined(DEBUG) or defined(PRINT_DEBUG)
@@ -340,15 +340,15 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
         return SCIP_OKAY;
 
     // Get variables.
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Force cuts for debugging.
 //    {
-//        Vector<Agent> a1s{};
+//        Vector<Robot> a1s{};
 //        Vector<Vector<EdgeTime>> a1_ins{};
 //        Vector<Vector<EdgeTime>> a1_outs{};
 //
-//        Vector<Agent> a2s{};
+//        Vector<Robot> a2s{};
 //        Vector<Vector<EdgeTime>> a2_ins{};
 //        Vector<Vector<EdgeTime>> a2_outs{};
 //
@@ -384,7 +384,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
     Vector<Vector<SCIP_VAR*>> agent_paths(N);
     Vector<Vector<NodeTime>> agent_vertices(N);
     Vector<HashTable<EdgeTime, SCIP_Real>> agent_edges(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         // Get agent-specific data.
         auto& agent_paths_a = agent_paths[a];
@@ -458,8 +458,8 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
 
     // Find conflicts.
     Vector<NodeTime> common_vertices;
-    for (Agent a1 = 0; a1 < N - 1; ++a1)
-        for (Agent a2 = a1 + 1; a2 < N; ++a2)
+    for (Robot a1 = 0; a1 < N - 1; ++a1)
+        for (Robot a2 = a1 + 1; a2 < N; ++a2)
         {
             // Find common vertices.
             common_vertices.clear();
@@ -565,10 +565,10 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                                     conflict.a2,
                                     lhs,
                                     SCIPnodeGetNumber(SCIPgetCurrentNode(scip)));
-                                debugln("      Agent {} in: {}", conflict.a1, a1_in_str);
-                                debugln("      Agent {} out: {}", conflict.a1, a1_out_str);
-                                debugln("      Agent {} in: {}", conflict.a2, a2_in_str);
-                                debugln("      Agent {} out: {}", conflict.a2, a2_out_str);
+                                debugln("      Robot {} in: {}", conflict.a1, a1_in_str);
+                                debugln("      Robot {} out: {}", conflict.a1, a1_out_str);
+                                debugln("      Robot {} in: {}", conflict.a2, a2_in_str);
+                                debugln("      Robot {} out: {}", conflict.a2, a2_out_str);
 #endif
 
                             // Create cut.

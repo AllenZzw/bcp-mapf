@@ -25,7 +25,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Create variable data
 SCIP_RETCODE SCIPvardataCreate(
     SCIP* scip,                // SCIP
-    const Agent a,             // Agent of the path
+    const Robot a,             // Robot of the path
     const Time path_length,    // Length of the path
     const Edge* const path,    // Edges in the path
     SCIP_VARDATA** vardata     // Output variable data
@@ -41,7 +41,7 @@ SCIP_RETCODE SCIPcreateVar(
 );
 
 // Get the agent of the path
-Agent SCIPvardataGetAgent(
+Robot SCIPvardataGetRobot(
     SCIP_VARDATA* vardata    // Variable data
 );
 

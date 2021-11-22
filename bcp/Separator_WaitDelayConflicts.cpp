@@ -36,8 +36,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct WaitDelayConflictData
 {
     SCIP_Real lhs;
-    Agent a1;
-    Agent a2;
+    Robot a1;
+    Robot a2;
     Array<EdgeTime, 9> a1_ets;
     EdgeTime a2_et;
 #ifdef DEBUG
@@ -51,8 +51,8 @@ SCIP_RETCODE waitdelay_conflicts_create_cut(
     SCIP* scip,                          // SCIP
     SCIP_ProbData* probdata,             // Problem data
     SCIP_SEPA* sepa,                     // Separator
-    const Agent a1,                      // Agent 1
-    const Agent a2,                      // Agent 2
+    const Robot a1,                      // Robot 1
+    const Robot a2,                      // Robot 2
 #ifdef DEBUG
     const NodeTime nt,                   // Node-time of the conflict
 #endif
@@ -69,7 +69,7 @@ SCIP_RETCODE waitdelay_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut{scip, a1, a2, 9, 1
+    TwoRobotRobustCut cut{scip, a1, a2, 9, 1
 #ifdef DEBUG
         , std::move(name)
 #endif
@@ -78,7 +78,7 @@ SCIP_RETCODE waitdelay_conflicts_create_cut(
     cut.a2_edge_time(0) = a2_et;
 
     // Store the cut.
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
 
     // Done.
     return SCIP_OKAY;
@@ -112,17 +112,17 @@ SCIP_RETCODE waitdelay_conflicts_separate(
         return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
+    const auto& agent_edges = SCIPprobdataGetRobotFractionalEdges(probdata);
 
     // Find conflicts.
     Vector<WaitDelayConflictData> cuts;
-    for (Agent a1 = 0; a1 < N; ++a1)
+    for (Robot a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
         const auto& agent_edges_a1 = agent_edges[a1];
 
         // Loop through the second agent.
-        for (Agent a2 = 0; a2 < N; ++a2)
+        for (Robot a2 = 0; a2 < N; ++a2)
             if (a2 != a1)
             {
                 // Get the edges of agent 2.

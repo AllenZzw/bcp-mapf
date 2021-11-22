@@ -112,7 +112,7 @@ SCIP_RETCODE edge_conflicts_create_cut(
 #ifdef USE_WAITEDGE_CONFLICTS
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
-    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+    const auto& agents = SCIPprobdataGetRobotsData(probdata);
 #endif
 
     // Create constraint name.
@@ -162,8 +162,8 @@ SCIP_RETCODE edge_conflicts_create_cut(
 #endif
         {
             // Print.
-            debugln("      Agent: {:2d}, Val: {:7.4f}, Path: {}",
-                    SCIPvardataGetAgent(vardata),
+            debugln("      Robot: {:2d}, Val: {:7.4f}, Path: {}",
+                    SCIPvardataGetRobot(vardata),
                     SCIPgetSolVal(scip, nullptr, var),
                     format_path_spaced(SCIPgetProbData(scip), path_length, path));
 
@@ -199,8 +199,8 @@ SCIP_RETCODE edge_conflicts_create_cut(
         const auto e = edges[2];
         debug_assert(e.d == Direction::WAIT);
 
-        auto& agent_goal_edge_conflicts = SCIPprobdataGetAgentGoalEdgeConflicts(probdata);
-        for (Agent a = 0; a < N; ++a)
+        auto& agent_goal_edge_conflicts = SCIPprobdataGetRobotGoalEdgeConflicts(probdata);
+        for (Robot a = 0; a < N; ++a)
             if (e.n == agents[a].goal)
             {
                 agent_goal_edge_conflicts[a].push_back({t, row});

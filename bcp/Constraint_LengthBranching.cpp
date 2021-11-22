@@ -40,7 +40,7 @@ Author: Edward Lam <ed@ed-lam.com>
 struct LengthBranchingConsData
 {
     LengthBranchDirection dir;    // Branch direction
-    Agent a;                      // Agent
+    Robot a;                      // Robot
     NodeTime nt;                  // Node-time
     Int npropagatedvars;          // Number of variables that existed when the related node
                                   // was propagated the last time. Used to determine whether
@@ -55,7 +55,7 @@ SCIP_RETCODE consdataCreate(
     SCIP* scip,                            // SCIP
     LengthBranchingConsData** consdata,    // Pointer to the constraint data
     const LengthBranchDirection dir,       // Branch direction
-    const Agent a,                         // Agent
+    const Robot a,                         // Robot
     const NodeTime nt,                     // Node-time
     SCIP_NODE* node                        // Node of the branch-and-bound tree for this constraint
 )
@@ -84,7 +84,7 @@ static inline
 SCIP_RETCODE check_variable(
     SCIP* scip,                         // SCIP
     const LengthBranchDirection dir,    // Branch direction
-    const Agent a,                      // Agent
+    const Robot a,                      // Robot
     const NodeTime nt,                  // Node-time
     SCIP_VAR* var,                      // Variable to check
     Int& nfixedvars,                    // Pointer to store the number of fixed variables
@@ -102,7 +102,7 @@ SCIP_RETCODE check_variable(
 
     // Get the path.
     auto vardata = SCIPvarGetData(var);
-    const auto path_a = SCIPvardataGetAgent(vardata);
+    const auto path_a = SCIPvardataGetRobot(vardata);
     const auto path_length = SCIPvardataGetPathLength(vardata);
     const auto path = SCIPvardataGetPath(vardata);
 
@@ -234,7 +234,7 @@ void check_propagation(
 
         // Get the path.
         auto vardata = SCIPvarGetData(var);
-        const auto path_a = SCIPvardataGetAgent(vardata);
+        const auto path_a = SCIPvardataGetRobot(vardata);
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
@@ -550,7 +550,7 @@ SCIP_RETCODE SCIPcreateConsLengthBranching(
     SCIP_CONS** cons,                   // Pointer to the created constraint
     const char* name,                   // Name of constraint
     const LengthBranchDirection dir,    // Branch direction
-    const Agent a,                      // Agent
+    const Robot a,                      // Robot
     const NodeTime nt,                  // Node-time
     SCIP_NODE* node,                    // The node of the branch-and-bound tree for this constraint
     SCIP_Bool local                     // Is this constraint only valid locally?
@@ -616,7 +616,7 @@ LengthBranchDirection SCIPgetLengthBranchingDirection(
 }
 
 // Get agent
-Agent SCIPgetLengthBranchingAgent(
+Robot SCIPgetLengthBranchingRobot(
     SCIP_CONS* cons    // Constraint enforcing length branching
 )
 {

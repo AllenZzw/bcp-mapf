@@ -47,7 +47,7 @@ extern "C" {
 
 struct CliqueItem
 {
-    Agent a;
+    Robot a;
     Time t;
     union
     {
@@ -191,8 +191,8 @@ SCIP_RETCODE clique_conflicts_create_cut(
     SCIP* scip,                                // SCIP
     SCIP_ProbData* probdata,                   // Problem data
     SCIP_SEPA* sepa,                           // Separator
-    const Agent a1,                            // Agent 1
-    const Agent a2,                            // Agent 2
+    const Robot a1,                            // Robot 1
+    const Robot a2,                            // Robot 2
     const Vector<CliqueItem>& clique_items,    // Items in the clique
     SCIP_Result* result                        // Output result
 )
@@ -251,7 +251,7 @@ SCIP_RETCODE clique_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut(scip,
+    TwoRobotRobustCut cut(scip,
                           a1,
                           a2,
                           ets1.size(),
@@ -270,7 +270,7 @@ SCIP_RETCODE clique_conflicts_create_cut(
     }
 
     // Store the cut.
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
 
     // Done.
     return SCIP_OKAY;
@@ -316,26 +316,26 @@ boolean cliquer_callback(set_t clique, graph_t*, clique_options* opts)
         {
             if (item.is_vertex())
             {
-                debugln("    Agent {}: (({},{}),{}) {}",
+                debugln("    Robot {}: (({},{}),{}) {}",
                         item.a, item.x1, item.y1, item.t, item.val);
             }
             else
             {
-                debugln("    Agent {}: (({},{}),({},{}),{}) {}",
+                debugln("    Robot {}: (({},{}),({},{}),{}) {}",
                         item.a, item.x1, item.y1, item.x2, item.y2, item.t, item.val);
             }
         }
 #endif
 
         // Count the number of agents in clique.
-        Vector<Agent> agents;
+        Vector<Robot> agents;
         {
             Vector<bool> agent_used(N);
             for (const auto& item : clique_items)
             {
                 agent_used[item.a] = true;
             }
-            for (Agent a = 0; a < static_cast<Agent>(agent_used.size()); ++a)
+            for (Robot a = 0; a < static_cast<Robot>(agent_used.size()); ++a)
                 if (agent_used[a])
                 {
                     agents.push_back(a);
@@ -430,8 +430,8 @@ SCIP_RETCODE clique_conflicts_separate(
     const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Calculate the number of times a vertex or edge is used by summing the columns.
-    HashTable<AgentNodeTime, SCIP_Real> vertex_val;
-    HashTable<AgentEdgeTime, SCIP_Real> edge_val;
+    HashTable<RobotNodeTime, SCIP_Real> vertex_val;
+    HashTable<RobotEdgeTime, SCIP_Real> edge_val;
     HashTable<NodeTime, Vector<bool>> vertex_agents;
     HashTable<EdgeTime, Vector<bool>> edge_agents;
     for (auto var : vars)
@@ -439,7 +439,7 @@ SCIP_RETCODE clique_conflicts_separate(
         // Get the path.
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
-        const auto a = SCIPvardataGetAgent(vardata);
+        const auto a = SCIPvardataGetRobot(vardata);
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
@@ -451,7 +451,7 @@ SCIP_RETCODE clique_conflicts_separate(
         {
             for (Time t = 1; t < path_length; ++t)
             {
-                const AgentNodeTime ant{a, path[t].n, t};
+                const RobotNodeTime ant{a, path[t].n, t};
                 vertex_val[ant] += var_val;
 
                 const NodeTime nt{path[t].n, t};
@@ -462,7 +462,7 @@ SCIP_RETCODE clique_conflicts_separate(
             }
             for (Time t = 0; t < path_length - 1; ++t)
             {
-                const AgentEdgeTime aet{a, path[t], t};
+                const RobotEdgeTime aet{a, path[t], t};
                 edge_val[aet] += var_val;
 
                 const EdgeTime et{path[t], t};
@@ -509,7 +509,7 @@ SCIP_RETCODE clique_conflicts_separate(
     for (const auto [nt, agents] : vertex_agents)
     {
 #ifdef RUN_ONLY_ON_MULTI_AGENT_RESOURCES
-        Agent nb_agents = 0;
+        Robot nb_agents = 0;
         for (const auto used : agents)
         {
             nb_agents += used;
@@ -517,7 +517,7 @@ SCIP_RETCODE clique_conflicts_separate(
         if (nb_agents > 1)
 #endif
         {
-            for (Agent a = 0; a < N; ++a)
+            for (Robot a = 0; a < N; ++a)
                 if (agents[a])
                 {
                     auto& item = items.emplace_back();
@@ -534,7 +534,7 @@ SCIP_RETCODE clique_conflicts_separate(
     for (const auto [et, agents] : edge_agents)
     {
 #ifdef RUN_ONLY_ON_MULTI_AGENT_RESOURCES
-        Agent nb_agents = 0;
+        Robot nb_agents = 0;
         for (const auto used : agents)
         {
             nb_agents += used;
@@ -542,7 +542,7 @@ SCIP_RETCODE clique_conflicts_separate(
         if (nb_agents > 1)
 #endif
         {
-            for (Agent a = 0; a < N; ++a)
+            for (Robot a = 0; a < N; ++a)
                 if (agents[a])
                 {
                     auto& item = items.emplace_back();

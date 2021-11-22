@@ -38,7 +38,7 @@ SCIP_RETCODE path_length_nogoods_create_cut(
     SCIP_SEPA* sepa,                                         // Separator
     const Vector<Vector<SCIP_VAR*>>& agent_vars,             // Variables for each agent
     Vector<PathLengthNogood>& path_length_nogoods,           // Existing nogoods
-    const Vector<Pair<Agent, Time>>& latest_finish_times,    // New nogood
+    const Vector<Pair<Robot, Time>>& latest_finish_times,    // New nogood
     SCIP_Result* result                                      // Output result
 )
 {
@@ -146,13 +146,13 @@ SCIP_RETCODE path_length_nogoods_separate(
         return SCIP_OKAY;
 
     // Get variables.
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Find conflicts.
     static int iter = 0;
     if (iter++ == 0)
     {
-        for (const auto& latest_finish_times : Vector<Vector<Pair<Agent, Time>>>{
+        for (const auto& latest_finish_times : Vector<Vector<Pair<Robot, Time>>>{
             {{1, 27}, {2, 27}},
             {{3, 23}, {4, 23}},
             {{5, 19}, {6, 19}},
@@ -291,7 +291,7 @@ SCIP_RETCODE path_length_nogoods_add_var(
     SCIP* scip,                                       // SCIP
     Vector<PathLengthNogood>& path_length_nogoods,    // Data for the nogoods
     SCIP_VAR* var,                                    // Variable
-    const Agent a,                                    // Agent
+    const Robot a,                                    // Robot
     const Time path_length                            // Path length
 )
 {

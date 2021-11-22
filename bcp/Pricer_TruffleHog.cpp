@@ -47,7 +47,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 struct PricingOrder
 {
-    Agent a;
+    Robot a;
     bool must_price;
     SCIP_VAR* new_var;
 };
@@ -58,7 +58,7 @@ struct SCIP_PricerData
     SCIP_CONSHDLR* vertex_branching_conshdlr;           // Constraint handler for vertex branching
 //    SCIP_CONSHDLR* wait_branching_conshdlr;           // Constraint handler for wait branching
     SCIP_CONSHDLR* length_branching_conshdlr;           // Constraint handler for length branching
-    Agent N;                                            // Number of agents
+    Robot N;                                            // Number of agents
 
     SCIP_Real* agent_part_dual;                         // Dual variable values of agent set partition constraints
     SCIP_Real* price_priority;                          // Pricing priority of each agent
@@ -178,12 +178,12 @@ MasterProblemStatus calculate_agents_order(
 
     // Get variables.
     const auto& dummy_vars = SCIPprobdataGetDummyVars(probdata);
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Calculate the order of the agents.
     MasterProblemStatus master_lp_status = MasterProblemStatus::Integral;
     auto order = pricerdata->order;
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         // Must price an agent if it is using an artificial variable.
         bool must_price_agent = false;
@@ -219,7 +219,7 @@ MasterProblemStatus calculate_agents_order(
     // Price all agents if the master problem solution is integral.
     if (master_lp_status == MasterProblemStatus::Integral)
     {
-        for (Agent a = 0; a < N; ++a)
+        for (Robot a = 0; a < N; ++a)
         {
             order[a].must_price = true;
         }
@@ -284,12 +284,12 @@ SCIP_RETCODE run_trufflehog_pricer(
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
-    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+    const auto& agents = SCIPprobdataGetRobotsData(probdata);
 
     // Create order of agents to solve.
     auto order = pricerdata->order;
     const auto master_lp_status = calculate_agents_order(scip, probdata, pricerdata);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         pricerdata->price_priority[a] /= PRICE_PRIORITY_DECAY_FACTOR;
     }
@@ -345,22 +345,22 @@ SCIP_RETCODE run_trufflehog_pricer(
     auto& vars = SCIPprobdataGetVars(probdata);
 
     // Get constraints.
-    const auto& agent_part = SCIPprobdataGetAgentPartConss(probdata);
+    const auto& agent_part = SCIPprobdataGetRobotPartConss(probdata);
     const auto& vertex_conflicts_conss = vertex_conflicts_get_constraints(probdata);
     const auto& edge_conflicts_conss = edge_conflicts_get_constraints(probdata);
-    const auto& agent_goal_vertex_conflicts = SCIPprobdataGetAgentGoalVertexConflicts(probdata);
+    const auto& agent_goal_vertex_conflicts = SCIPprobdataGetRobotGoalVertexConflicts(probdata);
 #ifdef USE_WAITEDGE_CONFLICTS
-    const auto& agent_goal_edge_conflicts = SCIPprobdataGetAgentGoalEdgeConflicts(probdata);
+    const auto& agent_goal_edge_conflicts = SCIPprobdataGetRobotGoalEdgeConflicts(probdata);
 #endif
 
     // Get cuts.
-    const auto& agent_robust_cuts = SCIPprobdataGetAgentRobustCuts(probdata);
+    const auto& agent_robust_cuts = SCIPprobdataGetRobotRobustCuts(probdata);
 #ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
     const auto& rectangle_clique_conflicts_conss = rectangle_clique_conflicts_get_constraints(probdata);
 #endif
 #ifdef USE_GOAL_CONFLICTS
-    const auto& goal_agent_goal_conflicts = SCIPprobdataGetGoalAgentGoalConflicts(probdata);
-    const auto& crossing_agent_goal_conflicts = SCIPprobdataGetCrossingAgentGoalConflicts(probdata);
+    const auto& goal_agent_goal_conflicts = SCIPprobdataGetGoalRobotGoalConflicts(probdata);
+    const auto& crossing_agent_goal_conflicts = SCIPprobdataGetCrossingRobotGoalConflicts(probdata);
 #endif
 #ifdef USE_PATH_LENGTH_NOGOODS
     const auto& path_length_nogoods = SCIPprobdataGetPathLengthNogoods(probdata);
@@ -405,7 +405,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 //        {
 //            // Get dual variable values of agent partition constraints.
 //            auto agent_part_dual = pricerdata->agent_part_dual;
-//            for (Agent a = 0; a < N; ++a)
+//            for (Robot a = 0; a < N; ++a)
 //            {
 //                // Get the constraint.
 //                auto cons = agent_part[a];
@@ -425,7 +425,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 //            // Get input paths.
 //            Vector<Vector<Pair<Position,Position>>> input_paths_xy{
 //            };
-//            Vector<Agent> input_paths_agent(N);
+//            Vector<Robot> input_paths_agent(N);
 //            std::iota(input_paths_agent.begin(), input_paths_agent.end(), 0);
 //
 //            // Convert input paths to node IDs.
@@ -469,7 +469,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 //            }
 //
 //            // Search.
-////            for (const auto a : Vector<Agent>{38})
+////            for (const auto a : Vector<Robot>{38})
 //            for (const auto a : input_paths_agent)
 //            {
 //                const auto input_path = input_paths[a];
@@ -490,7 +490,7 @@ SCIP_RETCODE run_trufflehog_pricer(
 //                    continue;
 //                }
 //
-//                const auto agent_vars = SCIPprobdataGetAgentVars(probdata);
+//                const auto agent_vars = SCIPprobdataGetRobotVars(probdata);
 //                bool found = false;
 //                for (const auto var : agent_vars[a])
 //                {
@@ -796,7 +796,7 @@ SCIP_RETCODE run_trufflehog_pricer(
                 continue;
 
             // Enforce the decision.
-            const auto branch_a = SCIPgetVertexBranchingAgent(cons);
+            const auto branch_a = SCIPgetVertexBranchingRobot(cons);
             const auto dir = SCIPgetVertexBranchingDirection(cons);
             const auto nt = SCIPgetVertexBranchingNodeTime(cons);
             if ((a == branch_a && dir == VertexBranchDirection::Forbid) ||
@@ -867,7 +867,7 @@ SCIP_RETCODE run_trufflehog_pricer(
                 continue;
 
             // Enforce the decision if the same agent. Disable crossing if different agent.
-            const auto branch_a = SCIPgetLengthBranchingAgent(cons);
+            const auto branch_a = SCIPgetLengthBranchingRobot(cons);
             const auto dir = SCIPgetLengthBranchingDirection(cons);
             const auto nt = SCIPgetLengthBranchingNodeTime(cons);
             if (a == branch_a)
@@ -986,7 +986,7 @@ SCIP_RETCODE run_trufflehog_pricer(
         if constexpr (!is_farkas)
         {
             bool all_agents_priced = true;
-            for (Agent a = 0; a < N; ++a)
+            for (Robot a = 0; a < N; ++a)
                 if (!agent_priced[a])
                 {
                     all_agents_priced = false;
@@ -1077,7 +1077,7 @@ SCIP_RETCODE add_initial_solution(
 //    auto probdata = SCIPgetProbData(scip);
 //    const auto N = SCIPprobdataGetN(probdata);
 //    const auto& map = SCIPprobdataGetMap(probdata);
-//    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+//    const auto& agents = SCIPprobdataGetRobotsData(probdata);
 //
 //    // Get shortest path solver.
 //    auto& astar = SCIPprobdataGetAStar(probdata);
@@ -1092,7 +1092,7 @@ SCIP_RETCODE add_initial_solution(
 //#endif
 //
 //    // Find a path for each agent.
-//    for (Agent a = 0; a < N; ++a)
+//    for (Robot a = 0; a < N; ++a)
 //    {
 //        // Set edge costs.
 //        edge_penalties.clear();

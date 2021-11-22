@@ -37,8 +37,8 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
     SCIP* scip,                        // SCIP
     SCIP_ProbData* probdata,           // Problem data
     SCIP_SEPA* sepa,                   // Separator
-    const Agent a1,                    // Agent 1
-    const Agent a2,                    // Agent 2
+    const Robot a1,                    // Robot 1
+    const Robot a2,                    // Robot 2
     const EdgeTime a1_et1,             // Edge-time 1 of agent 1
     const EdgeTime a1_et2,             // Edge-time 2 of agent 1
     const Vector<NodeTime>& a1_nts,    // Node-times of agent 1
@@ -80,7 +80,7 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut(scip,
+    TwoRobotRobustCut cut(scip,
                           a1,
                           a2,
                           2 + 5 * a1_nts.size(),
@@ -109,7 +109,7 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
     cut.a2_edge_time(1) = a2_et2;
 
     // Store the cut.
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 2, result));
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip, probdata, sepa, std::move(cut), 2, result));
 
     // Done.
     return SCIP_OKAY;
@@ -143,12 +143,12 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
         return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_vertices = SCIPprobdataGetAgentFractionalVertices(probdata);
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_with_waits = SCIPprobdataGetAgentFractionalEdges(probdata);
+    const auto& agent_vertices = SCIPprobdataGetRobotFractionalVertices(probdata);
+    const auto& agent_edges = SCIPprobdataGetRobotFractionalEdgesNoWaits(probdata);
+    const auto& agent_edges_with_waits = SCIPprobdataGetRobotFractionalEdges(probdata);
 
     // Find conflicts.
-    for (Agent a1 = 0; a1 < N; ++a1)
+    for (Robot a1 = 0; a1 < N; ++a1)
     {
         // Get the vertices and edges of agent 1.
         const auto& agent_vertices_a1 = agent_vertices[a1];
@@ -181,7 +181,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                         if (a2_et2.n != a1_et1.n)
                         {
                             // Found the four edges. Look for an agent 2 that uses these edges.
-                            for (Agent a2 = 0; a2 < N; ++a2)
+                            for (Robot a2 = 0; a2 < N; ++a2)
                                 if (a1 != a2)
                                 {
                                     // Get the value of the edges of agent 2.
@@ -279,7 +279,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                         const EdgeTime a2_et2{a2_et1.n, Direction::WAIT, a2_et1.t + 1};
 
                         // Found the four edges. Look for an agent 2 that uses these edges.
-                        for (Agent a2 = 0; a2 < N; ++a2)
+                        for (Robot a2 = 0; a2 < N; ++a2)
                             if (a1 != a2)
                             {
                                 // Get the value of the edges of agent 2.

@@ -40,7 +40,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //struct WaitBranchingConsData
 //{
 //    WaitBranchDirection dir;    // Branch direction
-//    Agent a;                    // Agent
+//    Robot a;                    // Robot
 //    Time t;                     // Time
 //    Count npropagatedvars;      // Number of variables that existed when the related node
 //                                // was propagated the last time. Used to determine whether
@@ -55,7 +55,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //    SCIP* scip,                          // SCIP
 //    WaitBranchingConsData** consdata,    // Pointer to the constraint data
 //    const WaitBranchDirection dir,       // Branch direction
-//    const Agent a,                       // Agent
+//    const Robot a,                       // Robot
 //    const Time t,                        // Time
 //    SCIP_NODE* node                      // Node of the branch-and-bound tree for this constraint
 //)
@@ -84,7 +84,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //SCIP_RETCODE check_variable(
 //    SCIP* scip,                       // SCIP
 //    const WaitBranchDirection dir,    // Branch direction
-//    const Agent a,                    // Agent
+//    const Robot a,                    // Robot
 //    const Time t,                     // Time
 //    SCIP_VAR* var,                    // Variable to check
 //    Count& nfixedvars,                // Pointer to store the number of fixed variables
@@ -104,7 +104,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //    auto vardata = SCIPvarGetData(var);
 //    const auto path_length = SCIPvardataGetPathLength(vardata);
 //    const auto path = SCIPvardataGetPath(vardata);
-//    debug_assert(a == SCIPvardataGetAgent(vardata));
+//    debug_assert(a == SCIPvardataGetRobot(vardata));
 //
 //    // Disable the path if the agent does or doesn't wait at the required time.
 //    const auto exists = (t < path_length && path[t].d == Direction::WAIT);
@@ -199,9 +199,9 @@ Author: Edward Lam <ed@ed-lam.com>
 //    // Get variables.
 //    const auto nvars = beforeprop ?
 //                       consdata->npropagatedvars :
-//                       SCIPprobdataGetAgentNVars(probdata)[a];
-//    release_assert(nvars <= SCIPprobdataGetAgentNVars(probdata)[a]);
-//    auto vars = SCIPprobdataGetAgentVars(probdata)[a];
+//                       SCIPprobdataGetRobotNVars(probdata)[a];
+//    release_assert(nvars <= SCIPprobdataGetRobotNVars(probdata)[a]);
+//    auto vars = SCIPprobdataGetRobotVars(probdata)[a];
 //
 //    // Check that the path of every variable is feasible for this constraint.
 //    for (Count v = 0; v < nvars; ++v)
@@ -218,7 +218,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //        auto vardata = SCIPvarGetData(var);
 //        const auto path_length = SCIPvardataGetPathLength(vardata);
 //        const auto path = SCIPvardataGetPath(vardata);
-//        debug_assert(a == SCIPvardataGetAgent(vardata));
+//        debug_assert(a == SCIPvardataGetRobot(vardata));
 //
 //        // Calculate condition.
 //        const auto exists = (t < path_length && path[t].d == Direction::WAIT);
@@ -309,7 +309,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //
 //    // Get problem data.
 //    auto probdata = SCIPgetProbData(scip);
-//    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+//    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 //    const auto nvars = agent_vars.size();
 //
 //    // Propagate constraints.
@@ -385,7 +385,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //
 //    // Get problem data.
 //    auto probdata = SCIPgetProbData(scip);
-//    auto agent_nvars = SCIPprobdataGetAgentNVars(probdata);
+//    auto agent_nvars = SCIPprobdataGetRobotNVars(probdata);
 //
 //    // Get constraint data.
 //    auto consdata = reinterpret_cast<WaitBranchingConsData*>(SCIPconsGetData(cons));
@@ -427,7 +427,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //
 //    // Get problem data.
 //    auto probdata = SCIPgetProbData(scip);
-//    auto agent_nvars = SCIPprobdataGetAgentNVars(probdata);
+//    auto agent_nvars = SCIPprobdataGetRobotNVars(probdata);
 //
 //    // Get constraint data.
 //    auto consdata = reinterpret_cast<WaitBranchingConsData*>(SCIPconsGetData(cons));
@@ -493,7 +493,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //    SCIP_CONS** cons,                 // Pointer to the created constraint
 //    const char* name,                 // Name of constraint
 //    const WaitBranchDirection dir,    // Branch direction
-//    const Agent a,                    // Agent
+//    const Robot a,                    // Robot
 //    const Time t,                     // Time
 //    SCIP_NODE* node,                  // The node of the branch-and-bound tree for this constraint
 //    SCIP_Bool local                   // Is this constraint only valid locally?
@@ -553,7 +553,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //}
 //
 //// Get agent
-//Agent SCIPgetWaitBranchingAgent(
+//Robot SCIPgetWaitBranchingRobot(
 //    SCIP_CONS* cons    // Constraint enforcing wait branching
 //)
 //{

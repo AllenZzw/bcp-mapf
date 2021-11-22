@@ -37,8 +37,8 @@ SCIP_RETCODE threevertex_conflicts_create_cut(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     SCIP_SEPA* sepa,            // Separator
-    const Agent a1,             // Agent 1
-    const Agent a2,             // Agent 2
+    const Robot a1,             // Robot 1
+    const Robot a2,             // Robot 2
     const EdgeTime a1_et1,      // Edge 1 of agent 1
     const EdgeTime a1_et2,      // Edge 2 of agent 1
     const NodeTime a2_v1,       // Vertex 1 of agent 2
@@ -79,7 +79,7 @@ SCIP_RETCODE threevertex_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut(scip, a1, a2, 2, 15
+    TwoRobotRobustCut cut(scip, a1, a2, 2, 15
 #ifdef DEBUG
         , std::move(name)
 #endif
@@ -115,7 +115,7 @@ SCIP_RETCODE threevertex_conflicts_create_cut(
     }    
 
     // Store the cut.
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 2, result));
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip, probdata, sepa, std::move(cut), 2, result));
 
     // Done.
     return SCIP_OKAY;
@@ -149,11 +149,11 @@ SCIP_RETCODE threevertex_conflicts_separate(
         return SCIP_OKAY;
 
     // Get the vertices and edges fractionally used by each agent.
-    const auto& agent_vertices = SCIPprobdataGetAgentFractionalVertices(probdata);
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
+    const auto& agent_vertices = SCIPprobdataGetRobotFractionalVertices(probdata);
+    const auto& agent_edges = SCIPprobdataGetRobotFractionalEdgesNoWaits(probdata);
 
     // Find conflicts.
-    for (Agent a1 = 0; a1 < N; ++a1)
+    for (Robot a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
         const auto& agent_edges_a1 = agent_edges[a1];
@@ -178,7 +178,7 @@ SCIP_RETCODE threevertex_conflicts_separate(
                 if (a1_et2.t == a1_et1.t + 1 && a1_et2_orig != a1_et1_dest)
                 {
                     // Loop through the second agent.
-                    for (Agent a2 = 0; a2 < N; ++a2)
+                    for (Robot a2 = 0; a2 < N; ++a2)
                         if (a1 != a2)
                         {
                             // Get the vertices of agent 2.

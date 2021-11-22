@@ -36,8 +36,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct ExitEntryConflictData
 {
     SCIP_Real lhs;
-    Agent a1;
-    Agent a2;
+    Robot a1;
+    Robot a2;
     Edge a1_e;
     Int a2_es_size;
     Array<Edge, 11> a2_es;
@@ -50,8 +50,8 @@ SCIP_RETCODE exitentry_conflicts_create_cut(
     SCIP* scip,                      // SCIP
     SCIP_ProbData* probdata,         // Problem data
     SCIP_SEPA* sepa,                 // Separator
-    const Agent a1,                  // Agent 1
-    const Agent a2,                  // Agent 2
+    const Robot a1,                  // Robot 1
+    const Robot a2,                  // Robot 2
     const Edge a1_e,                 // Edge of agent 1
     const Int a2_es_size,            // Number of edges for agent 2
     const Array<Edge, 11>& a2_es,    // Edges of agent 2
@@ -65,7 +65,7 @@ SCIP_RETCODE exitentry_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut{scip, a1, a2, 1, a2_es_size
+    TwoRobotRobustCut cut{scip, a1, a2, 1, a2_es_size
 #ifdef DEBUG
         , std::move(name)
 #endif
@@ -78,7 +78,7 @@ SCIP_RETCODE exitentry_conflicts_create_cut(
     // std::copy(a2_es.begin(), a2_es.begin() + a2_es_size, cut.edges_a2().first);
 
     // Store the cut.
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
 
     // Done.
     return SCIP_OKAY;
@@ -112,12 +112,12 @@ SCIP_RETCODE exitentry_conflicts_separate(
         return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges_no_waits = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_vec = SCIPprobdataGetAgentFractionalEdgesVec(probdata);
+    const auto& agent_edges_no_waits = SCIPprobdataGetRobotFractionalEdgesNoWaits(probdata);
+    const auto& agent_edges_vec = SCIPprobdataGetRobotFractionalEdgesVec(probdata);
 
     // Find conflicts.
     Vector<ExitEntryConflictData> cuts;
-    for (Agent a1 = 0; a1 < N; ++a1)
+    for (Robot a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
         const auto& agent_edges_a1 = agent_edges_no_waits[a1];
@@ -181,7 +181,7 @@ SCIP_RETCODE exitentry_conflicts_separate(
             }
 
             // Loop through the second agent.
-            for (Agent a2 = 0; a2 < N; ++a2)
+            for (Robot a2 = 0; a2 < N; ++a2)
                 if (a2 != a1)
                 {
                     // Compute the LHS.

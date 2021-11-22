@@ -35,7 +35,7 @@ SCIP_RETCODE goal_conflicts_add_var(
     SCIP* scip,                              // SCIP
     Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
     SCIP_VAR* var,                           // Variable
-    const Agent a,                           // Agent
+    const Robot a,                           // Robot
     const Time path_length,                  // Path length
     const Edge* const path                   // Path
 );

@@ -24,7 +24,7 @@ set(TRUFFLEHOG_SOURCE_FILES
     trufflehog/Debug.h
     trufflehog/Coordinates.h
     trufflehog/Map.h
-    trufflehog/AgentsData.h
+    trufflehog/RobotsData.h
     trufflehog/ProblemInstance.h
     trufflehog/ProblemInstance.cpp
     trufflehog/PriorityQueue.h
@@ -83,8 +83,8 @@ set(BCP_MAPF_SOURCE_FILES
     bcp/Separator_FiveEdgeConflicts.cpp
     bcp/Separator_SixEdgeConflicts.h
     bcp/Separator_SixEdgeConflicts.cpp
-    bcp/Separator_AgentWaitEdgeConflicts.h
-    bcp/Separator_AgentWaitEdgeConflicts.cpp
+    bcp/Separator_RobotWaitEdgeConflicts.h
+    bcp/Separator_RobotWaitEdgeConflicts.cpp
     bcp/Separator_VertexFourEdgeConflicts.h
     bcp/Separator_VertexFourEdgeConflicts.cpp
     bcp/Separator_CliqueConflicts.h

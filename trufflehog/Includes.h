@@ -35,7 +35,7 @@ using Int = int32_t;
 using Float = double;
 
 using Position = Int;
-using Agent = Int;
+using Robot = Int;
 using Cost = Float;
 using IntCost = Int;
 using Waypoint = Int;

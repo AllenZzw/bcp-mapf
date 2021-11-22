@@ -40,7 +40,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //    SCIP_CONS** cons,                 // Pointer to the created constraint
 //    const char* name,                 // Name of constraint
 //    const WaitBranchDirection dir,    // Branch direction
-//    const Agent a,                    // Agent
+//    const Robot a,                    // Robot
 //    const Time t,                     // Time
 //    SCIP_NODE* node,                  // The node of the branch-and-bound tree for this constraint
 //    SCIP_Bool local                   // Is this constraint only valid locally?
@@ -52,7 +52,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //);
 //
 //// Get agent
-//Agent SCIPgetWaitBranchingAgent(
+//Robot SCIPgetWaitBranchingRobot(
 //    SCIP_CONS* cons    // Constraint enforcing wait branching
 //);
 //

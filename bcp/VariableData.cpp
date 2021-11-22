@@ -23,7 +23,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Struct has undefined size - cannot use sizeof(SCIP_VarData)
 struct SCIP_VarData
 {
-    Agent a;             // Agent of the path
+    Robot a;             // Robot of the path
     Time path_length;    // Length of the path
     Edge path[0];        // Edges in the path
 };
@@ -31,7 +31,7 @@ struct SCIP_VarData
 // Create variable data
 SCIP_RETCODE SCIPvardataCreate(
     SCIP* scip,                // SCIP
-    const Agent a,             // Agent of the path
+    const Robot a,             // Robot of the path
     const Time path_length,    // Length of the path
     const Edge* const path,    // Edges in the path
     SCIP_VARDATA** vardata     // Output variable data
@@ -142,7 +142,7 @@ SCIP_RETCODE SCIPcreateVar(
 }
 
 // Get the agent of the path
-Agent SCIPvardataGetAgent(
+Robot SCIPvardataGetRobot(
     SCIP_VARDATA* vardata    // Variable data
 )
 {

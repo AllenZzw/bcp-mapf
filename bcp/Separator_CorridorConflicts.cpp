@@ -40,8 +40,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct CorridorConflictData
 {
     SCIP_Real lhs;
-    Agent a1;
-    Agent a2;
+    Robot a1;
+    Robot a2;
     EdgeTime a1_et1;
     EdgeTime a1_et2;
 #ifdef USE_WAITCORRIDOR_CONFLICTS
@@ -58,8 +58,8 @@ SCIP_RETCODE corridor_conflicts_create_cut(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     SCIP_SEPA* sepa,            // Separator
-    const Agent a1,             // Agent 1
-    const Agent a2,             // Agent 2
+    const Robot a1,             // Robot 1
+    const Robot a2,             // Robot 2
     const EdgeTime a1_et1,      // Edge-time 1 of agent 1
     const EdgeTime a1_et2,      // Edge-time 2 of agent 1
 #ifdef USE_WAITCORRIDOR_CONFLICTS
@@ -86,7 +86,7 @@ SCIP_RETCODE corridor_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut(scip,
+    TwoRobotRobustCut cut(scip,
                           a1,
                           a2,
 #ifdef USE_WAITCORRIDOR_CONFLICTS
@@ -109,7 +109,7 @@ SCIP_RETCODE corridor_conflicts_create_cut(
     cut.a2_edge_time(1) = a2_et2;
 
     // Store the cut.
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
 
     // Done.
     return SCIP_OKAY;
@@ -143,13 +143,13 @@ SCIP_RETCODE corridor_conflicts_separate(
         return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges = SCIPprobdataGetAgentFractionalEdges(probdata);
-    const auto& agent_edges_vec = SCIPprobdataGetAgentFractionalEdgesVec(probdata);
+    const auto& agent_edges = SCIPprobdataGetRobotFractionalEdges(probdata);
+    const auto& agent_edges_vec = SCIPprobdataGetRobotFractionalEdgesVec(probdata);
 
     // Find conflicts.
     Vector<CorridorConflictData> cuts;
     Vector<SCIP_Real> zeros(N, 0.0);
-    for (Agent a1 = 0; a1 < N - 1; ++a1)
+    for (Robot a1 = 0; a1 < N - 1; ++a1)
     {
         // Get the edges of agent 1.
         const auto& agent_edges_a1 = agent_edges[a1];
@@ -188,7 +188,7 @@ SCIP_RETCODE corridor_conflicts_separate(
 #endif
 
                 // Loop through the second agent.
-                for (Agent a2 = 0; a2 < N; ++a2)
+                for (Robot a2 = 0; a2 < N; ++a2)
                     if (a2 != a1)
                     {
                         // Get values of the edges of agent 2.

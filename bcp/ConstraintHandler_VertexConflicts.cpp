@@ -102,7 +102,7 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     // Get problem data.
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
-    const auto& agents = SCIPprobdataGetAgentsData(probdata);
+    const auto& agents = SCIPprobdataGetRobotsData(probdata);
 
     // Create constraint name.
 #ifdef DEBUG
@@ -146,8 +146,8 @@ SCIP_RETCODE vertex_conflicts_create_cut(
             (nt.t >= path_length && path[path_length - 1].n == nt.n))
         {
             // Print.
-            debugln("      Agent: {:2d}, Val: {:7.4f}, Path: {}",
-                    SCIPvardataGetAgent(vardata),
+            debugln("      Robot: {:2d}, Val: {:7.4f}, Path: {}",
+                    SCIPvardataGetRobot(vardata),
                     SCIPgetSolVal(scip, nullptr, var),
                     format_path_spaced(SCIPgetProbData(scip), path_length, path));
 
@@ -179,8 +179,8 @@ SCIP_RETCODE vertex_conflicts_create_cut(
 
     // Store the constraint by agent if the vertex conflict is at the goal of an agent.
     {
-        auto& agent_goal_vertex_conflicts = SCIPprobdataGetAgentGoalVertexConflicts(probdata);
-        for (Agent a = 0; a < N; ++a)
+        auto& agent_goal_vertex_conflicts = SCIPprobdataGetRobotGoalVertexConflicts(probdata);
+        for (Robot a = 0; a < N; ++a)
             if (nt.n == agents[a].goal)
             {
                 agent_goal_vertex_conflicts[a].push_back({nt.t, row});

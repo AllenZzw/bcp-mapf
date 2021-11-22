@@ -44,26 +44,26 @@ SCIP_RETCODE branch_pseudosolution(
 Vector<NodeTime> get_time_of_earliest_goal(
     SCIP* scip,                 // SCIP
     SCIP_PROBDATA* probdata,    // Problem data
-    const Agent N               // Number of agents
+    const Robot N               // Number of agents
 );
 
 // Create children nodes.
 SCIP_RETCODE
 branch_on_vertex(
     SCIP* scip,                   // SCIP
-    const AgentNodeTime ant,      // Branch decision
+    const RobotNodeTime ant,      // Branch decision
     const bool prefer_branch_0    // Preferred branch direction
 );
 //SCIP_RETCODE
 //branch_on_wait(
 //    SCIP* scip,                   // SCIP
-//    const AgentTime at,           // Branch decision
+//    const RobotTime at,           // Branch decision
 //    const bool prefer_branch_0    // Preferred branch direction
 //);
 SCIP_RETCODE
 branch_on_length(
     SCIP* scip,                   // SCIP
-    const AgentNodeTime ant,      // Branch decision
+    const RobotNodeTime ant,      // Branch decision
     const bool prefer_branch_0    // Preferred branch direction
 );
 

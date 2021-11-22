@@ -106,7 +106,7 @@ SCIP_RETCODE SCIPincludeBranchrule(
 
 SCIP_RETCODE branch_on_vertex(
     SCIP* scip,                   // SCIP
-    const AgentNodeTime ant,      // Branch decision
+    const RobotNodeTime ant,      // Branch decision
     const bool prefer_branch_0    // Preferred branch direction
 )
 {
@@ -149,9 +149,9 @@ SCIP_RETCODE branch_on_vertex(
             }
 
             // Get the decision.
-            const auto a = SCIPgetVertexBranchingAgent(cons);
+            const auto a = SCIPgetVertexBranchingRobot(cons);
             const auto nt = SCIPgetVertexBranchingNodeTime(cons);
-            const AgentNodeTime decision{.a = a, .n = nt.n, .t = nt.t};
+            const RobotNodeTime decision{.a = a, .n = nt.n, .t = nt.t};
 
             // Check.
             release_assert(decision != ant);
@@ -220,7 +220,7 @@ SCIP_RETCODE branch_on_vertex(
 
 //SCIP_RETCODE branch_on_wait(
 //    SCIP* scip,                   // SCIP
-//    const AgentTime at,           // Branch decision
+//    const RobotTime at,           // Branch decision
 //    const bool prefer_branch_0    // Preferred branch direction
 //)
 //{
@@ -256,9 +256,9 @@ SCIP_RETCODE branch_on_vertex(
 //            }
 //
 //            // Get the decision.
-//            const auto a = SCIPgetWaitBranchingAgent(cons);
+//            const auto a = SCIPgetWaitBranchingRobot(cons);
 //            const auto t = SCIPgetWaitBranchingTime(cons);
-//            const AgentTime decision{a, t};
+//            const RobotTime decision{a, t};
 //
 //            // Check.
 //            release_assert(decision != at);
@@ -325,7 +325,7 @@ SCIP_RETCODE branch_on_vertex(
 
 SCIP_RETCODE branch_on_length(
     SCIP* scip,                   // SCIP
-    const AgentNodeTime ant,      // Branch decision
+    const RobotNodeTime ant,      // Branch decision
     const bool prefer_branch_0    // Preferred branch direction
 )
 {
@@ -370,7 +370,7 @@ SCIP_RETCODE branch_on_length(
             }
 
             // Get the decision.
-            const auto a = SCIPgetLengthBranchingAgent(cons);
+            const auto a = SCIPgetLengthBranchingRobot(cons);
             const auto dir = SCIPgetLengthBranchingDirection(cons);
             const auto t = SCIPgetLengthBranchingNodeTime(cons).t;
 

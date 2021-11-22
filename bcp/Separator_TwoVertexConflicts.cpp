@@ -36,8 +36,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct TwoVertexConflictData
 {
     SCIP_Real lhs;
-    Agent a1;
-    Agent a2;
+    Robot a1;
+    Robot a2;
     EdgeTime a1_et;
     EdgeTime a2_et1;
     EdgeTime a2_et2;
@@ -49,8 +49,8 @@ SCIP_RETCODE twovertex_conflicts_create_cut(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     SCIP_SEPA* sepa,            // Separator
-    const Agent a1,             // Agent 1
-    const Agent a2,             // Agent 2
+    const Robot a1,             // Robot 1
+    const Robot a2,             // Robot 2
     const EdgeTime a1_et,       // Edge of agent 1
     const EdgeTime a2_et1,      // Edge 1 of agent 2
     const EdgeTime a2_et2,      // Edge 2 of agent 2
@@ -83,7 +83,7 @@ SCIP_RETCODE twovertex_conflicts_create_cut(
 #endif
 
     // Create data for the cut.
-    TwoAgentRobustCut cut(scip, a1, a2, 1, 2
+    TwoRobotRobustCut cut(scip, a1, a2, 1, 2
 #ifdef DEBUG
         , std::move(name)
 #endif
@@ -93,7 +93,7 @@ SCIP_RETCODE twovertex_conflicts_create_cut(
     cut.a2_edge_time(1) = a2_et2;
 
     // Store the cut.
-    SCIP_CALL(SCIPprobdataAddTwoAgentRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
+    SCIP_CALL(SCIPprobdataAddTwoRobotRobustCut(scip, probdata, sepa, std::move(cut), 1, result));
 
     // Done.
     return SCIP_OKAY;
@@ -127,12 +127,12 @@ SCIP_RETCODE twovertex_conflicts_separate(
         return SCIP_OKAY;
 
     // Get the edges fractionally used by each agent.
-    const auto& agent_edges_no_waits = SCIPprobdataGetAgentFractionalEdgesNoWaits(probdata);
-    const auto& agent_edges_vec = SCIPprobdataGetAgentFractionalEdgesVec(probdata);
+    const auto& agent_edges_no_waits = SCIPprobdataGetRobotFractionalEdgesNoWaits(probdata);
+    const auto& agent_edges_vec = SCIPprobdataGetRobotFractionalEdgesVec(probdata);
 
     // Find conflicts.
     Vector<TwoVertexConflictData> cuts;
-    for (Agent a1 = 0; a1 < N; ++a1)
+    for (Robot a1 = 0; a1 < N; ++a1)
     {
         // Get the edges of agent 1.
         const auto& agent_edges_a1 = agent_edges_no_waits[a1];
@@ -255,7 +255,7 @@ SCIP_RETCODE twovertex_conflicts_separate(
                     debug_assert(a2_et1s[a2_et1_idx] != a2_et2s[a2_et2_idx]);
 
             // Loop through the second agent.
-            for (Agent a2 = 0; a2 < N; ++a2)
+            for (Robot a2 = 0; a2 < N; ++a2)
                 if (a2 != a1)
                 {
                     // Loop through the two edges of agent 2.

@@ -72,7 +72,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Separator_SixEdgeConflicts.h"
 #endif
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
-#include "Separator_AgentWaitEdgeConflicts.h"
+#include "Separator_RobotWaitEdgeConflicts.h"
 #endif
 #ifdef USE_VERTEX_FOUREDGE_CONFLICTS
 #include "Separator_VertexFourEdgeConflicts.h"
@@ -96,7 +96,7 @@ struct SCIP_ProbData
 {
     // ProblemInstance data
     SharedPtr<ProblemInstance> instance;                                               // ProblemInstance
-    Agent N;                                                                    // Number of agents
+    Robot N;                                                                    // Number of agents
 
     // Model data
     SCIP_PricerData* pricerdata;                                                // Pricer data
@@ -113,10 +113,10 @@ struct SCIP_ProbData
     HashTable<EdgeTime, Vector<SCIP_Real>> fractional_edges_vec;                // Fractional edges by edge-time
 
     // Constraints
-    Vector<SCIP_CONS*> agent_part;                                              // Agent partition constraints
+    Vector<SCIP_CONS*> agent_part;                                              // Robot partition constraints
     SCIP_CONS* vertex_conflicts;                                                // Constraint for vertex conflicts
     SCIP_CONS* edge_conflicts;                                                  // Constraint for edge conflicts
-    Vector<TwoAgentRobustCut> two_agent_robust_cuts;                            // Robust cuts over two agents
+    Vector<TwoRobotRobustCut> two_agent_robust_cuts;                            // Robust cuts over two agents
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     SCIP_SEPA* rectangle_knapsack_conflicts;                                    // Separator for rectangle knapsack conflicts
 #endif
@@ -131,7 +131,7 @@ struct SCIP_ProbData
 #endif
 
     // Constraints separated by agent for fast retrieval
-    Vector<Vector<AgentRobustCut>> agent_robust_cuts;                           // Two-agent robust cuts grouped by agent
+    Vector<Vector<RobotRobustCut>> agent_robust_cuts;                           // Two-agent robust cuts grouped by agent
     Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_vertex_conflicts;          // Vertex conflicts at the goal of an agent
 #ifdef USE_WAITEDGE_CONFLICTS
     Vector<Vector<Pair<Time, SCIP_ROW*>>> agent_goal_edge_conflicts;            // Edge conflicts at the goal of an agent
@@ -172,7 +172,7 @@ SCIP_DECL_PROBTRANS(probtrans)
     (*targetdata)->vars.resize(sourcedata->vars.size());
     (*targetdata)->vars.reserve(N * 5000);
     (*targetdata)->agent_vars.resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         (*targetdata)->agent_vars[a].reserve(5000);
     }
@@ -184,13 +184,13 @@ SCIP_DECL_PROBTRANS(probtrans)
     {
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
-        const auto a = SCIPvardataGetAgent(vardata);
+        const auto a = SCIPvardataGetRobot(vardata);
 
         (*targetdata)->agent_vars[a].push_back(var);
     }
 
     // Copy dummy variables.
-    debug_assert(static_cast<Agent>(sourcedata->dummy_vars.size()) == N);
+    debug_assert(static_cast<Robot>(sourcedata->dummy_vars.size()) == N);
     (*targetdata)->dummy_vars.resize(N);
     SCIP_CALL(SCIPtransformVars(scip,
                                 N,
@@ -201,7 +201,7 @@ SCIP_DECL_PROBTRANS(probtrans)
     (*targetdata)->fractional_vertices.resize(N);
     (*targetdata)->fractional_edges.resize(N);
     (*targetdata)->fractional_edges_no_waits.resize(N);
-//    for (Agent a = 0; a < N; ++a)
+//    for (Robot a = 0; a < N; ++a)
 //    {
 //        (*targetdata)->fractional_vertices[a].reserve(1);
 //        (*targetdata)->fractional_edges[a].reserve(1);
@@ -209,7 +209,7 @@ SCIP_DECL_PROBTRANS(probtrans)
 //    }
 
     // Copy agent partition constraints.
-    debug_assert(static_cast<Agent>(sourcedata->agent_part.size()) == N);
+    debug_assert(static_cast<Robot>(sourcedata->agent_part.size()) == N);
     (*targetdata)->agent_part.resize(N);
     SCIP_CALL(SCIPtransformConss(scip,
                                  N,
@@ -255,7 +255,7 @@ SCIP_DECL_PROBTRANS(probtrans)
     // Allocate memory for two-agent robust cuts grouped by agent.
     debug_assert(sourcedata->agent_robust_cuts.empty());
     (*targetdata)->agent_robust_cuts.resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         (*targetdata)->agent_robust_cuts[a].reserve(5000);
     }
@@ -263,7 +263,7 @@ SCIP_DECL_PROBTRANS(probtrans)
     // Allocate memory for vertex conflicts at the goal of an agent.
     debug_assert(sourcedata->agent_goal_vertex_conflicts.empty());
     (*targetdata)->agent_goal_vertex_conflicts.resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         (*targetdata)->agent_goal_vertex_conflicts[a].reserve(5000);
     }
@@ -272,7 +272,7 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_WAITEDGE_CONFLICTS
     debug_assert(sourcedata->agent_goal_edge_conflicts.empty());
     (*targetdata)->agent_goal_edge_conflicts.resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         (*targetdata)->agent_goal_edge_conflicts[a].reserve(5000);
     }
@@ -282,7 +282,7 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_GOAL_CONFLICTS
     debug_assert(sourcedata->goal_agent_goal_conflicts.empty());
     (*targetdata)->goal_agent_goal_conflicts.resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         (*targetdata)->goal_agent_goal_conflicts[a].reserve(5000);
     }
@@ -292,7 +292,7 @@ SCIP_DECL_PROBTRANS(probtrans)
 #ifdef USE_GOAL_CONFLICTS
     debug_assert(sourcedata->crossing_agent_goal_conflicts.empty());
     (*targetdata)->crossing_agent_goal_conflicts.resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         (*targetdata)->crossing_agent_goal_conflicts[a].reserve(5000);
     }
@@ -348,7 +348,7 @@ SCIP_RETCODE probdataFree(
     // Release constraint for edge conflicts.
     SCIP_CALL(SCIPreleaseCons(scip, &(*probdata)->edge_conflicts));
 
-    // Release two-agent robust cuts. Agent-specific two-agent robust cuts are aliases of this.
+    // Release two-agent robust cuts. Robot-specific two-agent robust cuts are aliases of this.
     for (auto& cut : (*probdata)->two_agent_robust_cuts)
     {
         auto ptr = cut.begin();
@@ -426,7 +426,7 @@ SCIP_DECL_PROBEXITSOL(probexitsol)
 SCIP_RETCODE SCIPprobdataAddDummyVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
-    const Agent a,              // Agent
+    const Robot a,              // Robot
     SCIP_VAR** var              // Output new variable
 )
 {
@@ -461,11 +461,11 @@ SCIP_RETCODE SCIPprobdataAddDummyVar(
     SCIP_CALL(SCIPchgVarUbLazy(scip, *var, 1.0));
 
     // Add coefficient to agent partition constraint.
-    debug_assert(a < static_cast<Agent>(probdata->agent_part.size()));
+    debug_assert(a < static_cast<Robot>(probdata->agent_part.size()));
     SCIP_CALL(SCIPaddCoefSetppc(scip, probdata->agent_part[a], *var));
 
     // Store variable in dummy variables array.
-    debug_assert(a < static_cast<Agent>(probdata->dummy_vars.size()));
+    debug_assert(a < static_cast<Robot>(probdata->dummy_vars.size()));
     probdata->dummy_vars[a] = *var;
 
     // Done.
@@ -476,7 +476,7 @@ SCIP_RETCODE SCIPprobdataAddDummyVar(
 SCIP_RETCODE SCIPprobdataAddInitialVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
-    const Agent a,              // Agent
+    const Robot a,              // Robot
     const Time path_length,     // Path length
     const Edge* const path,     // Path
     SCIP_VAR** var              // Output new variable
@@ -601,7 +601,7 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
     probdata->vars.push_back(*var);
 
     // Store variable in agent variables array.
-    debug_assert(a < static_cast<Agent>(probdata->agent_vars.size()));
+    debug_assert(a < static_cast<Robot>(probdata->agent_vars.size()));
     probdata->agent_vars[a].push_back(*var);
 
     // Capture variable again. Previously captured in addVar.
@@ -615,7 +615,7 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
 SCIP_RETCODE SCIPprobdataAddPricedVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
-    const Agent a,              // Agent
+    const Robot a,              // Robot
     const Time path_length,     // Path length
     const Edge* const path,     // Path
     SCIP_VAR** var              // Output new variable
@@ -750,7 +750,7 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     probdata->vars.push_back(*var);
 
     // Store variable in agent variables array.
-    debug_assert(a < static_cast<Agent>(probdata->agent_vars.size()));
+    debug_assert(a < static_cast<Robot>(probdata->agent_vars.size()));
     probdata->agent_vars[a].push_back(*var);
 
     // Capture variable again. Previously captured in addVar.
@@ -761,11 +761,11 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
 }
 
 // Add a new two-agent robust cut
-SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
+SCIP_RETCODE SCIPprobdataAddTwoRobotRobustCut(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     SCIP_SEPA* sepa,            // Separator
-    TwoAgentRobustCut&& cut,    // Data for the cut
+    TwoRobotRobustCut&& cut,    // Data for the cut
     const SCIP_Real rhs,        // RHS
     SCIP_RESULT* result,        // Output result
     Int* idx                    // Output index of the cut
@@ -790,7 +790,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     cut.set_row(row);
 
     // Get variables.
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Add variables to the constraint.
 #ifdef DEBUG
@@ -804,7 +804,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
             // Get the path.
             debug_assert(var);
             auto vardata = SCIPvarGetData(var);
-            debug_assert(a == SCIPvardataGetAgent(vardata));
+            debug_assert(a == SCIPvardataGetRobot(vardata));
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
@@ -827,7 +827,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
 #endif
 
                 // Print.
-                debugln("      Val: {:7.4f}:, Agent: {:3d}, Coeff: {:1.0f}, Path: {}",
+                debugln("      Val: {:7.4f}:, Robot: {:3d}, Coeff: {:1.0f}, Path: {}",
                         SCIPgetSolVal(scip, nullptr, var),
                         a,
                         coeff,
@@ -849,7 +849,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
         for (auto it1 = ets_begin; it1 != ets_end; ++it1)
             for (auto it2 = it1 + 1; it2 != ets_end; ++it2)
             {
-                release_assert(*it1 != *it2, "Agent {} has a duplicate edge in cut", a);
+                release_assert(*it1 != *it2, "Robot {} has a duplicate edge in cut", a);
             }
     }
 #endif
@@ -923,7 +923,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
     // Store the cut in the set of cuts specific to an agent.
     for (const auto& [a, ets_begin, ets_end] : iterators)
     {
-        probdata->agent_robust_cuts[a].push_back(AgentRobustCut{cut.row(), ets_begin, ets_end});
+        probdata->agent_robust_cuts[a].push_back(RobotRobustCut{cut.row(), ets_begin, ets_end});
     }
 
     // Store the cut.
@@ -975,7 +975,7 @@ SCIP_RETCODE SCIPprobdataCreate(
         SCIP_CALL(SCIPallocBufferArray(scip, &start_y, N));
         SCIP_CALL(SCIPallocBufferArray(scip, &end_x, N));
         SCIP_CALL(SCIPallocBufferArray(scip, &end_y, N));
-        for (Agent a = 0; a < N; ++a)
+        for (Robot a = 0; a < N; ++a)
         {
             const auto& agent_data = instance->agents[a];
             start_x[a] = agent_data.start_x;
@@ -983,14 +983,14 @@ SCIP_RETCODE SCIPprobdataCreate(
             end_x[a] = agent_data.goal_x;
             end_y[a] = agent_data.goal_y;
         }
-        for (Agent a = 0; a < N - 1; ++a)
-            for (Agent b = a + 1; b < N; ++b)
+        for (Robot a = 0; a < N - 1; ++a)
+            for (Robot b = a + 1; b < N; ++b)
             {
                 release_assert(start_x[a] != start_x[b] || start_y[a] != start_y[b],
-                               "Agent {} and {} both start at ({},{})",
+                               "Robot {} and {} both start at ({},{})",
                                a, b, start_x[a], start_y[a]);
                 release_assert(end_x[a] != end_x[b] || end_y[a] != end_y[b],
-                               "Agent {} and {} both end at ({},{})",
+                               "Robot {} and {} both end at ({},{})",
                                a, b, end_x[a], end_y[a]);
             }
         SCIPfreeBufferArray(scip, &start_x);
@@ -1015,7 +1015,7 @@ SCIP_RETCODE SCIPprobdataCreate(
 
     // Create agent partition constraints.
     probdata->agent_part.resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         // Create constraint name.
         char name[SCIP_MAXSTRLEN];
@@ -1142,7 +1142,7 @@ SCIP_RETCODE SCIPprobdataCreate(
 
     // Include separator for agent wait-edge conflicts.
 #ifdef USE_AGENTWAITEDGE_CONFLICTS
-    SCIP_CALL(SCIPincludeSepaAgentWaitEdgeConflicts(scip));
+    SCIP_CALL(SCIPincludeSepaRobotWaitEdgeConflicts(scip));
 #endif
 
     // Include separator for vertex four-edge conflicts.
@@ -1167,7 +1167,7 @@ SCIP_RETCODE SCIPprobdataCreate(
 
     // Create dummy paths.
     probdata->dummy_vars.resize(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         SCIP_VAR* var;
         SCIP_CALL(SCIPprobdataAddDummyVar(scip, probdata, a, &var));
@@ -1177,7 +1177,7 @@ SCIP_RETCODE SCIPprobdataCreate(
     // Calculate the longest path length. Do this internally after computing h.
     {
         const auto& agents = instance->agents;
-        for (Agent a = 0; a < N; ++a)
+        for (Robot a = 0; a < N; ++a)
         {
             const auto goal = agents[a].goal;
             probdata->astar->compute_h(goal);
@@ -1226,7 +1226,7 @@ Vector<SCIP_VAR*>& SCIPprobdataGetDummyVars(
 }
 
 // Get array of variables for an agent
-Vector<Vector<SCIP_VAR*>>& SCIPprobdataGetAgentVars(
+Vector<Vector<SCIP_VAR*>>& SCIPprobdataGetRobotVars(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1235,7 +1235,7 @@ Vector<Vector<SCIP_VAR*>>& SCIPprobdataGetAgentVars(
 }
 
 // Get agent partition constraints
-Vector<SCIP_CONS*>& SCIPprobdataGetAgentPartConss(
+Vector<SCIP_CONS*>& SCIPprobdataGetRobotPartConss(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1264,7 +1264,7 @@ SCIP_CONS* SCIPprobdataGetEdgeConflictsCons(
 }
 
 // Get array of two-agent robust cuts
-Vector<TwoAgentRobustCut>& SCIPprobdataGetTwoAgentRobustCuts(
+Vector<TwoRobotRobustCut>& SCIPprobdataGetTwoRobotRobustCuts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1319,7 +1319,7 @@ Vector<PathLengthNogood>& SCIPprobdataGetPathLengthNogoods(
 #endif
 
 // Get array of two-agent robust cuts grouped by agent
-Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
+Vector<Vector<RobotRobustCut>>& SCIPprobdataGetRobotRobustCuts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1328,7 +1328,7 @@ Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
 }
 
 // Get array of vertex conflicts at the goal of an agent
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalVertexConflicts(
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalVertexConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1338,7 +1338,7 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalVertexConflicts(
 
 // Get array of edge conflicts at the goal of an agent
 #ifdef USE_WAITEDGE_CONFLICTS
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalEdgeConflicts(
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalEdgeConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1349,7 +1349,7 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalEdgeConflicts(
 
 // Get array of goal conflicts of an agent whose goal is in conflict
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalAgentGoalConflicts(
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1360,7 +1360,7 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalAgentGoalConflicts(
 
 // Get array of goal conflicts of an agent crossing the goal of another agent
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingAgentGoalConflicts(
+Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1370,7 +1370,7 @@ Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingAgentGoalConfl
 #endif
 
 // Get the vertices fractionally used by each agent
-const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalVertices(
+const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1379,7 +1379,7 @@ const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalVert
 }
 
 // Get the edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdges(
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdges(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1388,7 +1388,7 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdge
 }
 
 // Get the non-wait edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesNoWaits(
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesNoWaits(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1397,7 +1397,7 @@ const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdge
 }
 
 // Get the edges fractionally used by each agent grouped by edge-time
-const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesVec(
+const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesVec(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1418,7 +1418,7 @@ void update_fractional_vertices_and_edges(
 
     // Get variables.
     const auto& vars = SCIPprobdataGetVars(probdata);
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 
     // Find the makespan.
     Time makespan = 0;
@@ -1445,7 +1445,7 @@ void update_fractional_vertices_and_edges(
     auto& fractional_edges_no_waits = probdata->fractional_edges_no_waits;
     auto& fractional_edges_vec = probdata->fractional_edges_vec;
     fractional_edges_vec.clear();
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         // Clear data from previous iteration.
         auto& agent_vertices = fractional_vertices[a];
@@ -1658,7 +1658,7 @@ const Map& SCIPprobdataGetMap(
 }
 
 // Get the agents data
-const AgentsData& SCIPprobdataGetAgentsData(
+const RobotsData& SCIPprobdataGetRobotsData(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1667,7 +1667,7 @@ const AgentsData& SCIPprobdataGetAgentsData(
 }
 
 // Get the number of agents
-Agent SCIPprobdataGetN(
+Robot SCIPprobdataGetN(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1787,12 +1787,12 @@ void print_used_paths(
     const auto& map = SCIPprobdataGetMap(probdata);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& vars = SCIPprobdataGetVars(probdata);
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
     const auto& dummy_vars = SCIPprobdataGetDummyVars(probdata);
 
     // Calculate makespan.
     Time makespan = 0;
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
         for (auto var : agent_vars[a])
         {
             // Get the path length.
@@ -1808,8 +1808,8 @@ void print_used_paths(
         }
 
     // Get fractional vertices.
-    HashTable<NodeTime, HashTable<Agent, SCIP_Real>> vertex_times_used;
-    HashTable<EdgeTime, HashTable<Agent, SCIP_Real>> edge_times_used;
+    HashTable<NodeTime, HashTable<Robot, SCIP_Real>> vertex_times_used;
+    HashTable<EdgeTime, HashTable<Robot, SCIP_Real>> edge_times_used;
     if (!sol &&
         SCIPgetStage(scip) == SCIP_STAGE_SOLVING &&
         SCIPgetLPSolstat(scip) == SCIP_LPSOLSTAT_OPTIMAL)
@@ -1820,7 +1820,7 @@ void print_used_paths(
             // Get the path.
             debug_assert(var);
             auto vardata = SCIPvarGetData(var);
-            const auto a = SCIPvardataGetAgent(vardata);
+            const auto a = SCIPvardataGetRobot(vardata);
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
@@ -1879,7 +1879,7 @@ void print_used_paths(
 
     // Determine if the solution is fractional.
     bool is_fractional = false;
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
         for (auto var : agent_vars[a])
         {
             // Get the variable value.
@@ -1903,7 +1903,7 @@ void print_used_paths(
     println("");
 
     // Print paths.
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         // Determine if using a dummy variable.
         bool is_using_dummy_path;
@@ -1949,7 +1949,7 @@ void print_used_paths(
                 {
                     fmt::print("   ---");
                 }
-                fmt::print("Agent: {:3d}, Val: {:7.4f}, Path: ", a, std::abs(var_val));
+                fmt::print("Robot: {:3d}, Val: {:7.4f}, Path: ", a, std::abs(var_val));
 
                 for (Time t = 0; t < path_length; ++t)
                 {
@@ -2021,8 +2021,8 @@ void print_agent_part_dual(
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
 
-    const auto& conss = SCIPprobdataGetAgentPartConss(probdata);
-    for (Agent a = 0; a < N; ++a)
+    const auto& conss = SCIPprobdataGetRobotPartConss(probdata);
+    for (Robot a = 0; a < N; ++a)
     {
         auto cons = conss[a];
         if (SCIPconsIsActive(cons))
@@ -2081,7 +2081,7 @@ void print_two_agent_robust_cuts_dual(
 )
 {
     auto probdata = SCIPgetProbData(scip);
-    const auto& two_agent_robust_cuts = SCIPprobdataGetTwoAgentRobustCuts(probdata);
+    const auto& two_agent_robust_cuts = SCIPprobdataGetTwoRobotRobustCuts(probdata);
     for (const auto& cut : two_agent_robust_cuts)
     {
         auto row = cut.row();

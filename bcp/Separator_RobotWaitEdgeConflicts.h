@@ -25,7 +25,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 
 // Create separator for agent wait-edge conflicts and include it
-SCIP_RETCODE SCIPincludeSepaAgentWaitEdgeConflicts(
+SCIP_RETCODE SCIPincludeSepaRobotWaitEdgeConflicts(
     SCIP* scip    // SCIP
 );
 

@@ -31,8 +31,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct GoalConflict
 {
     SCIP_ROW* row;    // LP row
-    Agent a1;         // Agent of the goal
-    Agent a2;         // Agent trying to use the goal vertex
+    Robot a1;         // Robot of the goal
+    Robot a2;         // Robot trying to use the goal vertex
     NodeTime nt;      // Node-time of the conflict
 };
 #endif
@@ -41,7 +41,7 @@ struct GoalConflict
 struct PathLengthNogood
 {
     SCIP_ROW* row;                                    // LP row
-    Vector<Pair<Agent, Time>> latest_finish_times;    // Latest time for an agent to reach its target
+    Vector<Pair<Robot, Time>> latest_finish_times;    // Latest time for an agent to reach its target
 };
 #endif
 
@@ -57,7 +57,7 @@ SCIP_RETCODE SCIPprobdataCreate(
 SCIP_RETCODE SCIPprobdataAddInitialVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
-    const Agent a,              // Agent
+    const Robot a,              // Robot
     const Time path_length,     // Path length
     const Edge* const path,     // Path
     SCIP_VAR** var              // Output new variable
@@ -67,18 +67,18 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
 SCIP_RETCODE SCIPprobdataAddPricedVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
-    const Agent a,              // Agent
+    const Robot a,              // Robot
     const Time path_length,     // Path length
     const Edge* const path,     // Path
     SCIP_VAR** var              // Output new variable
 );
 
 // Add a new two-agent robust cut
-SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
+SCIP_RETCODE SCIPprobdataAddTwoRobotRobustCut(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data
     SCIP_SEPA* sepa,            // Separator
-    TwoAgentRobustCut&& cut,    // Data for the cut
+    TwoRobotRobustCut&& cut,    // Data for the cut
     const SCIP_Real rhs,        // RHS
     SCIP_RESULT* result,        // Output result
     Int* idx = nullptr          // Output index of the cut
@@ -95,12 +95,12 @@ Vector<SCIP_VAR*>& SCIPprobdataGetDummyVars(
 );
 
 // Get array of variables for each agent
-Vector<Vector<SCIP_VAR*>>& SCIPprobdataGetAgentVars(
+Vector<Vector<SCIP_VAR*>>& SCIPprobdataGetRobotVars(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get agent partition constraints
-Vector<SCIP_CONS*>& SCIPprobdataGetAgentPartConss(
+Vector<SCIP_CONS*>& SCIPprobdataGetRobotPartConss(
     SCIP_ProbData* probdata    // Problem data
 );
 
@@ -115,7 +115,7 @@ SCIP_CONS* SCIPprobdataGetEdgeConflictsCons(
 );
 
 // Get array of two-agent robust cuts
-Vector<TwoAgentRobustCut>& SCIPprobdataGetTwoAgentRobustCuts(
+Vector<TwoRobotRobustCut>& SCIPprobdataGetTwoRobotRobustCuts(
     SCIP_ProbData* probdata    // Problem data
 );
 
@@ -148,53 +148,53 @@ Vector<PathLengthNogood>& SCIPprobdataGetPathLengthNogoods(
 #endif
 
 // Get array of two-agent robust cuts grouped by agent
-Vector<Vector<AgentRobustCut>>& SCIPprobdataGetAgentRobustCuts(
+Vector<Vector<RobotRobustCut>>& SCIPprobdataGetRobotRobustCuts(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get array of vertex conflicts at the goal of an agent
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalVertexConflicts(
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalVertexConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get array of edge conflicts at the goal of an agent
 #ifdef USE_WAITEDGE_CONFLICTS
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetAgentGoalEdgeConflicts(
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetRobotGoalEdgeConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif
 
 // Get array of goal conflicts of an agent whose goal is in conflict
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalAgentGoalConflicts(
+Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif
 
 // Get array of goal conflicts of an agent crossing the goal of another agent
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingAgentGoalConflicts(
+Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif
 
 // Get the vertices fractionally used by each agent
-const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalVertices(
+const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdges(
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdges(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the non-wait edges fractionally used by each agent
-const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesNoWaits(
+const Vector<HashTable<EdgeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesNoWaits(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the edges fractionally used by each agent grouped by edge-time
-const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetAgentFractionalEdgesVec(
+const HashTable<EdgeTime, Vector<SCIP_Real>>& SCIPprobdataGetRobotFractionalEdgesVec(
     SCIP_ProbData* probdata    // Problem data
 );
 
@@ -225,12 +225,12 @@ const Map& SCIPprobdataGetMap(
 );
 
 // Get the number of agents
-Agent SCIPprobdataGetN(
+Robot SCIPprobdataGetN(
     SCIP_ProbData* probdata    // Problem data
 );
 
 // Get the agents data
-const AgentsData& SCIPprobdataGetAgentsData(
+const RobotsData& SCIPprobdataGetRobotsData(
     SCIP_ProbData* probdata    // Problem data
 );
 

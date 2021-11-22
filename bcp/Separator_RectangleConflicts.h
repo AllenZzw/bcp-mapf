@@ -29,8 +29,8 @@ Author: Edward Lam <ed@ed-lam.com>
 struct RectangleConflict
 {
     Vector<EdgeTime> edges;    // Edges of the rectangle
-    Agent a1;                  // Agent 1 in the conflict
-    Agent a2;                  // Agent 2 in the conflict
+    Robot a1;                  // Robot 1 in the conflict
+    Robot a2;                  // Robot 2 in the conflict
     uint16_t out1_begin_;      // Index of the first out edge for agent 1
     uint16_t in2_begin_;       // Index of the first in edge for agent 2
     uint16_t out2_begin_;      // Index of the first out edge for agent 2
@@ -54,12 +54,12 @@ struct RectangleConflict
 
     inline auto agent1_edges() const { return ETIteratorPair{in1_begin(), out1_end()}; }
     inline auto agent2_edges() const { return ETIteratorPair{in2_begin(), out2_end()}; }
-    inline auto agent_edges(const Agent a) const
+    inline auto agent_edges(const Robot a) const
     {
         debug_assert(a == a1 || a == a2);
         return a == a1 ? agent1_edges() : agent2_edges();
     }
-    inline auto agent_in_out_edges(const Agent a) const
+    inline auto agent_in_out_edges(const Robot a) const
     {
         debug_assert(a == a1 || a == a2);
         return a == a1 ?

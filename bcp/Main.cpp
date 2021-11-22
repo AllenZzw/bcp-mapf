@@ -33,7 +33,7 @@ SCIP_RETCODE start_solver(
 {
     // Parse program options.
     String instance_file;
-    Agent agents_limit = std::numeric_limits<Agent>::max();
+    Robot agents_limit = std::numeric_limits<Robot>::max();
     SCIP_Real time_limit = 0;
     SCIP_Real gap_limit = 0;
     try
@@ -46,7 +46,7 @@ SCIP_RETCODE start_solver(
         options.add_options()
             ("help", "Print help")
             ("f,file", "Path to instance file", cxxopts::value<Vector<String>>())
-            ("a,agents-limit", "Read first N agents only", cxxopts::value<Agent>())
+            ("a,agents-limit", "Read first N agents only", cxxopts::value<Robot>())
             ("t,time-limit", "Time limit in seconds", cxxopts::value<SCIP_Real>())
             ("g,gap-limit", "Solve to an optimality gap", cxxopts::value<SCIP_Real>())
         ;
@@ -71,7 +71,7 @@ SCIP_RETCODE start_solver(
         // Get agents limit.
         if (result.count("agents-limit"))
         {
-            agents_limit = result["agents-limit"].as<Agent>();
+            agents_limit = result["agents-limit"].as<Robot>();
         }
 
         // Get time limit.

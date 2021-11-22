@@ -23,31 +23,31 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Includes.h"
 #include "Coordinates.h"
 
-struct AgentRobustCut
+struct RobotRobustCut
 {
     SCIP_ROW* row;
     const EdgeTime* begin;
     const EdgeTime* end;
 };
 
-class TwoAgentRobustCut
+class TwoRobotRobustCut
 {
 #ifdef DEBUG
     String name_;
 #endif
     SCIP_ROW* row_;
-    Agent a1_;
-    Agent a2_;
+    Robot a1_;
+    Robot a2_;
     Int a1_end;
     Int a2_end_;
     EdgeTime* ets_;
 
   public:
     // Constructors
-    TwoAgentRobustCut(
+    TwoRobotRobustCut(
         SCIP* scip,
-        const Agent a1,
-        const Agent a2,
+        const Robot a1,
+        const Robot a2,
         const Int nb_a1_edgetimes,
         const Int nb_a2_edgetimes
 #ifdef DEBUG
@@ -87,13 +87,13 @@ class TwoAgentRobustCut
     {
         return {a2_edge_times_begin(), a2_edge_times_end()};
     }
-    inline Array<Tuple<Agent, const EdgeTime*, const EdgeTime*>, 2> iterators() const
+    inline Array<Tuple<Robot, const EdgeTime*, const EdgeTime*>, 2> iterators() const
     {
-        using T = Tuple<Agent, const EdgeTime*, const EdgeTime*>;
+        using T = Tuple<Robot, const EdgeTime*, const EdgeTime*>;
         return {T{a1(), a1_edge_times_begin(), a1_edge_times_end()},
                 T{a2(), a2_edge_times_begin(), a2_edge_times_end()}};
     };
-    inline Pair<const EdgeTime*, const EdgeTime*> edge_times(const Agent a) const
+    inline Pair<const EdgeTime*, const EdgeTime*> edge_times(const Robot a) const
     {
         debug_assert(a == a1_ || a == a2_);
         return a == a1_ ? a1_edge_times() : a2_edge_times();

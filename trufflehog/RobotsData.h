@@ -27,9 +27,9 @@ Author: Edward Lam <ed@ed-lam.com>
 namespace TruffleHog
 {
 
-class AgentsData
+class RobotsData
 {
-    struct AgentData
+    struct RobotData
     {
         Node start;
         Node goal;
@@ -39,19 +39,19 @@ class AgentsData
         Position goal_y;
     };
 
-    Vector<AgentData> data;
+    Vector<RobotData> data;
 
   public:
     // Constructors
-    AgentsData() = default;
-    ~AgentsData() = default;
-    AgentsData(const AgentsData&) = default;
-    AgentsData(AgentsData&&) = default;
-    AgentsData& operator=(const AgentsData&) = default;
-    AgentsData& operator=(AgentsData&&) = default;
+    RobotsData() = default;
+    ~RobotsData() = default;
+    RobotsData(const RobotsData&) = default;
+    RobotsData(RobotsData&&) = default;
+    RobotsData& operator=(const RobotsData&) = default;
+    RobotsData& operator=(RobotsData&&) = default;
 
     // Getters
-    inline Agent size() const
+    inline Robot size() const
     {
         return data.size();
     }
@@ -59,7 +59,7 @@ class AgentsData
     {
         return !size();
     }
-    inline const AgentData& operator[](const Agent a) const
+    inline const RobotData& operator[](const Robot a) const
     {
         debug_assert(a < size());
         return data[a];

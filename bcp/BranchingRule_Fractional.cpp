@@ -33,7 +33,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 struct Score
 {
-    Agent a;
+    Robot a;
     SCIP_Real val;
     Time shortest_path_length;
 };
@@ -52,18 +52,18 @@ struct GoalTimeBound
 };
 
 Tuple<HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>,
-      HashTable<AgentTime, SuccessorDirection>,
+      HashTable<RobotTime, SuccessorDirection>,
       Vector<Int>,
       Vector<GoalTimeBound>>
 get_lp_branch_candidates(
     SCIP* scip,                 // SCIP
     SCIP_PROBDATA* probdata,    // Problem data
-    const Agent N               // Number of agents
+    const Robot N               // Number of agents
 )
 {
     // Create output.
     Tuple<HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>,
-          HashTable<AgentTime, SuccessorDirection>,
+          HashTable<RobotTime, SuccessorDirection>,
           Vector<Int>,
           Vector<GoalTimeBound>> output;
     auto& [candidates, succ_dirs, nb_paths, goal_time_bounds] = output;
@@ -115,7 +115,7 @@ get_lp_branch_candidates(
         if (vardata)
         {
             // Get the path.
-            const auto a = SCIPvardataGetAgent(vardata);
+            const auto a = SCIPvardataGetRobot(vardata);
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
@@ -145,7 +145,7 @@ get_lp_branch_candidates(
                 }
 
                 // Store whether the vertex is reached by waiting.
-                auto& prev = succ_dirs[AgentTime{{a, t - 1}}];
+                auto& prev = succ_dirs[RobotTime{{a, t - 1}}];
                 prev.has_move |= (path[t - 1].d != Direction::WAIT);
                 prev.has_wait |= (path[t - 1].d == Direction::WAIT);
             }
@@ -219,7 +219,7 @@ get_lp_branch_candidates(
         // Get the path.
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
-        const auto a = SCIPvardataGetAgent(vardata);
+        const auto a = SCIPvardataGetRobot(vardata);
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
@@ -248,21 +248,21 @@ get_lp_branch_candidates(
     return output;
 }
 
-Pair<AgentNodeTime, bool> find_decision_early_goal(
+Pair<RobotNodeTime, bool> find_decision_early_goal(
     SCIP* scip,                                      // SCIP
     SCIP_PROBDATA* probdata,                         // Problem data
-    const Agent N,                                   // Number of agents
+    const Robot N,                                   // Number of agents
     const Vector<GoalTimeBound>& goal_time_bounds    // Earliest and latest time an agent reaches its goal
 )
 {
     // Create output.
-    AgentNodeTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
+    RobotNodeTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
     bool prefer_branch_0 = false;
     Time best_diff = 1;
 
     // Get agent variables.
 #ifdef DEBUG
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 #endif
 
     // Select an agent involved in a rectangle clique conflict.
@@ -285,7 +285,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
             {
                 debug_assert(var);
                 auto vardata = SCIPvarGetData(var);
-                const auto a = SCIPvardataGetAgent(vardata);
+                const auto a = SCIPvardataGetRobot(vardata);
                 const auto path_length = SCIPvardataGetPathLength(vardata);
                 const auto path = SCIPvardataGetPath(vardata);
 
@@ -312,7 +312,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
                 debug_assert(var);
                 auto var = agent_vars[conflict.a2][v];
                 auto vardata = SCIPvarGetData(var);
-                const auto a = SCIPvardataGetAgent(vardata);
+                const auto a = SCIPvardataGetRobot(vardata);
                 const auto path_length = SCIPvardataGetPathLength(vardata);
                 const auto path = SCIPvardataGetPath(vardata);
 
@@ -366,7 +366,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
                 {
                     // Get the agent.
                     auto vardata = SCIPvarGetData(var);
-                    const auto a = SCIPvardataGetAgent(vardata);
+                    const auto a = SCIPvardataGetRobot(vardata);
 
                     // Prefer agents with the earliest finish time.
                     const auto earliest_finish = goal_time_bounds[a].first;
@@ -397,7 +397,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
     // Select an agent involved in a rectangle knapsack conflict.
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     const auto& rectangle_knapsack_cuts = rectangle_knapsack_get_cuts(probdata);
-    const auto& two_agent_robust_cuts = SCIPprobdataGetTwoAgentRobustCuts(probdata);
+    const auto& two_agent_robust_cuts = SCIPprobdataGetTwoRobotRobustCuts(probdata);
     {
         SCIP_Real best_lhs = 3.0 - 0.99;
         for (const auto [idx, out1_begin, in2_begin, out2_begin] : rectangle_knapsack_cuts)
@@ -468,7 +468,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
                 {
                     // Get the agent.
                     auto vardata = SCIPvarGetData(var);
-                    const auto a = SCIPvardataGetAgent(vardata);
+                    const auto a = SCIPvardataGetRobot(vardata);
 
                     // Prefer agents with the earliest finish time.
                     const auto earliest_finish = goal_time_bounds[a].first;
@@ -499,7 +499,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
     // Select any other agent.
     best_ant.t = std::numeric_limits<Time>::max();
     best_diff = 0;
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         const auto earliest_finish = goal_time_bounds[a].first;
         const auto diff = goal_time_bounds[a].last - goal_time_bounds[a].first;
@@ -521,20 +521,20 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
     return {best_ant, prefer_branch_0};
 }
 
-//Pair<AgentTime, bool> find_decision_wait(
+//Pair<RobotTime, bool> find_decision_wait(
 //    SCIP* scip,                                             // SCIP
 //    SCIP_PROBDATA* probdata,                                // Problem data
-//    const HashTable<AgentTime, SuccessorDirection>& succ_dirs,    // Vertices with a wait
+//    const HashTable<RobotTime, SuccessorDirection>& succ_dirs,    // Vertices with a wait
 //    const Vector<GoalTimeBound>& goal_time_bounds           // Earliest and latest time an agent reaches its goal
 //)
 //{
 //    // Create output.
-//    AgentTime best_at{-1, std::numeric_limits<Time>::max()};
+//    RobotTime best_at{-1, std::numeric_limits<Time>::max()};
 //    bool prefer_branch_0 = false;
 //
 //    // Get agent variables.
-//    auto agent_nvars = SCIPprobdataGetAgentNVars(probdata);
-//    auto agent_vars = SCIPprobdataGetAgentVars(probdata);
+//    auto agent_nvars = SCIPprobdataGetRobotNVars(probdata);
+//    auto agent_vars = SCIPprobdataGetRobotVars(probdata);
 //
 //    // Get rectangle constraints.
 //    const auto& rectangle_conflicts_conss = rectangle_conflicts_get_constraints(probdata);
@@ -556,7 +556,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //        {
 //            auto var = agent_vars[conflict.a1][v];
 //            auto vardata = SCIPvarGetData(var);
-//            const auto a = SCIPvardataGetAgent(vardata);
+//            const auto a = SCIPvardataGetRobot(vardata);
 //            const auto path_length = SCIPvardataGetPathLength(vardata);
 //            const auto path = SCIPvardataGetPath(vardata);
 //
@@ -577,7 +577,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //        {
 //            auto var = agent_vars[conflict.a2][v];
 //            auto vardata = SCIPvarGetData(var);
-//            const auto a = SCIPvardataGetAgent(vardata);
+//            const auto a = SCIPvardataGetRobot(vardata);
 //            const auto path_length = SCIPvardataGetPathLength(vardata);
 //            const auto path = SCIPvardataGetPath(vardata);
 //
@@ -627,7 +627,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //                {
 //                    // Get the path.
 //                    auto vardata = SCIPvarGetData(var);
-//                    const auto a = SCIPvardataGetAgent(vardata);
+//                    const auto a = SCIPvardataGetRobot(vardata);
 //                    const auto path_length = SCIPvardataGetPathLength(vardata);
 //                    const auto path = SCIPvardataGetPath(vardata);
 //
@@ -661,7 +661,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //                    // Find a wait between the entry and exit times.
 //                    for (Time t = entry; t < std::min(exit, best_at.t); ++t)
 //                    {
-//                        const AgentTime at{a, t};
+//                        const RobotTime at{a, t};
 //                        auto it = succ_dirs.find(at);
 //                        if (it != succ_dirs.end() &&
 //                            it->second.has_move && it->second.has_wait)
@@ -685,7 +685,7 @@ Pair<AgentNodeTime, bool> find_decision_early_goal(
 //    return {best_at, prefer_branch_0};
 //}
 
-Pair<AgentNodeTime, bool> find_decision_vertex(
+Pair<RobotNodeTime, bool> find_decision_vertex(
     SCIP* scip,                                                                   // SCIP
     SCIP_PROBDATA* probdata,                                                      // Problem data
     const HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>& candidates,    // Candidate agent-time-nodes
@@ -694,12 +694,12 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
 )
 {
     // Create output.
-    AgentNodeTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
+    RobotNodeTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
     bool prefer_branch_0 = false;
 
     // Get agent variables.
 #ifdef DEBUG
-    const auto& agent_vars = SCIPprobdataGetAgentVars(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars(probdata);
 #endif
 
     // Prefer vertices inside a rectangle clique conflict.
@@ -723,7 +723,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
             {
                 debug_assert(var);
                 auto vardata = SCIPvarGetData(var);
-                const auto a = SCIPvardataGetAgent(vardata);
+                const auto a = SCIPvardataGetRobot(vardata);
                 const auto path_length = SCIPvardataGetPathLength(vardata);
                 const auto path = SCIPvardataGetPath(vardata);
 
@@ -749,7 +749,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
             {
                 debug_assert(var);
                 auto vardata = SCIPvarGetData(var);
-                const auto a = SCIPvardataGetAgent(vardata);
+                const auto a = SCIPvardataGetRobot(vardata);
                 const auto path_length = SCIPvardataGetPathLength(vardata);
                 const auto path = SCIPvardataGetPath(vardata);
 
@@ -803,7 +803,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
                 {
                     // Get the path.
                     auto vardata = SCIPvarGetData(var);
-                    const auto a = SCIPvardataGetAgent(vardata);
+                    const auto a = SCIPvardataGetRobot(vardata);
                     const auto path_length = SCIPvardataGetPathLength(vardata);
                     const auto path = SCIPvardataGetPath(vardata);
 
@@ -872,7 +872,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
     // Prefer vertices inside a rectangle knapsack conflict.
 #ifdef USE_RECTANGLE_KNAPSACK_CONFLICTS
     const auto& rectangle_knapsack_cuts = rectangle_knapsack_get_cuts(probdata);
-    const auto& two_agent_robust_cuts = SCIPprobdataGetTwoAgentRobustCuts(probdata);
+    const auto& two_agent_robust_cuts = SCIPprobdataGetTwoRobotRobustCuts(probdata);
     {
         SCIP_Real best_lhs = 3.0 - 0.99;
         Time best_path_length = std::numeric_limits<Time>::max();
@@ -944,7 +944,7 @@ Pair<AgentNodeTime, bool> find_decision_vertex(
                 {
                     // Get the path.
                     auto vardata = SCIPvarGetData(var);
-                    const auto a = SCIPvardataGetAgent(vardata);
+                    const auto a = SCIPvardataGetRobot(vardata);
                     const auto path_length = SCIPvardataGetPathLength(vardata);
                     const auto path = SCIPvardataGetPath(vardata);
 
@@ -1097,7 +1097,7 @@ SCIP_RETCODE branch_lp(
     // is used.
     {
         const auto& dummy_vars = SCIPprobdataGetDummyVars(probdata);
-        for (Agent a = 0; a < N; ++a)
+        for (Robot a = 0; a < N; ++a)
         {
             // Get the variable.
             auto var = dummy_vars[a];

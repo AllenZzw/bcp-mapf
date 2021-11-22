@@ -30,13 +30,13 @@ Author: Edward Lam <ed@ed-lam.com>
 SCIP_RETCODE read_instance(
     SCIP* scip,                   // SCIP
     const char* scenario_path,    // File path to scenario
-    const Agent nb_agents         // Number of agents to read
+    const Robot nb_agents         // Number of agents to read
 )
 {
     // Get instance name.
     std::filesystem::path path(scenario_path);
     auto instance_name = path.filename().stem().string();
-    if (nb_agents < std::numeric_limits<Agent>::max())
+    if (nb_agents < std::numeric_limits<Robot>::max())
     {
         instance_name += fmt::format("-{}agents", nb_agents);
     }

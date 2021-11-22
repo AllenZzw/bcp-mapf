@@ -20,7 +20,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #ifndef TRUFFLEHOG_PROBLEMINSTANCE_H
 #define TRUFFLEHOG_PROBLEMINSTANCE_H
 
-#include "AgentsData.h"
+#include "RobotsData.h"
 #include "Map.h"
 
 namespace TruffleHog
@@ -29,12 +29,12 @@ namespace TruffleHog
 struct ProblemInstance
 {
     Map map;
-    AgentsData agents;
+    RobotsData agents;
 
   public:
     // Constructors
     ProblemInstance() = default;
-    ProblemInstance(const char* scenario_path, const Agent nb_agents = std::numeric_limits<Agent>::max());
+    ProblemInstance(const char* scenario_path, const Robot nb_agents = std::numeric_limits<Robot>::max());
     ProblemInstance(const ProblemInstance&) = default;
     ProblemInstance(ProblemInstance&&) = default;
     ProblemInstance& operator=(const ProblemInstance&) = default;

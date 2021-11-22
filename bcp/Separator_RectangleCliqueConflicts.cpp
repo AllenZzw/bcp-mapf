@@ -98,7 +98,7 @@ SCIP_RETCODE rectangle_clique_conflicts_create_cut(
         // Get the path.
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
-        debug_assert(conflict.a1 == SCIPvardataGetAgent(vardata));
+        debug_assert(conflict.a1 == SCIPvardataGetRobot(vardata));
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
@@ -138,7 +138,7 @@ SCIP_RETCODE rectangle_clique_conflicts_create_cut(
         // Get the path.
         debug_assert(var);
         auto vardata = SCIPvarGetData(var);
-        debug_assert(conflict.a2 == SCIPvardataGetAgent(vardata));
+        debug_assert(conflict.a2 == SCIPvardataGetRobot(vardata));
         const auto path_length = SCIPvardataGetPathLength(vardata);
         const auto path = SCIPvardataGetPath(vardata);
 
@@ -213,8 +213,8 @@ RectangleConflict find_rectangle(
     const Map& map,                                               // Map
     const Vector<HashTable<EdgeTime, SCIP_Real>>& agent_edges,    // Edge weights for each agent
     const NodeTime nt,                                            // Node-time of the conflict
-    const Agent a1,                                               // Agent 1
-    const Agent a2,                                               // Agent 2
+    const Robot a1,                                               // Robot 1
+    const Robot a2,                                               // Robot 2
     SCIP_VAR* var1,                                               // Path of agent 1
     SCIP_VAR* var2,                                               // Path of agent 2
     const Int a1_nvars,                                           // Number of variables for agent 1
@@ -386,7 +386,7 @@ RectangleConflict find_rectangle(
 
             // Get the path.
             auto vardata = SCIPvarGetData(var);
-            debug_assert(conflict.a1 == SCIPvardataGetAgent(vardata));
+            debug_assert(conflict.a1 == SCIPvardataGetRobot(vardata));
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
@@ -414,7 +414,7 @@ RectangleConflict find_rectangle(
 
             // Get the path.
             auto vardata = SCIPvarGetData(var);
-            debug_assert(conflict.a2 == SCIPvardataGetAgent(vardata));
+            debug_assert(conflict.a2 == SCIPvardataGetRobot(vardata));
             const auto path_length = SCIPvardataGetPathLength(vardata);
             const auto path = SCIPvardataGetPath(vardata);
 
@@ -491,13 +491,13 @@ SCIP_RETCODE rectangle_clique_conflicts_separate(
         return SCIP_OKAY;
 
     // Get variables.
-    const auto& agent_vars = SCIPprobdataGetAgentVars2(probdata);
+    const auto& agent_vars = SCIPprobdataGetRobotVars2(probdata);
 
     // Get conflicting paths and vertices of each agent.
     Vector<Vector<SCIP_VAR*>> agent_paths(N);
     Vector<Vector<NodeTime>> agent_vertices(N);
     Vector<HashTable<EdgeTime, SCIP_Real>> agent_edges(N);
-    for (Agent a = 0; a < N; ++a)
+    for (Robot a = 0; a < N; ++a)
     {
         // Get agent-specific data.
         auto& agent_paths_a = agent_paths[a];
@@ -572,8 +572,8 @@ SCIP_RETCODE rectangle_clique_conflicts_separate(
 
     // Find conflicts.
     Vector<NodeTime> common_vertices;
-    for (Agent a1 = 0; a1 < N - 1; ++a1)
-        for (Agent a2 = a1 + 1; a2 < N; ++a2)
+    for (Robot a1 = 0; a1 < N - 1; ++a1)
+        for (Robot a2 = a1 + 1; a2 < N; ++a2)
         {
             // Find common vertices.
             common_vertices.clear();
@@ -800,7 +800,7 @@ SCIP_RETCODE rectangle_clique_conflicts_add_var(
     SCIP* scip,                 // SCIP
     SCIP_SEPA* sepa,            // Separator for rectangle clique conflicts
     SCIP_VAR* var,              // Variable
-    const Agent a,              // Agent
+    const Robot a,              // Robot
     const Time path_length,     // Path length
     const Edge* const path      // Path
 )
