@@ -366,7 +366,7 @@ SCIP_RETCODE start_solver(
         SCIP_CALL(SCIPprintStatistics(scip, NULL));
 
         // Write best solution to file.
-        SCIP_CALL(write_best_solution(scip));
+        // SCIP_CALL(write_best_solution(scip));
     }
 
     // Free memory.

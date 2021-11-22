@@ -17,6 +17,9 @@ if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif ()
 
+include_directories("lns/inc" "lns/inc/CBS" "lns/inc/PIBT")
+file(GLOB LNS_SOURCES "lns/src/*.cpp" "lns/src/CBS/*.cpp" "lns/src/PIBT/*.cpp")
+
 # Set source files.
 set(TRUFFLEHOG_SOURCE_FILES
     robin-hood-hashing/src/include/robin_hood.h
@@ -225,14 +228,12 @@ if (NOT LIBM)
     set(LIBM "")
 endif ()
 
-include_directories("lns/inc" "lns/inc/CBS" "lns/inc/PIBT")
-file(GLOB LNS_SOURCES "lns/src/*.cpp" "lns/src/CBS/*.cpp" "lns/src/PIBT/*.cpp")
-
 # Link to libraries.
 target_link_libraries(bcp-mapf fmt::fmt-header-only cliquer ${SCIP_LIBRARY} ${LIBM} ${Boost_LIBRARIES} Eigen3::Eigen)
 target_link_libraries(trufflehog fmt::fmt-header-only)
 
 # Set options.
+target_compile_options(bcp-mapf PRIVATE -DUSE_INITIAL_SOLUTION)
 target_compile_options(bcp-mapf PRIVATE -DUSE_RESERVATION_TABLE)
 target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_PATH_LENGTH_NOGOODS)

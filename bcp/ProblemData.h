@@ -229,6 +229,14 @@ Robot SCIPprobdataGetN(
     SCIP_ProbData* probdata    // Problem data
 );
 
+const String SCIPprobdataGetMapPath(
+    SCIP_ProbData* probdata    // Problem data
+);
+
+const String SCIPprobdataGetScenarioPath(
+    SCIP_ProbData* probdata    // Problem data
+);
+
 // Get the agents data
 const RobotsData& SCIPprobdataGetRobotsData(
     SCIP_ProbData* probdata    // Problem data

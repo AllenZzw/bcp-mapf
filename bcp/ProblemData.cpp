@@ -300,8 +300,9 @@ SCIP_DECL_PROBTRANS(probtrans)
     
     // Create a warm-start solution.
     release_assert(SCIPgetProbData(scip) == *targetdata, "Error in transforming problem");
-//    SCIP_CALL(add_initial_solution(scip));
-
+#ifdef USE_INITIAL_SOLUTION
+   SCIP_CALL(add_initial_solution(scip));
+#endif
     // Done.
     return SCIP_OKAY;
 }
@@ -1674,6 +1675,22 @@ Robot SCIPprobdataGetN(
     debug_assert(probdata);
     debug_assert(probdata->N >= 1);
     return probdata->N;
+}
+
+const String SCIPprobdataGetMapPath(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->instance->map_path_str; 
+}
+
+const String SCIPprobdataGetScenarioPath(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return probdata->instance->scenario_path_str; 
 }
 
 // Get the pricing solver

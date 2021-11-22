@@ -30,6 +30,8 @@ struct ProblemInstance
 {
     Map map;
     RobotsData agents;
+    String map_path_str;
+    String scenario_path_str; 
 
   public:
     // Constructors
