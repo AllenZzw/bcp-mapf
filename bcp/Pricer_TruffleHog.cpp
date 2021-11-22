@@ -32,7 +32,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include <chrono>
 #include <numeric>
 
-#include "trufflehog/Instance.h"
+#include "trufflehog/ProblemInstance.h"
 #include "trufflehog/AStar.h"
 
 // Pricer properties

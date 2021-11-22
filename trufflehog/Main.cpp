@@ -33,7 +33,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "LabelPool.h"
 #include "AgentsData.h"
 #include "Map.h"
-#include "Instance.h"
+#include "ProblemInstance.h"
 #include "Penalties.h"
 #include "Heuristic.h"
 #include "AStar.h"
@@ -44,7 +44,7 @@ int main()
 
     // Load instance.
     const char* scen_path = "instances/movingai_2018/20x20map/20x20map-20agents-0.scen";
-    const auto instance = Instance(scen_path);
+    const auto instance = ProblemInstance(scen_path);
     const auto& map = instance.map;
     const auto& agents = instance.agents;
     const auto A = agents.size();

@@ -17,8 +17,8 @@ along with BCP-MAPF.  If not, see <https://www.gnu.org/licenses/>.
 Author: Edward Lam <ed@ed-lam.com>
 */
 
-#ifndef TRUFFLEHOG_INSTANCE_H
-#define TRUFFLEHOG_INSTANCE_H
+#ifndef TRUFFLEHOG_PROBLEMINSTANCE_H
+#define TRUFFLEHOG_PROBLEMINSTANCE_H
 
 #include "AgentsData.h"
 #include "Map.h"
@@ -26,20 +26,20 @@ Author: Edward Lam <ed@ed-lam.com>
 namespace TruffleHog
 {
 
-struct Instance
+struct ProblemInstance
 {
     Map map;
     AgentsData agents;
 
   public:
     // Constructors
-    Instance() = default;
-    Instance(const char* scenario_path, const Agent nb_agents = std::numeric_limits<Agent>::max());
-    Instance(const Instance&) = default;
-    Instance(Instance&&) = default;
-    Instance& operator=(const Instance&) = default;
-    Instance& operator=(Instance&&) = default;
-    ~Instance() = default;
+    ProblemInstance() = default;
+    ProblemInstance(const char* scenario_path, const Agent nb_agents = std::numeric_limits<Agent>::max());
+    ProblemInstance(const ProblemInstance&) = default;
+    ProblemInstance(ProblemInstance&&) = default;
+    ProblemInstance& operator=(const ProblemInstance&) = default;
+    ProblemInstance& operator=(ProblemInstance&&) = default;
+    ~ProblemInstance() = default;
 };
 
 }

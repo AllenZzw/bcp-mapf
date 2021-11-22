@@ -179,7 +179,7 @@ class AStar
     };
 
   private:
-    // Instance
+    // ProblemInstance
     const Map& map_;
 
     // Inputs for a run

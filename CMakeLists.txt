@@ -25,8 +25,8 @@ set(TRUFFLEHOG_SOURCE_FILES
     trufflehog/Coordinates.h
     trufflehog/Map.h
     trufflehog/AgentsData.h
-    trufflehog/Instance.h
-    trufflehog/Instance.cpp
+    trufflehog/ProblemInstance.h
+    trufflehog/ProblemInstance.cpp
     trufflehog/PriorityQueue.h
     trufflehog/LabelPool.h
     trufflehog/LabelPool.cpp

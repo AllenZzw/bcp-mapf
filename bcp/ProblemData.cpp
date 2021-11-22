@@ -94,8 +94,8 @@ Author: Edward Lam <ed@ed-lam.com>
 // Problem data
 struct SCIP_ProbData
 {
-    // Instance data
-    SharedPtr<Instance> instance;                                               // Instance
+    // ProblemInstance data
+    SharedPtr<ProblemInstance> instance;                                               // ProblemInstance
     Agent N;                                                                    // Number of agents
 
     // Model data
@@ -941,7 +941,7 @@ SCIP_RETCODE SCIPprobdataAddTwoAgentRobustCut(
 SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
     const char* probname,             // Problem name
-    SharedPtr<Instance>& instance,    // Instance
+    SharedPtr<ProblemInstance>& instance,    // ProblemInstance
     SharedPtr<AStar>& astar           // Search algorithm
 )
 {

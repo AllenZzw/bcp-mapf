@@ -24,7 +24,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include "Coordinates.h"
 #include "Separator.h"
 
-#include "trufflehog/Instance.h"
+#include "trufflehog/ProblemInstance.h"
 #include "trufflehog/AStar.h"
 
 #ifdef USE_GOAL_CONFLICTS
@@ -49,7 +49,7 @@ struct PathLengthNogood
 SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
     const char* probname,             // Problem name
-    SharedPtr<Instance>& instance,    // Instance
+    SharedPtr<ProblemInstance>& instance,    // ProblemInstance
     SharedPtr<AStar>& astar           // Search algorithm
 );
 

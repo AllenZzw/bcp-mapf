@@ -18,7 +18,7 @@ Author: Edward Lam <ed@ed-lam.com>
 */
 
 #include <fstream>
-#include "Instance.h"
+#include "ProblemInstance.h"
 
 namespace TruffleHog
 {
@@ -126,7 +126,7 @@ void read_map(const char* const map_path, Map& map)
     map_file.close();
 }
 
-Instance::Instance(const char* scenario_path, const Agent nb_agents)
+ProblemInstance::ProblemInstance(const char* scenario_path, const Agent nb_agents)
 {
     // Read agents.
     Vector<AgentMapData> agents_map_data;

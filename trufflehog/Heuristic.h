@@ -68,7 +68,7 @@ class Heuristic
         inline void update_pqueue_index(Label*, const Int) {}
     };
 
-    // Instance
+    // ProblemInstance
     const Map& map_;
 
     // Lower bounds

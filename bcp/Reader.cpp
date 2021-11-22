@@ -23,7 +23,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #include <regex>
 #include <filesystem>
 
-#include "trufflehog/Instance.h"
+#include "trufflehog/ProblemInstance.h"
 #include "trufflehog/AStar.h"
 
 // Read instance from file
@@ -42,7 +42,7 @@ SCIP_RETCODE read_instance(
     }
 
     // Load instance.
-    auto instance = std::make_shared<Instance>(scenario_path, nb_agents);
+    auto instance = std::make_shared<ProblemInstance>(scenario_path, nb_agents);
 
     // Create pricing solver.
     auto astar = std::make_shared<AStar>(instance->map);
