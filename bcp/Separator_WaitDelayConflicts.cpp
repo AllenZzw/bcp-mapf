@@ -41,7 +41,7 @@ struct WaitDelayConflictData
     Array<EdgeTime, 9> a1_ets;
     EdgeTime a2_et;
 #ifdef DEBUG
-    NodeTime nt;
+    LocationTime nt;
 #endif
 };
 
@@ -54,7 +54,7 @@ SCIP_RETCODE waitdelay_conflicts_create_cut(
     const Robot a1,                      // Robot 1
     const Robot a2,                      // Robot 2
 #ifdef DEBUG
-    const NodeTime nt,                   // Node-time of the conflict
+    const LocationTime nt,                   // Location-time of the conflict
 #endif
     const Array<EdgeTime, 9>& a1_ets,    // Edge-times of agent 1
     const EdgeTime a2_et,                // Edge-time of the wait by agent 2

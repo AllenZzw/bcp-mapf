@@ -38,7 +38,7 @@ class Heuristic
         size_t label_id;
         const Label* parent;
 #endif
-        Node n;
+        Location n;
         IntCost g;
     };
 #ifdef DEBUG
@@ -72,7 +72,7 @@ class Heuristic
     const Map& map_;
 
     // Lower bounds
-    HashTable<Node, Vector<IntCost>> h_;
+    HashTable<Location, Vector<IntCost>> h_;
     Time max_path_length_;
 
     // Solver data structures
@@ -97,19 +97,19 @@ class Heuristic
     inline auto max_path_length() const { return max_path_length_; }
 
     // Get the lower bound from every node to a goal node
-    const Vector<IntCost>& get_h(const Node goal);
+    const Vector<IntCost>& get_h(const Location goal);
 
   private:
     // Check if a node has already been visited
-    bool dominated(const Node n);
+    bool dominated(const Location n);
 
     // Generate labels
-    void generate_start(const Node start);
-    void generate(const Label* const current, const Node n);
+    void generate_start(const Location start);
+    void generate(const Label* const current, const Location n);
     void generate_neighbours(const Label* const current);
 
     // Compute lower bound from every node to a goal node
-    void search(const Node goal, Vector<IntCost>& h);
+    void search(const Location goal, Vector<IntCost>& h);
 };
 
 }

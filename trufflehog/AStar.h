@@ -53,14 +53,14 @@ class AStar
             };
             struct
             {
-                Node n : 32;
+                Location n : 32;
                 Time t : 31;
             };
 #else
             uint64_t nt;
             struct
             {
-                Node n;
+                Location n;
                 Time t;
             };
 #endif
@@ -159,9 +159,9 @@ class AStar
     struct Data
     {
         // Waypoints
-        Node start;
-        Vector<NodeTime> waypoints;
-        Node goal;
+        Location start;
+        Vector<LocationTime> waypoints;
+        Location goal;
         Time earliest_goal_time;
         Time latest_goal_time;
 
@@ -191,7 +191,7 @@ class AStar
     Heuristic heuristic_;
     LabelPool label_pool_;
     AStarPriorityQueue open_;
-    HashTable<NodeTime, Label*> frontier_;
+    HashTable<LocationTime, Label*> frontier_;
 #ifdef DEBUG
     size_t nb_labels_;
 #endif
@@ -215,14 +215,14 @@ class AStar
     const auto& data() const { return data_; }
 
     // Solve
-    inline void compute_h(const Node goal) { heuristic_.get_h(goal); }
+    inline void compute_h(const Location goal) { heuristic_.get_h(goal); }
     void preprocess_input();
     template<bool is_farkas>
-    Pair<Vector<NodeTime>, Cost> solve();
+    Pair<Vector<LocationTime>, Cost> solve();
 
     // Debug
 #ifdef DEBUG
-    Pair<Vector<NodeTime>, Cost> calculate_cost(const Vector<Edge>& input_path);
+    Pair<Vector<LocationTime>, Cost> calculate_cost(const Vector<Edge>& input_path);
     void set_verbose(const bool on = true);
 #endif
 
@@ -236,12 +236,12 @@ class AStar
     void generate_neighbours(Label* const current, const Waypoint w, const Time waypoint_time);
     void generate(Label* const current,
                   const Waypoint w,
-                  const Node next_n,
+                  const Location next_n,
                   const Cost cost,
                   const Time waypoint_time);
     template<IntCost default_cost>
     void generate_neighbours_last_segment(Label* const current);
-    void generate_last_segment(Label* const current, const Node next_n, const Cost cost);
+    void generate_last_segment(Label* const current, const Location next_n, const Cost cost);
     void generate_end(Label* const current);
 };
 

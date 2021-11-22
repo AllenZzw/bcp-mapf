@@ -37,7 +37,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Data for vertex conflicts
 struct VertexConflictsConsData
 {
-    HashTable<NodeTime, VertexConflict> conflicts;
+    HashTable<LocationTime, VertexConflict> conflicts;
 };
 
 // Create a constraint for vertex conflicts and include it
@@ -94,7 +94,7 @@ SCIP_RETCODE vertex_conflicts_create_cut(
     SCIP* scip,                           // SCIP
     SCIP_CONS* cons,                      // Constraint
     VertexConflictsConsData* consdata,    // Constraint data
-    const NodeTime nt,                    // Node-time of the conflict
+    const LocationTime nt,                    // Location-time of the conflict
     const Vector<SCIP_VAR*>& vars,        // Variables
     SCIP_Result* result                   // Output result
 )
@@ -234,7 +234,7 @@ SCIP_RETCODE vertex_conflicts_check(
     }
 
     // Calculate the number of times a vertex is used by summing the columns.
-    HashTable<NodeTime, SCIP_Real> vertex_times_used;
+    HashTable<LocationTime, SCIP_Real> vertex_times_used;
     for (auto var : vars)
     {
         // Get the path.
@@ -252,13 +252,13 @@ SCIP_RETCODE vertex_conflicts_check(
             Time t = 1;
             for (; t < path_length; ++t)
             {
-                const NodeTime nt{path[t].n, t};
+                const LocationTime nt{path[t].n, t};
                 vertex_times_used[nt] += var_val;
             }
             const auto n = path[path_length - 1].n;
             for (; t < makespan; ++t)
             {
-                const NodeTime nt{n, t};
+                const LocationTime nt{n, t};
                 vertex_times_used[nt] += var_val;
             }
         }
@@ -335,7 +335,7 @@ SCIP_RETCODE vertex_conflicts_separate(
     }
 
     // Calculate the number of times a vertex is used by summing the columns.
-    HashTable<NodeTime, SCIP_Real> vertex_used;
+    HashTable<LocationTime, SCIP_Real> vertex_used;
     for (auto var : vars)
     {
         // Get the path.
@@ -353,13 +353,13 @@ SCIP_RETCODE vertex_conflicts_separate(
             Time t = 1;
             for (; t < path_length; ++t)
             {
-                const NodeTime nt{path[t].n, t};
+                const LocationTime nt{path[t].n, t};
                 vertex_used[nt] += var_val;
             }
             const auto n = path[path_length - 1].n;
             for (; t < makespan; ++t)
             {
-                const NodeTime nt{n, t};
+                const LocationTime nt{n, t};
                 vertex_used[nt] += var_val;
             }
         }
@@ -835,7 +835,7 @@ SCIP_RETCODE vertex_conflicts_add_var(
     return SCIP_OKAY;
 }
 
-const HashTable<NodeTime, VertexConflict>& vertex_conflicts_get_constraints(
+const HashTable<LocationTime, VertexConflict>& vertex_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 )
 {

@@ -38,7 +38,7 @@ struct GoalConflictData
     SCIP_Real lhs;
     Robot a1;
     Robot a2;
-    NodeTime nt;
+    LocationTime nt;
 };
 
 #define MATRIX(i,j) (i * N + j)
@@ -49,7 +49,7 @@ SCIP_RETCODE goal_conflicts_create_cut(
     Vector<GoalConflict>& goal_conflicts,    // Goal conflicts
     const Robot a1,                          // Robot of the goal
     const Robot a2,                          // Robot trying to use the goal vertex
-    const NodeTime nt,                       // Node-time of the conflict
+    const LocationTime nt,                       // Location-time of the conflict
     const Vector<SCIP_VAR*>& a1_vars,        // Array of variables for agent 1
     const Vector<SCIP_VAR*>& a2_vars,        // Array of variables for agent 2
     SCIP_Result* result                      // Output result
@@ -217,7 +217,7 @@ SCIP_RETCODE goal_conflicts_separate(
 //        {
 //            const auto a1 = a1s[idx];
 //            const auto a2 = a2s[idx];
-//            const auto nt = NodeTime(map.get_id(xs[idx], ys[idx]), ts[idx]);
+//            const auto nt = LocationTime(map.get_id(xs[idx], ys[idx]), ts[idx]);
 //
 //            SCIP_CALL(goal_conflicts_create_cut(scip,
 //                                                sepa,
@@ -264,7 +264,7 @@ SCIP_RETCODE goal_conflicts_separate(
         for (const auto conflict_time : finish_times[a1])
         {
             // Make the node-time of the conflict.
-            const NodeTime nt{conflict_node, conflict_time};
+            const LocationTime nt{conflict_node, conflict_time};
 
             // Sum paths belonging to the agent of the conflicting goal.
             SCIP_Real lhs1 = 0.0;

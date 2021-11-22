@@ -107,7 +107,7 @@ struct SCIP_ProbData
     Vector<SCIP_VAR*> vars;                                                     // Array of variables
     Vector<SCIP_VAR*> dummy_vars;                                               // Array of dummy variables
     Vector<Vector<SCIP_VAR*>> agent_vars;                                       // Array of variables for each agent
-    Vector<HashTable<NodeTime, SCIP_Real>> fractional_vertices;                 // Fractional vertices
+    Vector<HashTable<LocationTime, SCIP_Real>> fractional_vertices;                 // Fractional vertices
     Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges;                    // Fractional edges
     Vector<HashTable<EdgeTime, SCIP_Real>> fractional_edges_no_waits;           // Fractional edges without waits
     HashTable<EdgeTime, Vector<SCIP_Real>> fractional_edges_vec;                // Fractional edges by edge-time
@@ -138,7 +138,7 @@ struct SCIP_ProbData
 #endif
 #ifdef USE_GOAL_CONFLICTS
     Vector<Vector<Pair<Time, SCIP_ROW*>>> goal_agent_goal_conflicts;            // Goal conflicts of an agent whose goal is in conflict
-    Vector<Vector<Pair<NodeTime, SCIP_ROW*>>> crossing_agent_goal_conflicts;    // Goal conflicts of an agent crossing the goal of another agent
+    Vector<Vector<Pair<LocationTime, SCIP_ROW*>>> crossing_agent_goal_conflicts;    // Goal conflicts of an agent crossing the goal of another agent
 #endif
 };
 
@@ -1360,7 +1360,7 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
 
 // Get array of goal conflicts of an agent crossing the goal of another agent
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
+Vector<Vector<Pair<LocationTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1370,7 +1370,7 @@ Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConfl
 #endif
 
 // Get the vertices fractionally used by each agent
-const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
+const Vector<HashTable<LocationTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 )
 {
@@ -1483,7 +1483,7 @@ void update_fractional_vertices_and_edges(
                 {
                     // Store the vertex.
                     {
-                        const NodeTime nt{path[t].n, t};
+                        const LocationTime nt{path[t].n, t};
                         agent_vertices[nt] += var_val;
                     }
 
@@ -1512,7 +1512,7 @@ void update_fractional_vertices_and_edges(
                 {
                     // Store the vertex.
                     {
-                        const NodeTime nt{n, t};
+                        const LocationTime nt{n, t};
                         agent_vertices[nt] += var_val;
                     }
 
@@ -1530,7 +1530,7 @@ void update_fractional_vertices_and_edges(
 
                 // Store the last vertex.
                 {
-                    const NodeTime nt{n, t};
+                    const LocationTime nt{n, t};
                     agent_vertices[nt] += var_val;
                 }
             }
@@ -1808,7 +1808,7 @@ void print_used_paths(
         }
 
     // Get fractional vertices.
-    HashTable<NodeTime, HashTable<Robot, SCIP_Real>> vertex_times_used;
+    HashTable<LocationTime, HashTable<Robot, SCIP_Real>> vertex_times_used;
     HashTable<EdgeTime, HashTable<Robot, SCIP_Real>> edge_times_used;
     if (!sol &&
         SCIPgetStage(scip) == SCIP_STAGE_SOLVING &&
@@ -1835,13 +1835,13 @@ void print_used_paths(
                     Time t = 1;
                     for (; t < path_length; ++t)
                     {
-                        const NodeTime nt{path[t].n, t};
+                        const LocationTime nt{path[t].n, t};
                         vertex_times_used[nt][a] += var_val;
                     }
                     const auto n = path[path_length - 1].n;
                     for (; t < makespan; ++t)
                     {
-                        const NodeTime nt{n, t};
+                        const LocationTime nt{n, t};
                         vertex_times_used[nt][a] += var_val;
                     }
                 }
@@ -1961,7 +1961,7 @@ void print_used_paths(
 #endif
 
                     fmt::terminal_color colour = fmt::terminal_color::black;
-                    if (auto it = vertex_times_used.find(NodeTime(e.n, t)); it != vertex_times_used.end())
+                    if (auto it = vertex_times_used.find(LocationTime(e.n, t)); it != vertex_times_used.end())
                     {
                         const auto n = it->second.size();
                         if (n > 1)

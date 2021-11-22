@@ -53,7 +53,7 @@ static_assert(sizeof(EdgeCosts) == 6 * 8);
 // Penalties for crossing an edge
 class EdgePenalties
 {
-    HashTable<NodeTime, EdgeCosts> edge_penalties_;
+    HashTable<LocationTime, EdgeCosts> edge_penalties_;
 
   public:
     // Constructors
@@ -69,12 +69,12 @@ class EdgePenalties
     inline auto begin() const { return edge_penalties_.begin(); }
     inline auto end() { return edge_penalties_.end(); }
     inline auto end() const { return edge_penalties_.end(); }
-    inline auto find(const NodeTime nt) { return edge_penalties_.find(nt); }
-    inline auto find(const NodeTime nt) const { return edge_penalties_.find(nt); }
+    inline auto find(const LocationTime nt) { return edge_penalties_.find(nt); }
+    inline auto find(const LocationTime nt) const { return edge_penalties_.find(nt); }
 
     // Return the edge costs of a node-time
     template<IntCost default_cost>
-    inline EdgeCosts get_edge_costs(const NodeTime nt)
+    inline EdgeCosts get_edge_costs(const LocationTime nt)
     {
         // Make default edge costs.
         EdgeCosts costs(default_cost);
@@ -105,13 +105,13 @@ class EdgePenalties
     }
 
     // Create or return the outgoing edge penalties of a node-time
-    inline EdgeCosts& get_edge_penalties(const NodeTime nt)
+    inline EdgeCosts& get_edge_penalties(const LocationTime nt)
     {
         return edge_penalties_[nt];
     }
-    inline EdgeCosts& get_edge_penalties(const Node n, const Time t)
+    inline EdgeCosts& get_edge_penalties(const Location n, const Time t)
     {
-        return get_edge_penalties(NodeTime{n, t});
+        return get_edge_penalties(LocationTime{n, t});
     }
 
     // Clear for next run
@@ -140,42 +140,42 @@ class EdgePenalties
     // Debug
     void print(const Map& map)
     {
-        HashTable<NodeTime, EdgeCosts> incoming_penalties;
+        HashTable<LocationTime, EdgeCosts> incoming_penalties;
         for (const auto [outgoing_nt, penalties] : edge_penalties_)
         {
             if (penalties.north != 0)
             {
                 const auto incoming_n = map.get_north(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const NodeTime incoming_nt{incoming_n, incoming_t};
+                const LocationTime incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].south += penalties.north;
             }
             if (penalties.south != 0)
             {
                 const auto incoming_n = map.get_south(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const NodeTime incoming_nt{incoming_n, incoming_t};
+                const LocationTime incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].north += penalties.south;
             }
             if (penalties.east != 0)
             {
                 const auto incoming_n = map.get_east(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const NodeTime incoming_nt{incoming_n, incoming_t};
+                const LocationTime incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].west += penalties.east;
             }
             if (penalties.west != 0)
             {
                 const auto incoming_n = map.get_west(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const NodeTime incoming_nt{incoming_n, incoming_t};
+                const LocationTime incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].east += penalties.west;
             }
             if (penalties.wait != 0)
             {
                 const auto incoming_n = map.get_wait(outgoing_nt.n);
                 const auto incoming_t = outgoing_nt.t + 1;
-                const NodeTime incoming_nt{incoming_n, incoming_t};
+                const LocationTime incoming_nt{incoming_n, incoming_t};
                 incoming_penalties[incoming_nt].wait += penalties.wait;
             }
         }
@@ -194,7 +194,7 @@ class EdgePenalties
     }
     void print_used(const Map& map)
     {
-        Vector<Pair<NodeTime, EdgeCosts>> all_penalties;
+        Vector<Pair<LocationTime, EdgeCosts>> all_penalties;
         for (const auto [nt, penalties] : edge_penalties_)
             if (penalties.used)
             {
@@ -202,7 +202,7 @@ class EdgePenalties
             }
         std::sort(all_penalties.begin(),
                   all_penalties.end(),
-                  [](const Pair<NodeTime, EdgeCosts>& a, const Pair<NodeTime, EdgeCosts>& b)
+                  [](const Pair<LocationTime, EdgeCosts>& a, const Pair<LocationTime, EdgeCosts>& b)
                   {
                       return a.first.t < b.first.t;
                   });
@@ -228,7 +228,7 @@ class GoalPenalties
   public:
     struct GoalPenalty
     {
-        NodeTime nt;
+        LocationTime nt;
         Cost cost;
     };
     static_assert(sizeof(GoalPenalty) == 2*8);
@@ -264,7 +264,7 @@ class GoalPenalties
     }
 
     // Add a goal penalty for crossing the goal of another agent
-    void add(const NodeTime nt, const Cost cost)
+    void add(const LocationTime nt, const Cost cost)
     {
         debug_assert(cost >= 0);
         goal_penalties_.push_back({nt, cost});

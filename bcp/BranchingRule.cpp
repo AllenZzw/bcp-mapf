@@ -106,7 +106,7 @@ SCIP_RETCODE SCIPincludeBranchrule(
 
 SCIP_RETCODE branch_on_vertex(
     SCIP* scip,                   // SCIP
-    const RobotNodeTime ant,      // Branch decision
+    const RobotLocationTime ant,      // Branch decision
     const bool prefer_branch_0    // Preferred branch direction
 )
 {
@@ -150,8 +150,8 @@ SCIP_RETCODE branch_on_vertex(
 
             // Get the decision.
             const auto a = SCIPgetVertexBranchingRobot(cons);
-            const auto nt = SCIPgetVertexBranchingNodeTime(cons);
-            const RobotNodeTime decision{.a = a, .n = nt.n, .t = nt.t};
+            const auto nt = SCIPgetVertexBranchingLocationTime(cons);
+            const RobotLocationTime decision{.a = a, .n = nt.n, .t = nt.t};
 
             // Check.
             release_assert(decision != ant);
@@ -190,7 +190,7 @@ SCIP_RETCODE branch_on_vertex(
 #endif
                                             VertexBranchDirection::Use,
                                             ant.a,
-                                            NodeTime(ant.n, ant.t),
+                                            LocationTime(ant.n, ant.t),
                                             branch_1_node,
                                             TRUE));
     SCIP_CALL(SCIPcreateConsVertexBranching(scip,
@@ -202,7 +202,7 @@ SCIP_RETCODE branch_on_vertex(
 #endif
                                             VertexBranchDirection::Forbid,
                                             ant.a,
-                                            NodeTime(ant.n, ant.t),
+                                            LocationTime(ant.n, ant.t),
                                             branch_0_node,
                                             TRUE));
 
@@ -325,7 +325,7 @@ SCIP_RETCODE branch_on_vertex(
 
 SCIP_RETCODE branch_on_length(
     SCIP* scip,                   // SCIP
-    const RobotNodeTime ant,      // Branch decision
+    const RobotLocationTime ant,      // Branch decision
     const bool prefer_branch_0    // Preferred branch direction
 )
 {
@@ -372,7 +372,7 @@ SCIP_RETCODE branch_on_length(
             // Get the decision.
             const auto a = SCIPgetLengthBranchingRobot(cons);
             const auto dir = SCIPgetLengthBranchingDirection(cons);
-            const auto t = SCIPgetLengthBranchingNodeTime(cons).t;
+            const auto t = SCIPgetLengthBranchingLocationTime(cons).t;
 
             // Store the decision.
             if (a == ant.a)
@@ -422,7 +422,7 @@ SCIP_RETCODE branch_on_length(
 #endif
                                             LengthBranchDirection::GEq,
                                             ant.a,
-                                            NodeTime(ant.n, ant.t + 1),
+                                            LocationTime(ant.n, ant.t + 1),
                                             branch_1_node,
                                             TRUE));
     SCIP_CALL(SCIPcreateConsLengthBranching(scip,
@@ -434,7 +434,7 @@ SCIP_RETCODE branch_on_length(
 #endif
                                             LengthBranchDirection::LEq,
                                             ant.a,
-                                            NodeTime(ant.n, ant.t),
+                                            LocationTime(ant.n, ant.t),
                                             branch_0_node,
                                             TRUE));
 

@@ -88,7 +88,7 @@ void read_map(const char* const map_path, Map& map)
         }
         release_assert(c == '\n', "Invalid map header");
     }
-    Node n = width + 1; // Start reading into the second row, second column of the grid
+    Location n = width + 1; // Start reading into the second row, second column of the grid
     while (true)
     {
         auto c = static_cast<char>(map_file.get());

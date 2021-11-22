@@ -60,7 +60,7 @@ SCIP_RETCODE vertex_conflicts_add_var(
     const Edge* const path     // Path
 );
 
-const HashTable<NodeTime, VertexConflict>& vertex_conflicts_get_constraints(
+const HashTable<LocationTime, VertexConflict>& vertex_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 );
 

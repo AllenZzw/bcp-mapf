@@ -67,7 +67,7 @@ struct CliqueItem
         };
         int64_t l2;
     };
-    NodeTime nt;
+    LocationTime nt;
     EdgeTime et;
     SCIP_Real val;
 
@@ -430,9 +430,9 @@ SCIP_RETCODE clique_conflicts_separate(
     const auto& vars = SCIPprobdataGetVars(probdata);
 
     // Calculate the number of times a vertex or edge is used by summing the columns.
-    HashTable<RobotNodeTime, SCIP_Real> vertex_val;
+    HashTable<RobotLocationTime, SCIP_Real> vertex_val;
     HashTable<RobotEdgeTime, SCIP_Real> edge_val;
-    HashTable<NodeTime, Vector<bool>> vertex_agents;
+    HashTable<LocationTime, Vector<bool>> vertex_agents;
     HashTable<EdgeTime, Vector<bool>> edge_agents;
     for (auto var : vars)
     {
@@ -451,10 +451,10 @@ SCIP_RETCODE clique_conflicts_separate(
         {
             for (Time t = 1; t < path_length; ++t)
             {
-                const RobotNodeTime ant{a, path[t].n, t};
+                const RobotLocationTime ant{a, path[t].n, t};
                 vertex_val[ant] += var_val;
 
-                const NodeTime nt{path[t].n, t};
+                const LocationTime nt{path[t].n, t};
                 auto [it, _] = vertex_agents.emplace(std::piecewise_construct,
                                                      std::forward_as_tuple(nt),
                                                      std::forward_as_tuple(N));
@@ -480,8 +480,8 @@ SCIP_RETCODE clique_conflicts_separate(
         const auto [ant, val] = *it;
         if (SCIPisIntegral(scip, val))
         {
-            debug_assert(vertex_agents.find(NodeTime{ant.n, ant.t}) != vertex_agents.end());
-            vertex_agents.erase(vertex_agents.find(NodeTime{ant.n, ant.t}));
+            debug_assert(vertex_agents.find(LocationTime{ant.n, ant.t}) != vertex_agents.end());
+            vertex_agents.erase(vertex_agents.find(LocationTime{ant.n, ant.t}));
             it = vertex_val.erase(it);
         }
         else

@@ -31,8 +31,8 @@ class RobotsData
 {
     struct RobotData
     {
-        Node start;
-        Node goal;
+        Location start;
+        Location goal;
         Position start_x;
         Position start_y;
         Position goal_x;

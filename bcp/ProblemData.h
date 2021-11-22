@@ -33,7 +33,7 @@ struct GoalConflict
     SCIP_ROW* row;    // LP row
     Robot a1;         // Robot of the goal
     Robot a2;         // Robot trying to use the goal vertex
-    NodeTime nt;      // Node-time of the conflict
+    LocationTime nt;      // Location-time of the conflict
 };
 #endif
 
@@ -173,13 +173,13 @@ Vector<Vector<Pair<Time, SCIP_ROW*>>>& SCIPprobdataGetGoalRobotGoalConflicts(
 
 // Get array of goal conflicts of an agent crossing the goal of another agent
 #ifdef USE_GOAL_CONFLICTS
-Vector<Vector<Pair<NodeTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
+Vector<Vector<Pair<LocationTime, SCIP_ROW*>>>& SCIPprobdataGetCrossingRobotGoalConflicts(
     SCIP_ProbData* probdata    // Problem data
 );
 #endif
 
 // Get the vertices fractionally used by each agent
-const Vector<HashTable<NodeTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
+const Vector<HashTable<LocationTime, SCIP_Real>>& SCIPprobdataGetRobotFractionalVertices(
     SCIP_ProbData* probdata    // Problem data
 );
 

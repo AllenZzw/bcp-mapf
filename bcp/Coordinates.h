@@ -43,19 +43,19 @@ inline bool operator!=(const RobotTime a, const RobotTime b)
     return !(a == b);
 }
 
-struct RobotNodeTime
+struct RobotLocationTime
 {
     Robot a{-1};
-    Node n{0};
+    Location n{0};
     Time t{0};
 };
-static_assert(sizeof(RobotNodeTime) == 12);
-static_assert(std::is_trivially_copyable<RobotNodeTime>::value);
-inline bool operator==(const RobotNodeTime a, const RobotNodeTime b)
+static_assert(sizeof(RobotLocationTime) == 12);
+static_assert(std::is_trivially_copyable<RobotLocationTime>::value);
+inline bool operator==(const RobotLocationTime a, const RobotLocationTime b)
 {
     return a.a == b.a && a.n == b.n && a.t == b.t;
 }
-inline bool operator!=(const RobotNodeTime a, const RobotNodeTime b)
+inline bool operator!=(const RobotLocationTime a, const RobotLocationTime b)
 {
     return !(a == b);
 }
@@ -97,9 +97,9 @@ struct hash<RobotTime>
 };
 
 template<>
-struct hash<RobotNodeTime>
+struct hash<RobotLocationTime>
 {
-    inline std::size_t operator()(const RobotNodeTime ant) const noexcept
+    inline std::size_t operator()(const RobotLocationTime ant) const noexcept
     {
         auto x = robin_hood::hash<Robot>{}(ant.a);
         hash_combine(x, ant.n);
@@ -126,13 +126,13 @@ namespace fmt
 {
 
 template<>
-struct formatter<RobotNodeTime>
+struct formatter<RobotLocationTime>
 {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const RobotNodeTime& ant, FormatContext& ctx)
+    inline auto format(const RobotLocationTime& ant, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(a={},n={},t={})", ant.a, ant.n, ant.t);
     }

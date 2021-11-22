@@ -33,11 +33,11 @@ class ReservationTable
 {
     char* table_;
     Time timesteps_;
-    const Node map_size_;
+    const Location map_size_;
 
   public:
     // Constructors
-    ReservationTable(const Node map_size) :
+    ReservationTable(const Location map_size) :
         map_size_(map_size)
     {
         timesteps_ = 4 * std::sqrt(map_size_);
@@ -59,7 +59,7 @@ class ReservationTable
     {
         return map_size_;
     }
-    bool is_reserved(const NodeTime nt) const
+    bool is_reserved(const LocationTime nt) const
     {
         // Check.
         debug_assert(0 <= nt.n && nt.n < map_size_);
@@ -79,7 +79,7 @@ class ReservationTable
         const auto val = (table_[idx] & mask) != 0b0;
         return val;
     }
-    void reserve(const NodeTime nt)
+    void reserve(const LocationTime nt)
     {
         // Check.
         debug_assert(0 <= nt.n && nt.n < map_size_);
@@ -109,7 +109,7 @@ class ReservationTable
         const char mask = 0b1 << (elem % CHAR_BIT);
         table_[idx] |= mask;
     }
-    inline void unreserve(const NodeTime nt)
+    inline void unreserve(const LocationTime nt)
     {
         // Check.
         debug_assert(0 <= nt.n && nt.n < map_size_);

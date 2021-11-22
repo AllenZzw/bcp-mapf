@@ -57,7 +57,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //    const WaitBranchDirection dir,       // Branch direction
 //    const Robot a,                       // Robot
 //    const Time t,                        // Time
-//    SCIP_NODE* node                      // Node of the branch-and-bound tree for this constraint
+//    SCIP_NODE* node                      // Location of the branch-and-bound tree for this constraint
 //)
 //{
 //    // Check.
@@ -123,7 +123,7 @@ Author: Edward Lam <ed@ed-lam.com>
 //        if (fixing_is_infeasible)
 //        {
 //            debug_assert(SCIPvarGetLbLocal(var) > 0.5);
-//            debugln("         Node is infeasible - cut off")
+//            debugln("         Location is infeasible - cut off")
 //            (*cutoff) = TRUE;
 //        }
 //        else

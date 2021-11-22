@@ -46,12 +46,12 @@ struct SuccessorDirection
 
 struct GoalTimeBound
 {
-    Node n;
+    Location n;
     Time first;
     Time last;
 };
 
-Tuple<HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>,
+Tuple<HashTable<LocationTime, Pair<Vector<Score>, Vector<Score>>>,
       HashTable<RobotTime, SuccessorDirection>,
       Vector<Int>,
       Vector<GoalTimeBound>>
@@ -62,7 +62,7 @@ get_lp_branch_candidates(
 )
 {
     // Create output.
-    Tuple<HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>,
+    Tuple<HashTable<LocationTime, Pair<Vector<Score>, Vector<Score>>>,
           HashTable<RobotTime, SuccessorDirection>,
           Vector<Int>,
           Vector<GoalTimeBound>> output;
@@ -127,7 +127,7 @@ get_lp_branch_candidates(
             for (Time t = 1; t < path_length; ++t)
             {
                 // Store the candidate vertex.
-                const NodeTime nt{path[t].n, t};
+                const LocationTime nt{path[t].n, t};
                 auto& scores = candidates[nt].first;
                 auto it = std::find_if(scores.begin(),
                                        scores.end(),
@@ -248,7 +248,7 @@ get_lp_branch_candidates(
     return output;
 }
 
-Pair<RobotNodeTime, bool> find_decision_early_goal(
+Pair<RobotLocationTime, bool> find_decision_early_goal(
     SCIP* scip,                                      // SCIP
     SCIP_PROBDATA* probdata,                         // Problem data
     const Robot N,                                   // Number of agents
@@ -256,7 +256,7 @@ Pair<RobotNodeTime, bool> find_decision_early_goal(
 )
 {
     // Create output.
-    RobotNodeTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
+    RobotLocationTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
     bool prefer_branch_0 = false;
     Time best_diff = 1;
 
@@ -685,16 +685,16 @@ Pair<RobotNodeTime, bool> find_decision_early_goal(
 //    return {best_at, prefer_branch_0};
 //}
 
-Pair<RobotNodeTime, bool> find_decision_vertex(
+Pair<RobotLocationTime, bool> find_decision_vertex(
     SCIP* scip,                                                                   // SCIP
     SCIP_PROBDATA* probdata,                                                      // Problem data
-    const HashTable<NodeTime, Pair<Vector<Score>, Vector<Score>>>& candidates,    // Candidate agent-time-nodes
+    const HashTable<LocationTime, Pair<Vector<Score>, Vector<Score>>>& candidates,    // Candidate agent-time-nodes
     const Vector<GoalTimeBound>& goal_time_bounds,                                // Earliest and latest time an agent reaches its goal
     const Vector<Int>& nb_paths                                                   // Number of paths used by an agent
 )
 {
     // Create output.
-    RobotNodeTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
+    RobotLocationTime best_ant{-1, 0, std::numeric_limits<Time>::max()};
     bool prefer_branch_0 = false;
 
     // Get agent variables.
@@ -839,7 +839,7 @@ Pair<RobotNodeTime, bool> find_decision_vertex(
                     // Find a candidate between the entry and exit times.
                     for (Time t = entry; t < std::min(exit, best_ant.t); ++t)
                     {
-                        const NodeTime nt{path[t].n, t};
+                        const LocationTime nt{path[t].n, t};
                         auto it = candidates.find(nt);
                         if (it != candidates.end())
                         {
@@ -981,7 +981,7 @@ Pair<RobotNodeTime, bool> find_decision_vertex(
                     // Find a candidate between the entry and exit times.
                     for (Time t = entry; t < std::min(exit, best_ant.t); ++t)
                     {
-                        const NodeTime nt{path[t].n, t};
+                        const LocationTime nt{path[t].n, t};
                         auto it = candidates.find(nt);
                         if (it != candidates.end())
                         {
@@ -1111,7 +1111,7 @@ SCIP_RETCODE branch_lp(
             if (SCIPisPositive(scip, var_val))
             {
                 // Print.
-                debugln("   Node is infeasible by using artificial variable for agent {}",
+                debugln("   Location is infeasible by using artificial variable for agent {}",
                         a);
 
                 // Done.

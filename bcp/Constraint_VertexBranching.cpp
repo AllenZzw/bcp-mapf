@@ -41,7 +41,7 @@ struct VertexBranchingConsData
 {
     VertexBranchDirection dir;    // Branch direction
     Robot a;                      // Robot
-    NodeTime nt;                  // Node-time
+    LocationTime nt;                  // Location-time
     Int npropagatedvars;          // Number of variables that existed when the related node
                                   // was propagated the last time. Used to determine whether
                                   // the constraint should be repropagated
@@ -56,8 +56,8 @@ SCIP_RETCODE consdataCreate(
     VertexBranchingConsData** consdata,    // Pointer to the constraint data
     const VertexBranchDirection dir,       // Branch direction
     const Robot a,                         // Robot
-    const NodeTime nt,                     // Node-time
-    SCIP_NODE* node                        // Node of the branch-and-bound tree for this constraint
+    const LocationTime nt,                     // Location-time
+    SCIP_NODE* node                        // Location of the branch-and-bound tree for this constraint
 )
 {
     // Check.
@@ -85,7 +85,7 @@ SCIP_RETCODE check_variable(
     SCIP* scip,                         // SCIP
     const VertexBranchDirection dir,    // Branch direction
     const Robot a,                      // Robot
-    const NodeTime nt,                  // Node-time
+    const LocationTime nt,                  // Location-time
     SCIP_VAR* var,                      // Variable to check
     Int& nfixedvars,                    // Pointer to store the number of fixed variables
     SCIP_Bool* cutoff                   // Pointer to store if a cutoff was detected
@@ -135,7 +135,7 @@ SCIP_RETCODE check_variable(
         if (fixing_is_infeasible)
         {
             debug_assert(SCIPvarGetLbLocal(var) > 0.5);
-            debugln("         Node is infeasible - cut off");
+            debugln("         Location is infeasible - cut off");
             (*cutoff) = TRUE;
         }
         else
@@ -551,7 +551,7 @@ SCIP_RETCODE SCIPcreateConsVertexBranching(
     const char* name,                   // Name of constraint
     const VertexBranchDirection dir,    // Branch direction
     const Robot a,                      // Robot
-    const NodeTime nt,                  // Node-time
+    const LocationTime nt,                  // Location-time
     SCIP_NODE* node,                    // The node of the branch-and-bound tree for this constraint
     SCIP_Bool local                     // Is this constraint only valid locally?
 )
@@ -627,7 +627,7 @@ Robot SCIPgetVertexBranchingRobot(
 }
 
 // Get node-time
-NodeTime SCIPgetVertexBranchingNodeTime(
+LocationTime SCIPgetVertexBranchingLocationTime(
     SCIP_CONS* cons    // Constraint enforcing vertex branching
 )
 {

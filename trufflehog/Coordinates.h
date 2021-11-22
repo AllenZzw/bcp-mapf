@@ -25,7 +25,7 @@ Author: Edward Lam <ed@ed-lam.com>
 namespace TruffleHog
 {
 
-using Node = Int;
+using Location = Int;
 using Time = Int;
 enum Direction: uint8_t
 {
@@ -41,13 +41,13 @@ union Edge
 {
     struct
     {
-        Node n: 29;
+        Location n: 29;
         Direction d: 3;
     };
     uint32_t id;
 
     Edge() noexcept = default;
-    explicit Edge(const Node n, const Direction d) noexcept : n(n), d(d) {}
+    explicit Edge(const Location n, const Direction d) noexcept : n(n), d(d) {}
 };
 static_assert(sizeof(Edge) == 4);
 static_assert(std::is_trivial<Edge>::value);
@@ -60,26 +60,26 @@ inline bool operator!=(const Edge a, const Edge b)
     return !(a == b);
 }
 
-union NodeTime
+union LocationTime
 {
     struct
     {
-        Node n;
+        Location n;
         Time t;
     };
     uint64_t nt;
 
-    NodeTime() noexcept = default;
-    NodeTime(const uint64_t nt) noexcept : nt(nt) {}
-    explicit NodeTime(const Node n, const Time t) noexcept : n(n), t(t) {}
+    LocationTime() noexcept = default;
+    LocationTime(const uint64_t nt) noexcept : nt(nt) {}
+    explicit LocationTime(const Location n, const Time t) noexcept : n(n), t(t) {}
 };
-static_assert(sizeof(NodeTime) == 8);
-static_assert(std::is_trivial<NodeTime>::value);
-inline bool operator==(const NodeTime a, const NodeTime b)
+static_assert(sizeof(LocationTime) == 8);
+static_assert(std::is_trivial<LocationTime>::value);
+inline bool operator==(const LocationTime a, const LocationTime b)
 {
     return a.nt == b.nt;
 }
-inline bool operator!=(const NodeTime a, const NodeTime b)
+inline bool operator!=(const LocationTime a, const LocationTime b)
 {
     return a.nt != b.nt;
 }
@@ -93,7 +93,7 @@ union EdgeTime
     } et;
     struct
     {
-        Node n : 29;
+        Location n : 29;
         Direction d : 3;
         Time t;
     };
@@ -101,10 +101,10 @@ union EdgeTime
 
     EdgeTime() noexcept = default;
     explicit EdgeTime(const Edge e, const Time t) noexcept : et{e, t} {}
-    explicit EdgeTime(const NodeTime nt, const Direction d) noexcept : n{nt.n}, d{d}, t{nt.t} {}
-    explicit EdgeTime(const Node n, const Direction d, const Time t) noexcept : n{n}, d{d}, t{t} {}
+    explicit EdgeTime(const LocationTime nt, const Direction d) noexcept : n{nt.n}, d{d}, t{nt.t} {}
+    explicit EdgeTime(const Location n, const Direction d, const Time t) noexcept : n{n}, d{d}, t{t} {}
 
-    inline NodeTime nt() const noexcept { return NodeTime{n, t}; }
+    inline LocationTime nt() const noexcept { return LocationTime{n, t}; }
 };
 static_assert(sizeof(EdgeTime) == 8);
 static_assert(std::is_trivial<EdgeTime>::value);
@@ -132,9 +132,9 @@ struct hash<TruffleHog::Edge>
 };
 
 template<>
-struct hash<TruffleHog::NodeTime>
+struct hash<TruffleHog::LocationTime>
 {
-    inline std::size_t operator()(const TruffleHog::NodeTime nt) const noexcept
+    inline std::size_t operator()(const TruffleHog::LocationTime nt) const noexcept
     {
         return robin_hood::hash<uint64_t>{}(nt.nt);
     }
@@ -188,13 +188,13 @@ struct formatter<TruffleHog::Edge>
 };
 
 template<>
-struct formatter<TruffleHog::NodeTime>
+struct formatter<TruffleHog::LocationTime>
 {
     template<typename ParseContext>
     constexpr auto parse(ParseContext& ctx) { return ctx.begin(); }
 
     template<typename FormatContext>
-    inline auto format(const TruffleHog::NodeTime nt, FormatContext& ctx)
+    inline auto format(const TruffleHog::LocationTime nt, FormatContext& ctx)
     {
         return format_to(ctx.out(), "(n={},t={})", nt.n, nt.t);
     }

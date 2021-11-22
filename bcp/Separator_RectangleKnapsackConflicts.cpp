@@ -106,7 +106,7 @@ RectangleConflict find_rectangle(
     SCIP* scip,                                                   // SCIP
     const Map& map,                                               // Map
     const Vector<HashTable<EdgeTime, SCIP_Real>>& agent_edges,    // Edge weights for each agent
-    const NodeTime nt,                                            // Node-time of the conflict
+    const LocationTime nt,                                            // Location-time of the conflict
     const Robot a1,                                               // Robot 1
     const Robot a2,                                               // Robot 2
     SCIP_VAR* var1,                                               // Path of agent 1
@@ -382,7 +382,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
 
     // Get conflicting paths and vertices of each agent.
     Vector<Vector<SCIP_VAR*>> agent_paths(N);
-    Vector<Vector<NodeTime>> agent_vertices(N);
+    Vector<Vector<LocationTime>> agent_vertices(N);
     Vector<HashTable<EdgeTime, SCIP_Real>> agent_edges(N);
     for (Robot a = 0; a < N; ++a)
     {
@@ -416,7 +416,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
                 for (Time t = 1; t < path_length; ++t)
                 {
                     {
-                        const NodeTime nt{path[t].n, t};
+                        const LocationTime nt{path[t].n, t};
                         if (std::find(agent_vertices_a.begin(),
                                       agent_vertices_a.end(),
                                       nt) == agent_vertices_a.end())
@@ -436,7 +436,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
         // Sort.
         std::sort(agent_vertices_a.begin(),
                   agent_vertices_a.end(),
-                  [](const NodeTime a, const NodeTime b)
+                  [](const LocationTime a, const LocationTime b)
                   {
                       return (a.t < b.t) || (a.t == b.t && a.n < b.n);
                   });
@@ -457,7 +457,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
     }
 
     // Find conflicts.
-    Vector<NodeTime> common_vertices;
+    Vector<LocationTime> common_vertices;
     for (Robot a1 = 0; a1 < N - 1; ++a1)
         for (Robot a2 = a1 + 1; a2 < N; ++a2)
         {
@@ -466,7 +466,7 @@ SCIP_RETCODE rectangle_knapsack_conflicts_separate(
             std::set_intersection(agent_vertices[a1].begin(), agent_vertices[a1].end(),
                                   agent_vertices[a2].begin(), agent_vertices[a2].end(),
                                   std::back_inserter(common_vertices),
-                                  [](const NodeTime a, const NodeTime b)
+                                  [](const LocationTime a, const LocationTime b)
                                   {
                                       return (a.t < b.t) || (a.t == b.t && a.n < b.n);
                                   });

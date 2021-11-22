@@ -40,7 +40,7 @@ Heuristic::Heuristic(const Map& map) :
     h_.reserve(1000);
 }
 
-bool Heuristic::dominated(const Node n)
+bool Heuristic::dominated(const Location n)
 {
     if (!visited_[n])
     {
@@ -55,7 +55,7 @@ bool Heuristic::dominated(const Node n)
     }
 }
 
-void Heuristic::generate_start(const Node start)
+void Heuristic::generate_start(const Location start)
 {
     // Create label.
     auto new_label = reinterpret_cast<Label*>(label_pool_.get_label_buffer());
@@ -80,7 +80,7 @@ void Heuristic::generate_start(const Node start)
             new_label->g);
 }
 
-void Heuristic::generate(const Label* const current, const Node n)
+void Heuristic::generate(const Label* const current, const Location n)
 {
     if (!dominated(n))
     {
@@ -137,7 +137,7 @@ void Heuristic::generate_neighbours(const Label* const current)
     }
 }
 
-void Heuristic::search(const Node goal, Vector<IntCost>& h)
+void Heuristic::search(const Location goal, Vector<IntCost>& h)
 {
     // Reset.
     label_pool_.reset(sizeof(Label));
@@ -171,7 +171,7 @@ void Heuristic::search(const Node goal, Vector<IntCost>& h)
     debugln("=======================================");
 }
 
-const Vector<IntCost>& Heuristic::get_h(const Node goal)
+const Vector<IntCost>& Heuristic::get_h(const Location goal)
 {
     auto& h = h_[goal];
     if (h.empty())

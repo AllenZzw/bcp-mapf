@@ -41,7 +41,7 @@ SCIP_RETCODE vertexfouredge_conflicts_create_cut(
     const Robot a2,                    // Robot 2
     const EdgeTime a1_et1,             // Edge-time 1 of agent 1
     const EdgeTime a1_et2,             // Edge-time 2 of agent 1
-    const Vector<NodeTime>& a1_nts,    // Node-times of agent 1
+    const Vector<LocationTime>& a1_nts,    // Location-times of agent 1
     const EdgeTime a2_et1,             // Edge-time 1 of agent 2
     const EdgeTime a2_et2,             // Edge-time 2 of agent 2
     SCIP_Result* result                // Output result
@@ -199,7 +199,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                                     for (Time t = 1; t <= a1_et1.t; ++t)
                                     {
                                         // Get all incompatible vertices at time t.
-                                        Vector<NodeTime> a1_nts;
+                                        Vector<LocationTime> a1_nts;
                                         Float a1_nts_val = 0;
                                         for (const auto [a1_nt, a1_nt_val] : agent_vertices_a1)
                                             if (a1_nt.t == t)
@@ -298,7 +298,7 @@ SCIP_RETCODE vertexfouredge_conflicts_separate(
                                 for (Time t = 1; t <= a1_et1.t; ++t)
                                 {
                                     // Get all vertices at time t.
-                                    Vector<NodeTime> a1_nts;
+                                    Vector<LocationTime> a1_nts;
                                     Float a1_nts_val = 0;
                                     for (const auto [a1_nt, a1_nt_val] : agent_vertices_a1)
                                         if (a1_nt.t == t)

@@ -43,7 +43,7 @@ class Map
     Map& operator=(Map&&) = default;
 
     // Getters
-    inline Node size() const
+    inline Location size() const
     {
         return passable_.size();
     }
@@ -59,49 +59,49 @@ class Map
     {
         return height_;
     }
-    inline bool operator[](const Node n) const
+    inline bool operator[](const Location n) const
     {
         debug_assert(n < size());
         return passable_[n];
     }
     inline const Vector<Time>& latest_visit_time() const { return latest_visit_time_; }
-    inline Node get_id(const Position x, const Position y) const
+    inline Location get_id(const Position x, const Position y) const
     {
         return y * width_ + x;
     }
-    inline Position get_x(const Node n) const
+    inline Position get_x(const Location n) const
     {
         return n % width_;
     }
-    inline Position get_y(const Node n) const
+    inline Position get_y(const Location n) const
     {
         return n / width_;
     }
-    inline Pair<Position, Position> get_xy(const Node n) const
+    inline Pair<Position, Position> get_xy(const Location n) const
     {
         return {get_x(n), get_y(n)};
     }
-    inline Node get_north(const Node n) const
+    inline Location get_north(const Location n) const
     {
         return n - width_;
     }
-    inline Node get_south(const Node n) const
+    inline Location get_south(const Location n) const
     {
         return n + width_;
     }
-    inline Node get_east(const Node n) const
+    inline Location get_east(const Location n) const
     {
         return n + 1;
     }
-    inline Node get_west(const Node n) const
+    inline Location get_west(const Location n) const
     {
         return n - 1;
     }
-    inline Node get_wait(const Node n) const
+    inline Location get_wait(const Location n) const
     {
         return n;
     }
-    inline Direction get_direction(const Node n1, const Node n2) const
+    inline Direction get_direction(const Location n1, const Location n2) const
     {
         // Check.
         debug_assert(n2 == get_north(n1) ||
@@ -117,7 +117,7 @@ class Map
         else if (n2 == get_west(n1)) { return Direction::WEST; }
         else { return Direction::WAIT; }
     }
-    inline Node get_destination(const Edge e) const
+    inline Location get_destination(const Edge e) const
     {
         switch (e.d) 
         {
@@ -128,7 +128,7 @@ class Map
             default: { return get_wait(e.n); }
         }
     }
-    inline Node get_destination(const EdgeTime et) const
+    inline Location get_destination(const EdgeTime et) const
     {
         return get_destination(et.et.e);
     }
@@ -170,13 +170,13 @@ class Map
         width_ = width;
         height_ = height;
     }
-    void set_passable(const Node n)
+    void set_passable(const Location n)
     {
         debug_assert(n < size());
         passable_[n] = true;
         latest_visit_time_[n] = std::numeric_limits<Time>::max();
     }
-    void set_obstacle(const Node n)
+    void set_obstacle(const Location n)
     {
         debug_assert(n < size());
         passable_[n] = false;
@@ -186,7 +186,7 @@ class Map
     // Debug
     void print() const
     {
-        for (Node n = 0; n < size(); ++n)
+        for (Location n = 0; n < size(); ++n)
         {
             if (n % width() == 0)
                 fmt::print("\n");
