@@ -25,10 +25,12 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "trufflehog/ProblemInstance.h"
 #include "trufflehog/AStar.h"
+#include "lns/inc/LNS.h"
 
 // Read instance from file
 SCIP_RETCODE read_instance(
     SCIP* scip,                   // SCIP
+    const char* map_path,         // File path to scenario
     const char* scenario_path,    // File path to scenario
     const Robot nb_agents         // Number of agents to read
 )
@@ -42,13 +44,24 @@ SCIP_RETCODE read_instance(
     }
 
     // Load instance.
-    auto instance = std::make_shared<ProblemInstance>(scenario_path, nb_agents);
+    auto instance = std::make_shared<ProblemInstance>(map_path, scenario_path, nb_agents);
+
+    // Load LNS instance 
+    auto lns_instance = std::make_shared<Instance>(instance->map_path_str, instance->scenario_path_str, nb_agents);
 
     // Create pricing solver.
     auto astar = std::make_shared<AStar>(instance->map);
 
+    // Create lns solver 
+    PIBTPPS_option pipp_option;
+    pipp_option.windowSize = 5;
+    pipp_option.winPIBTSoft = true;
+    SCIP_Real time_limit = 0;
+    SCIPgetRealParam(scip, "limits/time", &time_limit);
+    auto lns = std::make_shared<LNS>(*lns_instance, time_limit, "PP", "PP", "Adaptive", 5, 50000, 0, pipp_option);
+
     // Create the problem.
-    SCIP_CALL(SCIPprobdataCreate(scip, instance_name.c_str(), instance, astar));
+    SCIP_CALL(SCIPprobdataCreate(scip, instance_name.c_str(), instance, lns_instance, astar, lns));
 
     // Done.
     return SCIP_OKAY;

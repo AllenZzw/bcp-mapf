@@ -25,6 +25,7 @@ Author: Edward Lam <ed@ed-lam.com>
 // Read instance from file
 SCIP_RETCODE read_instance(
     SCIP* scip,                                                  // SCIP
+    const char* map_path,                                        // File path to scenario
     const char* scenario_path,                                   // File path to scenario
     const Robot nb_agents = std::numeric_limits<Robot>::max()    // Number of agents to read
 );

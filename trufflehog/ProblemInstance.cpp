@@ -126,7 +126,7 @@ void read_map(const char* const map_path, Map& map)
     map_file.close();
 }
 
-ProblemInstance::ProblemInstance(const char* scenario_path, const Robot nb_agents) : scenario_path_str(scenario_path)
+ProblemInstance::ProblemInstance(const char* map_path, const char* scenario_path, const Robot nb_agents) : map_path_str(map_path), scenario_path_str(scenario_path)
 {
     // Read agents.
     Vector<RobotMapData> agents_map_data;
@@ -170,17 +170,17 @@ ProblemInstance::ProblemInstance(const char* scenario_path, const Robot nb_agent
                 if (map.empty())
                 {
                     // Prepend the directory of the scenario file.
-                    // String map_path_str;
-                    const String scenario_path_str(scenario_path);
-                    const auto last_slash_idx = scenario_path_str.rfind('/');
-                    if (std::string::npos != last_slash_idx)
-                    {
-                        map_path_str = scenario_path_str.substr(0, last_slash_idx);
-                    }
-                    map_path_str += "/" + agent_map_data.map_path;
+                    // String map_patxh_str;
+                    // const String scenario_path_str(scenario_path);
+                    // const auto last_slash_idx = scenario_path_str.rfind('/');
+                    // if (std::string::npos != last_slash_idx)
+                    // {
+                    //     map_path_str = scenario_path_str.substr(0, last_slash_idx);
+                    // }
+                    // map_path_str += "/" + agent_map_data.map_path;
 
                     // Read map.
-                    read_map(map_path_str.c_str(), map);
+                    read_map(map_path, map);
                 }
 
                 // Store.

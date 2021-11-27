@@ -96,11 +96,13 @@ struct SCIP_ProbData
 {
     // ProblemInstance data
     SharedPtr<ProblemInstance> instance;                                               // ProblemInstance
+    SharedPtr<Instance> lns_instance;                                               // ProblemInstance
     Robot N;                                                                    // Number of agents
 
     // Model data
     SCIP_PricerData* pricerdata;                                                // Pricer data
     SharedPtr<AStar> astar;                                                     // Pricing solver
+    SharedPtr<LNS> lns;                                                         // LNS solver
     bool found_cuts;                                                            // Indicates whether a cut is found in the current separation round
 
     // Variables
@@ -161,11 +163,13 @@ SCIP_DECL_PROBTRANS(probtrans)
 
     // Copy instance data.
     (*targetdata)->instance = sourcedata->instance;
+    (*targetdata)->lns_instance = sourcedata->lns_instance;
     (*targetdata)->N = sourcedata->N;
 
     // Copy model data.
     (*targetdata)->pricerdata = sourcedata->pricerdata;
     (*targetdata)->astar = sourcedata->astar;
+    (*targetdata)->lns = sourcedata->lns;
     (*targetdata)->found_cuts = false;
 
     // Copy agent path variables.
@@ -619,7 +623,8 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     const Robot a,              // Robot
     const Timepoint path_length,     // Path length
     const Edge* const path,     // Path
-    SCIP_VAR** var              // Output new variable
+    SCIP_VAR** var,              // Output new variable
+    bool check
 )
 {
     // Check.
@@ -627,23 +632,18 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     debug_assert(path);
 
     // Check that the path doesn't already exist.
-#ifdef DEBUG
-    for (auto var : probdata->agent_vars.at(a))
+    if (check)
     {
-        debug_assert(var);
-        auto vardata = SCIPvarGetData(var);
-        const auto existing_path_length = SCIPvardataGetPathLength(vardata);
-        const auto existing_path = SCIPvardataGetPath(vardata);
-        release_assert(!std::equal(path,
-                                   path + path_length,
-                                   existing_path,
-                                   existing_path + existing_path_length),
-                       "Path {} already exists for agent {} with value {}",
-                       format_path(probdata, path_length, path),
-                       a,
-                       SCIPgetSolVal(scip, nullptr, var));
+        for (auto var : probdata->agent_vars.at(a))
+        {
+            debug_assert(var);
+            auto vardata = SCIPvarGetData(var);
+            const auto existing_path_length = SCIPvardataGetPathLength(vardata);
+            const auto existing_path = SCIPvardataGetPath(vardata);
+            if (std::equal(path, path + path_length, existing_path, existing_path + existing_path_length))
+                return SCIP_OKAY;
+        }
     }
-#endif
 
     // Create variable data.
     SCIP_VarData* vardata = nullptr;
@@ -943,7 +943,9 @@ SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
     const char* probname,             // Problem name
     SharedPtr<ProblemInstance>& instance,    // ProblemInstance
-    SharedPtr<AStar>& astar           // Search algorithm
+    SharedPtr<Instance>& lns_instance,    // LNS Instance
+    SharedPtr<AStar>& astar,           // Search algorithm
+    SharedPtr<LNS>& lns           // LNS algorithm
 )
 {
     // Check.
@@ -1008,11 +1010,13 @@ SCIP_RETCODE SCIPprobdataCreate(
 
     // Copy instance data.
     probdata->instance = instance;
+    probdata->lns_instance = lns_instance; 
     probdata->N = N;
 
     // Copy model data.
     probdata->pricerdata = nullptr;
     probdata->astar = astar;
+    probdata->lns = lns;
 
     // Create agent partition constraints.
     probdata->agent_part.resize(N);
@@ -1700,6 +1704,24 @@ AStar& SCIPprobdataGetAStar(
 {
     debug_assert(probdata);
     return *probdata->astar;
+}
+
+// Get the LNS solver
+LNS& SCIPprobdataGetLNS(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return *probdata->lns;
+}
+
+// Get the LNS instance 
+Instance& SCIPprobdataGetLNSInstance(
+    SCIP_ProbData* probdata    // Problem data
+)
+{
+    debug_assert(probdata);
+    return *probdata->lns_instance;
 }
 
 // Format path

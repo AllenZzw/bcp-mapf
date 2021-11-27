@@ -26,6 +26,7 @@ Author: Edward Lam <ed@ed-lam.com>
 
 #include "trufflehog/ProblemInstance.h"
 #include "trufflehog/AStar.h"
+#include "lns/inc/LNS.h"
 
 #ifdef USE_GOAL_CONFLICTS
 struct GoalConflict
@@ -49,8 +50,10 @@ struct PathLengthNogood
 SCIP_RETCODE SCIPprobdataCreate(
     SCIP* scip,                       // SCIP
     const char* probname,             // Problem name
-    SharedPtr<ProblemInstance>& instance,    // ProblemInstance
-    SharedPtr<AStar>& astar           // Search algorithm
+    SharedPtr<ProblemInstance>& instance,   // ProblemInstance
+    SharedPtr<Instance>& lns_instance,    // LNS Instance
+    SharedPtr<AStar>& astar,           // Search algorithm
+    SharedPtr<LNS>& lns           // LNS algorithm
 );
 
 // Add a new variable for an warm-start solution
@@ -70,7 +73,8 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     const Robot a,              // Robot
     const Timepoint path_length,     // Path length
     const Edge* const path,     // Path
-    SCIP_VAR** var              // Output new variable
+    SCIP_VAR** var,              // Output new variable
+    bool check = false
 );
 
 // Add a new two-agent robust cut
@@ -244,6 +248,16 @@ const RobotsData& SCIPprobdataGetRobotsData(
 
 // Get the pricing solver
 AStar& SCIPprobdataGetAStar(
+    SCIP_ProbData* probdata    // Problem data
+);
+
+// Get the lns solver
+LNS& SCIPprobdataGetLNS(
+    SCIP_ProbData* probdata    // Problem data
+);
+
+// Get the LNS instance 
+Instance& SCIPprobdataGetLNSInstance(
     SCIP_ProbData* probdata    // Problem data
 );
 

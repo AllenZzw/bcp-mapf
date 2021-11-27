@@ -36,7 +36,7 @@ struct ProblemInstance
   public:
     // Constructors
     ProblemInstance() = default;
-    ProblemInstance(const char* scenario_path, const Robot nb_agents = std::numeric_limits<Robot>::max());
+    ProblemInstance(const char* map_path, const char* scenario_path, const Robot nb_agents = std::numeric_limits<Robot>::max());
     ProblemInstance(const ProblemInstance&) = default;
     ProblemInstance(ProblemInstance&&) = default;
     ProblemInstance& operator=(const ProblemInstance&) = default;

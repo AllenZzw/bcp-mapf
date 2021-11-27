@@ -245,6 +245,66 @@ MasterProblemStatus calculate_agents_order(
     return master_lp_status;
 }
 
+// static
+// bool run_lns_pricer(
+//     SCIP* scip
+// )
+// {
+//     println("run lns pricer"); 
+//     // Check.
+//     debug_assert(scip);
+//     debug_assert(pricer);
+
+//     // Get problem data.
+//     SCIP_ProbData* probdata = SCIPgetProbData(scip);
+//     const auto& map = SCIPprobdataGetMap(probdata);
+//     auto& lns = SCIPprobdataGetLNS(probdata);
+//     auto& lns_instance = SCIPprobdataGetLNSInstance(probdata);
+
+//     // run LNS to search for new columns 
+//     bool succ = false; 
+//     for (int i = 0; i != 100 && !succ; i++) 
+//         succ = lns.runOneStepSearch();
+
+//     if (succ)
+//     {
+//         auto& neighbor = lns.getNeighbor(); 
+//         for (auto a : neighbor.agents) 
+//         {
+//             Vector<Edge> tmp_path; 
+//             auto& path = lns.getPath(a); 
+//             Agent agent = lns.agents[a]; 
+//             auto [y, x] = lns_instance.getCoordinate(agent.path[0].location); 
+//             for (int i = 1; i != agent.path.size(); i++)
+//             {
+//                 const auto& state = agent.path[i];
+//                 Direction d; 
+//                 auto [next_y, next_x] = lns_instance.getCoordinate(agent.path[i].location); 
+//                 if (next_y == y - 1)
+//                     tmp_path.push_back(Edge(map.get_id(x+1,y+1), NORTH));
+//                 else if (next_y == y + 1)
+//                     tmp_path.push_back(Edge(map.get_id(x+1,y+1), SOUTH));
+//                 else if (next_x == x + 1)
+//                     tmp_path.push_back(Edge(map.get_id(x+1,y+1), EAST));
+//                 else if (next_x == x - 1)
+//                     tmp_path.push_back(Edge(map.get_id(x+1,y+1), WEST));
+//                 else 
+//                     tmp_path.push_back(Edge(map.get_id(x+1,y+1), WAIT));
+//                 x = next_x;
+//                 y = next_y;
+//             }
+//             tmp_path.push_back(Edge(map.get_id(x+1,y+1), Direction::INVALID));
+
+//             // Add column.
+//             SCIP_VAR* var = nullptr;
+//             SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, tmp_path.size(), tmp_path.data(), &var, true));
+//         }
+//         return true; 
+//     }
+//     else
+//         return false; 
+// }
+
 static
 SCIP_RETCODE run_trufflehog_pricer(
     SCIP* scip,               // SCIP
@@ -1072,140 +1132,79 @@ SCIP_RETCODE add_initial_solution(
     SCIP* scip    // SCIP
 )
 {
-    // err("Not yet implemented");
 #ifdef USE_INITIAL_SOLUTION
     // Get problem data.
     auto probdata = SCIPgetProbData(scip);
     const auto N = SCIPprobdataGetN(probdata);
     const auto& map = SCIPprobdataGetMap(probdata);
+    auto& lns = SCIPprobdataGetLNS(probdata);
+    auto& lns_instance = SCIPprobdataGetLNSInstance(probdata);
 
-    Vector< Vector<Edge> > paths(N); 
+    println("Initialization with large neighborhood search:"); 
+    bool succ = false; 
+    const auto start_time = std::chrono::high_resolution_clock::now();
+    while (!succ && ((fsec)(Time::now() - start_time)).count() < lns.time_limit)
     {
-        const String map_path = SCIPprobdataGetMapPath(probdata);
-        const String scen_path = SCIPprobdataGetScenarioPath(probdata);
-        Instance lns_instance(map_path, scen_path, N); 
-        double time_limit = 1.0; // 60 seconds time limit 
-        int screen = 0; 
-        srand(0);
-        PIBTPPS_option pipp_option;
-        pipp_option.windowSize = 5;
-        pipp_option.winPIBTSoft = true;
-        bool succ = false; 
-        while (!succ)
+        succ = lns.getInitialSolution();
+    }
+    if (succ) 
+    {
+        println("   Found initial solution with cost {}", lns.sum_of_costs);
+        // try to update the solution until it converge 
+        int remaining_step = 10000; 
+        auto down_time = std::chrono::high_resolution_clock::now();
+        while (remaining_step > 0 && ((fsec)(Time::now() - down_time)).count() < 5.0 && ((fsec)(Time::now() - start_time)).count() < lns.time_limit/5)
         {
-            // println("   running LNS with time limit {}", time_limit);
-            LNS lns(lns_instance, time_limit, "PP", "PP", "Adaptive", 5, 50000, screen, pipp_option); 
-            succ = lns.run();
-            if (succ) 
+            if (lns.runOneStepSearch())
             {
-                for (int a = 0; a < N; a++) 
-                {
-                    Vector<Edge> tmp_path; 
-                    Agent agent = lns.agents[a]; 
-                    auto [y, x] = lns_instance.getCoordinate(agent.path[0].location); 
-                    for (int i = 1; i != agent.path.size(); i++)
-                    {   
-                        const auto& state = agent.path[i];
-                        Direction d; 
-                        auto [next_y, next_x] = lns_instance.getCoordinate(agent.path[i].location); 
-                        if (next_y == y - 1)
-                            tmp_path.push_back(Edge(map.get_id(x+1,y+1), NORTH));
-                        else if (next_y == y + 1)
-                            tmp_path.push_back(Edge(map.get_id(x+1,y+1), SOUTH));
-                        else if (next_x == x + 1)
-                            tmp_path.push_back(Edge(map.get_id(x+1,y+1), EAST));
-                        else if (next_x == x - 1)
-                            tmp_path.push_back(Edge(map.get_id(x+1,y+1), WEST));
-                        else 
-                            tmp_path.push_back(Edge(map.get_id(x+1,y+1), WAIT));
-                        x = next_x; 
-                        y = next_y; 
-                    }
-                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), Direction::INVALID));
-                    paths[a] = tmp_path;
-                }
+                println("   Found better solution with cost {} at {}", lns.sum_of_costs, ((fsec)(Time::now() - start_time)).count());
+                remaining_step = 10000;
+                down_time = std::chrono::high_resolution_clock::now();
             }
-            else {
-                time_limit = time_limit * 2; 
-                println("Fail to find initail solution, increase time limit to {}", time_limit);
-            }   
+            else 
+                remaining_step--; 
+        }
+
+        for (int a = 0; a < N; a++)
+        {
+            Vector<Edge> tmp_path; 
+            Agent agent = lns.agents[a]; 
+            auto [y, x] = lns_instance.getCoordinate(agent.path[0].location); 
+            for (int i = 1; i != agent.path.size(); i++)
+            {   
+                const auto& state = agent.path[i];
+                Direction d; 
+                auto [next_y, next_x] = lns_instance.getCoordinate(agent.path[i].location); 
+                if (next_y == y - 1)
+                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), NORTH));
+                else if (next_y == y + 1)
+                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), SOUTH));
+                else if (next_x == x + 1)
+                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), EAST));
+                else if (next_x == x - 1)
+                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), WEST));
+                else 
+                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), WAIT));
+                x = next_x; 
+                y = next_y; 
+            }
+            tmp_path.push_back(Edge(map.get_id(x+1,y+1), Direction::INVALID));
+            
+            // Add column.
+            SCIP_VAR* var = nullptr;
+            SCIP_CALL(SCIPprobdataAddInitialVar(scip,
+                                                probdata,
+                                                a,
+                                                tmp_path.size(),
+                                                tmp_path.data(),
+                                                &var));
+            debug_assert(var);
         }
     }
-
-    // add column 
-    for (int a = 0; a < N; a++) 
+    else 
     {
-        // Add column.
-        SCIP_VAR* var = nullptr;
-        SCIP_CALL(SCIPprobdataAddInitialVar(scip,
-                                            probdata,
-                                            a,
-                                            paths[a].size(),
-                                            paths[a].data(),
-                                            &var));
-        // println("starting point for agent {}: {}", a, paths[a][0].n);
-        debug_assert(var);
+        println("LNS: Fail to get initial solution within {} seconds", lns.time_limit);
     }
-
 #endif 
-   
-//    const auto& agents = SCIPprobdataGetRobotsData(probdata);
-//
-//    // Get shortest path solver.
-//    auto& astar = SCIPprobdataGetAStar(probdata);
-//    auto& restab = astar.reservation_table();
-//    restab.clear_reservations();
-//    auto& edge_penalties = astar.edge_penalties();
-//    auto& finish_time_penalties = astar.finish_time_penalties();
-//    release_assert(finish_time_penalties.empty(), "Cannot have time finish penalties in warm-start solution");
-//#ifdef USE_GOAL_CONFLICTS
-//    auto& goal_penalties = astar.goal_penalties();
-//    release_assert(goal_penalties.empty(), "Cannot have goal penalties in warm-start solution");
-//#endif
-//
-//    // Find a path for each agent.
-//    for (Robot a = 0; a < N; ++a)
-//    {
-//        // Set edge costs.
-//        edge_penalties.clear();
-//
-//        // Solve.
-//        const auto start = LocationTimepoint{agents[a].start, 0};
-//        const auto goal = agents[a].goal;
-//        const Timepoint earliest_finish = 0;
-//        const Timepoint latest_finish = astar.max_path_length() - 1;
-//        const auto [segment, path_cost] = astar.solve<false>(start,
-//                                                             goal,
-//                                                             earliest_finish,
-//                                                             latest_finish,
-//                                                             std::numeric_limits<Cost>::max());
-//
-//        // Get the solution.
-//        Vector<Edge> path;
-//        for (auto it = segment.begin(); it != segment.end(); ++it)
-//        {
-//            const auto d = it != segment.end() - 1 ?
-//                           map.get_direction(it->n, (it + 1)->n) :
-//                           Direction::INVALID;
-//            path.push_back(Edge{it->n, d});
-//        }
-//
-//        // Print.
-//        debugln("      Found path with length {}, cost {:.6f} ({})",
-//                path.size(),
-//                path_cost,
-//                format_path(probdata, path.size(), path.data()));
-//
-//        // Add column.
-//        SCIP_VAR* var = nullptr;
-//        SCIP_CALL(SCIPprobdataAddInitialVar(scip,
-//                                            probdata,
-//                                            a,
-//                                            path.size(),
-//                                            path.data(),
-//                                            &var));
-//        debug_assert(var);
-//    }
-
     return SCIP_OKAY;
 }

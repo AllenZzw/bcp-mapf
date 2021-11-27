@@ -33,6 +33,7 @@ SCIP_RETCODE start_solver(
 {
     // Parse program options.
     String instance_file;
+    String map_file; 
     Robot agents_limit = std::numeric_limits<Robot>::max();
     SCIP_Real time_limit = 0;
     SCIP_Real gap_limit = 0;
@@ -45,6 +46,7 @@ SCIP_RETCODE start_solver(
         options.positional_help("instance_file").show_positional_help();
         options.add_options()
             ("help", "Print help")
+            ("m,map", "Path to map file", cxxopts::value<Vector<String>>())
             ("f,file", "Path to instance file", cxxopts::value<Vector<String>>())
             ("a,agents-limit", "Read first N agents only", cxxopts::value<Robot>())
             ("t,time-limit", "Timepoint limit in seconds", cxxopts::value<SCIP_Real>())
@@ -56,10 +58,16 @@ SCIP_RETCODE start_solver(
         auto result = options.parse(argc, argv);
 
         // Print help.
-        if (result.count("help") || !result.count("file"))
+        if (result.count("help") || !result.count("file") || !result.count("map"))
         {
             println("{}", options.help());
             exit(0);
+        }
+
+        // Get path to instance.
+        if (result.count("map"))
+        {
+            map_file = result["map"].as<Vector<String>>().at(0);
         }
 
         // Get path to instance.
@@ -340,10 +348,6 @@ SCIP_RETCODE start_solver(
         }
     }
 
-    // Read instance.
-    release_assert(agents_limit > 0, "Cannot limit to {} number of agents", agents_limit);
-    SCIP_CALL(read_instance(scip, instance_file.c_str(), agents_limit));
-
     // Set time limit.
     if (time_limit > 0)
     {
@@ -355,6 +359,10 @@ SCIP_RETCODE start_solver(
     {
         SCIP_CALL(SCIPsetRealParam(scip, "limits/gap", gap_limit));
     }
+
+    // Read instance.
+    release_assert(agents_limit > 0, "Cannot limit to {} number of agents", agents_limit);
+    SCIP_CALL(read_instance(scip, map_file.c_str(), instance_file.c_str(), agents_limit));
 
     // Solve.
     SCIP_CALL(SCIPsolve(scip));
