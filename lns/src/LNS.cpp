@@ -34,6 +34,78 @@ LNS::LNS(const Instance& instance, double time_limit, string init_algo_name, str
         cout << "Pre-processing time = " << preprocessing_time << " seconds." << endl;
 }
 
+bool LNS::runOneStepSearch()
+{
+    bool succ = false; 
+    if (ALNS)
+        chooseDestroyHeuristicbyALNS();
+
+    switch (destroy_strategy)
+    {
+        case RANDOMWALK:
+            succ = generateNeighborByRandomWalk();
+            break;
+        case INTERSECTION:
+            succ = generateNeighborByIntersection();
+            break;
+        case RANDOMAGENTS:
+            neighbor.agents.resize(agents.size());
+            for (int i = 0; i < (int)agents.size(); i++)
+                neighbor.agents[i] = i;
+            if (neighbor.agents.size() > neighbor_size)
+            {
+                std::random_device rd;
+                std::mt19937 g(rd());
+                std::shuffle(neighbor.agents.begin(), neighbor.agents.end(), g);
+                neighbor.agents.resize(neighbor_size);
+            }
+            succ = true;
+            break;
+        default:
+            cerr << "Wrong neighbor generation strategy" << endl;
+            exit(-1);
+    }
+    if(!succ)
+        return succ;
+
+    // store the neighbor information
+    neighbor.old_paths.resize(neighbor.agents.size());
+    neighbor.old_sum_of_costs = 0;
+    for (int i = 0; i < (int)neighbor.agents.size(); i++)
+    {
+        if (replan_algo_name == "PP")
+            neighbor.old_paths[i] = agents[neighbor.agents[i]].path;
+        path_table.deletePath(neighbor.agents[i], agents[neighbor.agents[i]].path);
+        neighbor.old_sum_of_costs += agents[neighbor.agents[i]].path.size() - 1;
+    }
+
+    if (replan_algo_name == "EECBS")
+        succ = runEECBS();
+    else if (replan_algo_name == "CBS")
+        succ = runCBS();
+    else if (replan_algo_name == "PP")
+        succ = runPP();
+    else
+    {
+        cerr << "Wrong replanning strategy" << endl;
+        exit(-1);
+    }
+
+    if (ALNS) // update destroy heuristics
+    {
+        if (neighbor.old_sum_of_costs > neighbor.sum_of_costs )
+            destroy_weights[selected_neighbor] =
+                    reaction_factor * (neighbor.old_sum_of_costs - neighbor.sum_of_costs) / neighbor.agents.size()
+                    + (1 - reaction_factor) * destroy_weights[selected_neighbor];
+        else
+            destroy_weights[selected_neighbor] =
+                    (1 - decay_factor) * destroy_weights[selected_neighbor];
+    }
+    sum_of_costs += neighbor.sum_of_costs - neighbor.old_sum_of_costs;
+
+    return succ && (neighbor.old_sum_of_costs > neighbor.sum_of_costs); 
+}
+
 bool LNS::run()
 {
     // only for statistic analysis, and thus is not included in runtime
@@ -349,7 +421,7 @@ bool LNS::runPP()
             cout << "Remaining agents = " << remaining_agents <<
                  ", remaining time = " << time_limit - runtime << " seconds. " << endl
                  << "Agent " << agents[id].id << endl;
-        agents[id].path = agents[id].path_planner.findOptimalPath(path_table);
+        agents[id].path = agents[id].path_planner.findOptimalPath(path_table, time_limit - runtime);
         if (agents[id].path.empty())
         {
             break;

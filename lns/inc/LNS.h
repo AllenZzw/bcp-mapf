@@ -50,6 +50,7 @@ public:
     double preprocessing_time = 0;
     double initial_solution_runtime = 0;
     double runtime = 0;
+    double time_limit;
     int initial_sum_of_costs = -1;
     int sum_of_costs = -1;
     int sum_of_costs_lowerbound = -1;
@@ -60,8 +61,18 @@ public:
         string init_algo_name, string replan_algo_name, string destory_name,
         int neighbor_size, int num_of_iterations, int screen, PIBTPPS_option pipp_option);
 
+    LNS() = delete;
+    LNS(const LNS&) = delete;
+    LNS(LNS&&) = delete;
+    LNS& operator=(const LNS&) = delete;
+    LNS& operator=(LNS&&) = delete;
+    ~LNS() = default;
+
     bool getInitialSolution();
     bool run();
+    bool runOneStepSearch(); 
+    Path& getPath(int a) { return agents[a].path; }
+    Neighbor& getNeighbor() { return neighbor; }
     void validateSolution() const;
     void writeIterStatsToFile(string file_name) const;
     void writeResultToFile(string file_name) const;
@@ -72,7 +83,6 @@ private:
 
     // input params
     const Instance& instance; // avoid making copies of this variable as much as possible
-    double time_limit;
     double replan_time_limit; // time limit for replanning
     string init_algo_name;
     string replan_algo_name;
@@ -82,7 +92,6 @@ private:
     int num_of_iterations;
 
     high_resolution_clock::time_point start_time;
-
 
     PathTable path_table; // 1. stores the paths of all agents in a time-space table;
     // 2. avoid making copies of this variable as much as possible.

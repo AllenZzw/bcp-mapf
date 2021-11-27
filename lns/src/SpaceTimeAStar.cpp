@@ -22,7 +22,7 @@ Path SpaceTimeAStar::findOptimalPath(const HLNode& node, const ConstraintTable& 
 
 // find path by time-space A* search
 // Returns a shortest path that does not collide with paths in the path table
-Path SpaceTimeAStar::findOptimalPath(const PathTable& path_table)
+Path SpaceTimeAStar::findOptimalPath(const PathTable& path_table, double remaining_time)
 {
     Path path;
     num_expanded = 0;
@@ -52,10 +52,14 @@ Path SpaceTimeAStar::findOptimalPath(const PathTable& path_table)
     allNodes_table.insert(start);
     min_f_val = (int) start->getFVal();
     // lower_bound = int(w * min_f_val));
-
-	// todo: seems to get stuck here 
+	auto time = Time::now();
     while (!open_list.empty())
     {
+		if ( num_generated % 100 == 0 && ((fsec)(Time::now() - time)).count() > remaining_time )
+    	{
+    		path.clear();
+    		break; 
+    	}
 		// cout << "current location: " << curr->location << "current timestep: " << curr->timestep << endl; 
         updateFocalList(); // update FOCAL if min f-val increased
         auto* curr = popNode();
