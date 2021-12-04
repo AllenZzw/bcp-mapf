@@ -176,6 +176,7 @@ class AStar
 
         // Check if any cost is better
         bool can_be_better(const Data& previous_data);
+        void smooth(const Data& previous_data, const double SMOOTH_FACTOR); 
     };
 
   private:
