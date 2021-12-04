@@ -1014,6 +1014,10 @@ SCIP_RETCODE add_initial_solution(
     auto& lns = SCIPprobdataGetLNS(probdata);
     auto& lns_instance = SCIPprobdataGetLNSInstance(probdata);
 
+    lns.sum_of_distances = 0; 
+    for (const auto & agent : lns.agents)
+        lns.sum_of_distances += agent.path_planner.my_heuristic[agent.path_planner.start_location];
+
     println("Initialization with large neighborhood search:"); 
     bool succ = false; 
     const auto start_time = std::chrono::high_resolution_clock::now();
@@ -1023,21 +1027,7 @@ SCIP_RETCODE add_initial_solution(
     }
     if (succ) 
     {
-        println("   Found initial solution with cost {}", lns.sum_of_costs);
-        // try to update the solution until it converge 
-        int remaining_step = 10000; 
-        auto down_time = std::chrono::high_resolution_clock::now();
-        while (remaining_step > 0 && ((fsec)(Time::now() - down_time)).count() < 5.0 && ((fsec)(Time::now() - start_time)).count() < lns.time_limit/5)
-        {
-            if (lns.runOneStepSearch())
-            {
-                println("   Found better solution with cost {} at {}", lns.sum_of_costs, ((fsec)(Time::now() - start_time)).count());
-                remaining_step = 10000;
-                down_time = std::chrono::high_resolution_clock::now();
-            }
-            else 
-                remaining_step--; 
-        }
+        println("   Found initial solution with cost {}, lower bound {}", lns.sum_of_costs, std::max(lns.sum_of_distances, lns.sum_of_costs_lowerbound) );
 
         for (int a = 0; a < N; a++)
         {
@@ -1072,9 +1062,7 @@ SCIP_RETCODE add_initial_solution(
         }
     }
     else 
-    {
         println("LNS: Fail to get initial solution within {} seconds", lns.time_limit);
-    }
 #endif 
     return SCIP_OKAY;
 }
