@@ -1147,6 +1147,139 @@ Pair<Vector<LocationTimepoint>, Cost> AStar::solve()
 template Pair<Vector<LocationTimepoint>, Cost> AStar::solve<false>();
 template Pair<Vector<LocationTimepoint>, Cost> AStar::solve<true>();
 
+// bool AStar::before_enumerate()
+// {
+//     // Get data.
+//     const auto& [start, 
+//                  waypoints, 
+//                  goal, 
+//                  earliest_goal_time, 
+//                  latest_goal_time, 
+//                  cost_offset, 
+//                  latest_visit_time,
+//                  edge_penalties, 
+//                  finish_time_penalties
+// #ifdef USE_GOAL_CONFLICTS
+//                , goal_penalties
+// #endif
+//     ] = data_;
+
+//     // Prepare costs.
+//     data_.edge_penalties.before_solve();
+//     data_.finish_time_penalties.before_solve();
+// #ifdef USE_GOAL_CONFLICTS
+//     data_.goal_penalties.before_solve();
+// #endif
+
+//     // Get number of resources.
+// #ifdef USE_GOAL_CONFLICTS
+//     const auto nb_goal_crossings = goal_penalties.size();
+// #else
+//     constexpr Int nb_goal_crossings = 0;
+// #endif
+
+//     // Reset.
+//     const auto nb_states = nb_goal_crossings;
+//     label_pool_.reset(sizeof(Label) + (nb_states + CHAR_BIT - 1) / CHAR_BIT);
+//     open_.clear();
+//     frontier_.clear();
+//     if (waypoints.size() != 1)
+//         return false; 
+
+//     // Compute minimum time between each waypoint.
+//     h_waypoint_to_goal_.resize(waypoints.size());
+//     h_waypoint_to_goal_.back() = 0;
+//     for (Waypoint w = waypoints.size() - 2; w >= 0; --w)
+//     {
+//         const auto h = heuristic_.get_h(waypoints[w + 1].n)[waypoints[w].n];
+//         const auto t_diff = waypoints[w + 1].t - waypoints[w].t;
+//         h_waypoint_to_goal_[w] = std::max(h, t_diff) + h_waypoint_to_goal_[w + 1];
+//     }
+
+//     // Create the first label.
+//     Waypoint w = 0;
+//     h_node_to_waypoint_ = &heuristic_.get_h(waypoints[w].n);
+//     generate_start();
+
+//     // Return.
+//     return true;
+// }
+
+// // continue enumerate paths with negative reduced costs 
+// template<bool is_farkas>
+// Pair<Vector<LocationTimepoint>, Cost> AStar::enumerate()
+// {
+//     // Get data.
+//     const auto& [start, 
+//                  waypoints, 
+//                  goal, 
+//                  earliest_goal_time, 
+//                  latest_goal_time, 
+//                  cost_offset, 
+//                  latest_visit_time,
+//                  edge_penalties, 
+//                  finish_time_penalties
+// #ifdef USE_GOAL_CONFLICTS
+//                , goal_penalties
+// #endif
+//     ] = data_;
+
+//     // Create output.
+//     Pair<Vector<LocationTimepoint>, Cost> output;
+//     auto& path = output.first;
+//     auto& path_cost = output.second;
+
+//     // Solve up to but not including the last waypoint (goal).
+//     constexpr IntCost default_cost = is_farkas ? 0 : 1;
+    
+//     // Solve the last segment.
+//     while (!open_.empty())
+//     {
+//         // Get a label from priority queue.
+//         const auto current = open_.top();
+//         open_.pop();
+
+//         // Expand the neighbours of the current label or exit if the goal is reached.
+//         debug_assert(current->t <= latest_goal_time);
+//         if (current->n >= 0)
+//         {
+//             // Generate neighbours.
+//             generate_neighbours_last_segment<default_cost>(current, false);
+
+//             // Generate to the end.
+//             if (current->n == goal && current->t >= earliest_goal_time)
+//             {
+//                 generate_end(current);
+//             }
+//         }
+//         else
+//         {
+//             // Store the path cost.
+//             path_cost = current->g;
+
+//             // Store the path.
+//             debug_assert(path.empty());
+//             for (auto l = current->parent; l; l = l->parent)
+//             {
+//                 path.push_back(l->nt);
+//             }
+//             std::reverse(path.begin(), path.end());
+
+//             // Check.
+//             debug_assert(isLT(path_cost, 0));
+//             debug_assert(earliest_goal_time <= current->t && current->t <= latest_goal_time);
+
+//             // Finish.
+//             break;
+//         }
+//     }
+
+//     // Return.
+//     return output;
+// }
+// template Pair<Vector<LocationTimepoint>, Cost> AStar::enumerate<false>();
+// template Pair<Vector<LocationTimepoint>, Cost> AStar::enumerate<true>();
+
 #ifdef DEBUG
 Pair<Vector<LocationTimepoint>, Cost> AStar::calculate_cost(const Vector<Edge>& input_path)
 {

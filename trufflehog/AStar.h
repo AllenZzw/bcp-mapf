@@ -220,6 +220,9 @@ class AStar
     void preprocess_input();
     template<bool is_farkas>
     Pair<Vector<LocationTimepoint>, Cost> solve();
+    // template<bool is_farkas>
+    // Pair<Vector<LocationTimepoint>, Cost> enumerate();
+    // bool before_enumerate(); 
 
     // Debug
 #ifdef DEBUG
