@@ -1988,7 +1988,7 @@ void print_used_paths(
                 {
                     fmt::print("   ---");
                 }
-                fmt::print("Robot: {:3d}, Val: {:7.4f}, Path: ", a, std::abs(var_val));
+                fmt::print("Robot: {:3d}, Val: {:7.4f}, Path lenght: {}, Path: ", a, std::abs(var_val), path_length);
 
                 for (Timepoint t = 0; t < path_length; ++t)
                 {
