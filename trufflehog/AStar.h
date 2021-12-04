@@ -166,10 +166,10 @@ class AStar
         Timepoint latest_goal_time;
 
         // Costs
-        Cost cost_offset;
-        Vector<Timepoint> latest_visit_time;
-        EdgePenalties edge_penalties;
-        FinishTimepointPenalties finish_time_penalties;
+        Cost cost_offset; // dual value for set partition constraint 
+        Vector<Timepoint> latest_visit_time; // the latest visited time for locations 
+        EdgePenalties edge_penalties; // dual values associated with edges
+        FinishTimepointPenalties finish_time_penalties; // dual values associated with wait edge at the goal location 
 #ifdef USE_GOAL_CONFLICTS
         GoalPenalties goal_penalties;
 #endif
