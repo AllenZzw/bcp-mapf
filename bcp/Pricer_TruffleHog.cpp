@@ -278,6 +278,7 @@ static bool run_lns_pricer(
     
     if (succ)
     {
+        debugln("Run LNS solver get solution with obj {}", lns.sum_of_costs ); 
         auto& neighbor = lns.getNeighbor(); 
         for (auto a : neighbor.agents) 
         {
