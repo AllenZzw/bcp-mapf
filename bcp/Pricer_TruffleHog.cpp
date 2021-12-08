@@ -45,8 +45,8 @@ Author: Edward Lam <ed@ed-lam.com>
 #define EPS (1e-6)
 #define STALLED_NB_ROUNDS (4)
 #define STALLED_ABSOLUTE_CHANGE (-1)
-#define SMOOTH_FACTOR (0.9)
-#define MAX_SMOOTH_ROUND (5) 
+#define SMOOTH_FACTOR (0)
+#define MAX_SMOOTH_ROUND (1) 
 
 struct PricingOrder
 {
@@ -251,8 +251,6 @@ static bool run_lns_pricer(
     SCIP* scip
 )
 {
-    // println("Run lns pricer with LP objective: {:.6f}", SCIPgetLPObjval(scip)); 
-
     // Get problem data.
     SCIP_ProbData* probdata = SCIPgetProbData(scip);
     const auto& map = SCIPprobdataGetMap(probdata);
@@ -262,12 +260,24 @@ static bool run_lns_pricer(
 
     // run LNS to search for new columns 
     bool succ = false; 
-    for (int i = 0; i < 50 && !succ; i++) 
-        succ = lns.runOneStepSearch();
+    if (lns.initial_sum_of_costs == -1) 
+    {
+        lns.sum_of_distances = 0; 
+        for (const auto & agent : lns.agents)
+            lns.sum_of_distances += agent.path_planner.my_heuristic[agent.path_planner.start_location];
+        
+        const auto start_time = std::chrono::high_resolution_clock::now();
+        while (!succ && ((fsec)(Time::now() - start_time)).count() < lns.time_limit)
+            succ = lns.getInitialSolution();
+    }
+    else 
+    {
+        for (int i = 0; i < 50 && !succ; i++) 
+            succ = lns.runOneStepSearch();
+    }
     
     if (succ)
     {
-        println("   Run lns pricer found better solution with obj {}", lns.sum_of_costs); 
         auto& neighbor = lns.getNeighbor(); 
         for (auto a : neighbor.agents) 
         {
@@ -303,14 +313,13 @@ static bool run_lns_pricer(
                 auto vardata = SCIPvarGetData(var);
                 const auto existing_path_length = SCIPvardataGetPathLength(vardata);
                 const auto existing_path = SCIPvardataGetPath(vardata);
-                if (!std::equal(tmp_path.data(), tmp_path.data() + tmp_path.size(), existing_path, existing_path + existing_path_length))
+                if (std::equal(tmp_path.data(), tmp_path.data() + tmp_path.size(), existing_path, existing_path + existing_path_length))
                 {
-                    SCIP_Bool infeasible; 
-                    SCIP_Bool fixed; 
-                    SCIP_CALL(SCIPfixVar(scip, var, 0, &infeasible, &fixed)); 
+                    exists = true; 
+                    break; 
                 }
                 else 
-                    exists = true; 
+                    SCIPvarMarkDeletable(var); 
             }
 
             if (!exists)
@@ -371,12 +380,14 @@ SCIP_RETCODE run_full_pricer(
     const auto& agents = SCIPprobdataGetRobotsData(probdata);
     auto& lns = SCIPprobdataGetLNS(probdata);
 
+#ifdef USE_LNS
     if (SCIPnodeGetNumber(SCIPgetCurrentNode(scip)) == 1 && run_lns_pricer(scip))
     {
         *lower_bound = std::max(lns.sum_of_distances, lns.sum_of_costs_lowerbound); 
         *result = SCIP_SUCCESS;
         return SCIP_OKAY;
     }
+#endif
 
     // Create order of agents to solve.
     auto order = pricerdata->order;
@@ -421,18 +432,18 @@ SCIP_RETCODE run_full_pricer(
                 }
                 if (stalled)
                 {
-                    println("   LP stalled - skip pricing");
-                    // *stopearly = true;
-                    // return SCIP_OKAY;
+                    debugln("   LP stalled - skip pricing");
+                    *stopearly = true;
+                    return SCIP_OKAY;
                 }
                 else
-                    println("   LP not stalled - start pricing");
+                    debugln("   LP not stalled - start pricing");
             }
         }
         else if (master_lp_status == MasterProblemStatus::Integral && SCIPgetLPObjval(scip) < SCIPgetPrimalbound(scip) ) 
         {
-            println("   Better Integral LP with obj {} - skip pricing ", SCIPgetLPObjval(scip));
-            // *stopearly = true;
+            debugln("   Better Integral LP with obj {} - skip pricing ", SCIPgetLPObjval(scip));
+            *stopearly = true;
             *result = SCIP_DIDNOTRUN; 
             return SCIP_OKAY;
         }
@@ -598,12 +609,12 @@ SCIP_RETCODE run_full_pricer(
     Float min_reduced_cost = 0;
     Int nb_new_cols = 0;
     bool misprice = true;
-    int smooth_round = MAX_SMOOTH_ROUND; 
+    int smooth_round = SCIPnodeGetNumber(SCIPgetCurrentNode(scip)) == 1? MAX_SMOOTH_ROUND: 1; 
     double lb; 
     auto agent_priced = pricerdata->agent_priced;
-    do {
+    do { 
         lb = SCIPgetLPObjval(scip); 
-        for (Int order_idx = 0; order_idx < N && nb_new_cols < 5 && !SCIPisStopped(scip); ++order_idx)
+        for (Int order_idx = 0; order_idx < N && (nb_new_cols < 1 || order[order_idx].must_price) && !SCIPisStopped(scip); ++order_idx)
         {
             // Create output.
             Vector<Edge> path;
@@ -905,7 +916,7 @@ SCIP_RETCODE run_full_pricer(
                     goto FINISHED_PRICING_AGENT;
                 }
             }
-
+            
             // Store the penalties of the run.
     #ifdef USE_ASTAR_SOLUTION_CACHING
             pricerdata->previous_data[a] = astar.data();
@@ -923,8 +934,6 @@ SCIP_RETCODE run_full_pricer(
     #endif
         }
         smooth_round--; 
-        // if (misprice)
-        //     *lower_bound = lb;
     } while (smooth_round > 0 && misprice); 
     
     // Print.
@@ -934,7 +943,7 @@ SCIP_RETCODE run_full_pricer(
     if (!SCIPisStopped(scip))
     {
         pricerdata->last_solved_node = SCIPnodeGetNumber(SCIPgetCurrentNode(scip));
-        println("   Price at node {}, stop at smooth round: {}, computed LP obj: {}, expected lower bound: {}, lower bound {}, Added {} new columns", pricerdata->last_solved_node, smooth_round, SCIPgetLPObjval(scip), lb, *lower_bound, nb_new_cols); 
+        debugln("   Price at node {}, stop at smooth round: {}, computed LP obj: {}, expected lower bound: {}, lower bound {}, Added {} new columns", pricerdata->last_solved_node, smooth_round, SCIPgetLPObjval(scip), lb, *lower_bound, nb_new_cols); 
 
         // Mark as completed.
         *result = SCIP_SUCCESS;
@@ -1644,63 +1653,5 @@ SCIP_RETCODE add_initial_solution(
     SCIP* scip    // SCIP
 )
 {
-#ifdef USE_INITIAL_SOLUTION
-    // Get problem data.
-    auto probdata = SCIPgetProbData(scip);
-    const auto N = SCIPprobdataGetN(probdata);
-    const auto& map = SCIPprobdataGetMap(probdata);
-    auto& lns = SCIPprobdataGetLNS(probdata);
-    auto& lns_instance = SCIPprobdataGetLNSInstance(probdata);
-
-    lns.sum_of_distances = 0; 
-    for (const auto & agent : lns.agents)
-        lns.sum_of_distances += agent.path_planner.my_heuristic[agent.path_planner.start_location];
-
-    println("Initialization with large neighborhood search:"); 
-    bool succ = false; 
-    const auto start_time = std::chrono::high_resolution_clock::now();
-    while (!succ && ((fsec)(Time::now() - start_time)).count() < lns.time_limit)
-    {
-        succ = lns.getInitialSolution();
-    }
-    if (succ) 
-    {
-        println("   Found initial solution with cost {}, lower bound {}", lns.sum_of_costs, std::max(lns.sum_of_distances, lns.sum_of_costs_lowerbound) );
-
-        for (int a = 0; a < N; a++)
-        {
-            Vector<Edge> tmp_path; 
-            Agent agent = lns.agents[a]; 
-            auto [y, x] = lns_instance.getCoordinate(agent.path[0].location); 
-            for (int i = 1; i != agent.path.size(); i++)
-            {   
-                const auto& state = agent.path[i];
-                Direction d; 
-                auto [next_y, next_x] = lns_instance.getCoordinate(agent.path[i].location); 
-                if (next_y == y - 1)
-                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), NORTH));
-                else if (next_y == y + 1)
-                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), SOUTH));
-                else if (next_x == x + 1)
-                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), EAST));
-                else if (next_x == x - 1)
-                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), WEST));
-                else 
-                    tmp_path.push_back(Edge(map.get_id(x+1,y+1), WAIT));
-                x = next_x; 
-                y = next_y; 
-            }
-            tmp_path.push_back(Edge(map.get_id(x+1,y+1), Direction::INVALID));
-            
-            // Add column.
-            SCIP_VAR* var = nullptr;
-            SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, tmp_path.size(), tmp_path.data(), &var));
-            debug_assert(var);
-            debugln("Initial path for agent {} with length {} ({})", a,  tmp_path.size(), format_path(probdata, tmp_path.size(), tmp_path.data()));
-        }
-    }
-    else 
-        println("LNS: Fail to get initial solution within {} seconds", lns.time_limit);
-#endif 
     return SCIP_OKAY;
 }
