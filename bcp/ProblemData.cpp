@@ -617,6 +617,131 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
 }
 
 // Add a new variable from pricing
+SCIP_RETCODE SCIPprobdataAddPricedVarwithCut(
+    SCIP* scip,                 // SCIP
+    SCIP_ProbData* probdata,    // Problem data
+    const Robot a,              // Robot
+    const Timepoint path_length,     // Path length
+    const Edge* const path,     // Path
+    SCIP_VAR** var              // Output new variable
+)
+{
+    // Check.
+    debug_assert(var);
+    debug_assert(path);
+
+    // Create variable data.
+    SCIP_VarData* vardata = nullptr;
+    SCIP_CALL(SCIPvardataCreate(scip, a, path_length, path, &vardata));
+    debug_assert(vardata);
+
+    // Calculate column cost.
+    const SCIP_Real obj = path_length - 1;
+
+    // Create and add variable.
+#ifdef MAKE_NAMES
+    const auto name = fmt::format("path({},({}))",
+                                  a, format_path(probdata, path_length, path)).substr(0, 255);
+#endif
+    SCIP_CALL(SCIPcreateVar(scip,
+                            var,
+#ifdef MAKE_NAMES
+                            name.c_str(),
+#else
+                            "",
+#endif
+                            obj,
+                            vardata));
+    
+    debug_assert(*var);
+    SCIP_CALL(SCIPaddPricedVar(scip, *var, 1.0));
+
+    // Print.
+    debugln("      Adding column with obj {:4.0f}, agent {:2d}, path {}",
+            obj, a, format_path_spaced(probdata, path_length, path));
+
+    // Change the upper bound of the binary variable to lazy since the upper bound is
+    // already enforced due to the objective function the set covering constraint. The
+    // reason for doing is that, is to avoid the bound of x <= 1 in the LP relaxation
+    // since this bound constraint would produce a dual variable which might have a
+    // positive reduced cost.
+    SCIP_CALL(SCIPchgVarUbLazy(scip, *var, 1.0));
+
+    // Store variable in array of all variables.
+    probdata->vars.push_back(*var);
+
+    // Store variable in agent variables array.
+    debug_assert(a < static_cast<Robot>(probdata->agent_vars.size()));
+    probdata->agent_vars[a].push_back(*var);
+
+    // Add coefficient to agent partition constraint.
+    debug_assert(SCIPconsIsEnabled(probdata->agent_part[a]));
+    SCIP_CALL(SCIPaddCoefSetppc(scip, probdata->agent_part[a], *var));
+
+    // Add coefficient to vertex conflicts constraints.
+    // SCIP_CALL(vertex_conflicts_add_var(scip, probdata->vertex_conflicts, *var, path_length, path) ); 
+    SCIP_CALL(var_add_vertex_conflicts(scip, probdata->vertex_conflicts, *var, path_length, path) ); 
+    
+    // Add coefficient to edge conflicts constraints.
+    // todo: SCIP_CALL(var_add_edge_conflicts(scip, probdata->edge_conflicts, *var, path_length, path)); 
+    SCIP_CALL(edge_conflicts_add_var(scip, probdata->edge_conflicts, *var, path_length, path));
+
+    // Add coefficients to two-agent robust cuts.
+    for (const auto& [row, ets_begin, ets_end] : probdata->agent_robust_cuts[a])
+    {
+        // Calculate the coefficient.
+        SCIP_Real coeff = 0.0;
+        for (auto it = ets_begin; it != ets_end; ++it)
+        {
+            const auto [e, t] = it->et;
+            coeff += (t < path_length - 1 && e == path[t]) ||
+                     (t >= path_length - 1 && e.n == path[path_length - 1].n && e.d == Direction::WAIT);
+        }
+
+        // Add variable to the cut.
+        if (coeff)
+        {
+            SCIP_CALL(SCIPaddVarToRow(scip, row, *var, coeff));
+        }
+    }
+
+    // Add coefficient to rectangle clique conflicts constraints.
+#ifdef USE_RECTANGLE_CLIQUE_CONFLICTS
+    SCIP_CALL(rectangle_clique_conflicts_add_var(scip,
+                                                 probdata->rectangle_clique_conflicts,
+                                                 *var,
+                                                 a,
+                                                 path_length,
+                                                 path));
+#endif
+
+    // Add coefficient to goal conflicts constraints.
+#ifdef USE_GOAL_CONFLICTS
+    SCIP_CALL(goal_conflicts_add_var(scip,
+                                     probdata->goal_conflicts,
+                                     *var,
+                                     a,
+                                     path_length,
+                                     path));
+#endif
+
+    // Add coefficient to path length nogoods.
+#ifdef USE_PATH_LENGTH_NOGOODS
+    SCIP_CALL(path_length_nogoods_add_var(scip,
+                                          probdata->path_length_nogoods,
+                                          *var,
+                                          a,
+                                          path_length));
+#endif
+
+    // Capture variable again. Previously captured in addVar.
+    SCIP_CALL(SCIPcaptureVar(scip, *var));
+
+    // Done.
+    return SCIP_OKAY;
+}
+
+// Add a new variable from pricing
 SCIP_RETCODE SCIPprobdataAddPricedVar(
     SCIP* scip,                 // SCIP
     SCIP_ProbData* probdata,    // Problem data

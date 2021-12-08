@@ -66,6 +66,16 @@ SCIP_RETCODE SCIPprobdataAddInitialVar(
     SCIP_VAR** var              // Output new variable
 );
 
+// Add a new variable for an warm-start solution
+SCIP_RETCODE SCIPprobdataAddInitialVarwithCut(
+    SCIP* scip,                 // SCIP
+    SCIP_ProbData* probdata,    // Problem data
+    const Robot a,              // Robot
+    const Timepoint path_length,     // Path length
+    const Edge* const path,     // Path
+    SCIP_VAR** var              // Output new variable
+);
+
 // Add a new variable from pricing
 SCIP_RETCODE SCIPprobdataAddPricedVar(
     SCIP* scip,                 // SCIP
@@ -75,6 +85,16 @@ SCIP_RETCODE SCIPprobdataAddPricedVar(
     const Edge* const path,     // Path
     SCIP_VAR** var,              // Output new variable
     bool check = false
+);
+
+// Add a new variable from pricing with the corresponding edge and vertex conflict 
+SCIP_RETCODE SCIPprobdataAddPricedVarwithCut(
+    SCIP* scip,                 // SCIP
+    SCIP_ProbData* probdata,    // Problem data
+    const Robot a,              // Robot
+    const Timepoint path_length,     // Path length
+    const Edge* const path,     // Path
+    SCIP_VAR** var             // Output new variable
 );
 
 // Add a new two-agent robust cut

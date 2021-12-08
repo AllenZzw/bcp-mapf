@@ -835,6 +835,73 @@ SCIP_RETCODE vertex_conflicts_add_var(
     return SCIP_OKAY;
 }
 
+SCIP_RETCODE var_add_vertex_conflicts(
+    SCIP* scip,                 // SCIP
+    SCIP_CONS* cons,            // Vertex conflicts constraint
+    SCIP_VAR* var,              // Variable
+    const Timepoint path_length,     // Path length
+    const Edge* const path      // Path
+)
+{
+    // Get constraint data.
+    debug_assert(cons);
+    auto probdata = SCIPgetProbData(scip);
+    auto consdata = reinterpret_cast<VertexConflictsConsData*>(SCIPconsGetData(cons));
+    debug_assert(consdata);
+    debug_assert(probdata); 
+
+    // Check.
+    debug_assert(var);
+    debug_assert(SCIPconsIsTransformed(cons));
+    debug_assert(SCIPvarIsTransformed(var));
+
+    const auto& vars = SCIPprobdataGetVars(probdata);
+
+    // Add rounding lock to the new variable.
+    SCIP_CALL(SCIPlockVarCons(scip, var, cons, FALSE, TRUE));
+
+    // Find the makespan.
+    Timepoint makespan = 0;
+    for (auto var : vars)
+    {
+        // Get the path length.
+        debug_assert(var);
+        auto vardata = SCIPvarGetData(var);
+        const auto length = SCIPvardataGetPathLength(vardata);
+
+        // Store the length of the longest path.
+        if (length > makespan)
+            makespan = length;
+    }
+
+    // Add variable to constraints.
+    auto& conflicts = consdata->conflicts;
+    for (Int t = 0; t < makespan; t++)
+    {
+        LocationTimepoint nt(path[t].n, t); 
+        if (auto it = consdata->conflicts.find(nt); it != consdata->conflicts.end())
+        {
+            // Reactivate the row if it is not in the LP.
+            const auto& [row] = it->second;
+            if (!SCIProwIsInLP(row))
+            {
+                SCIP_Bool infeasible;
+                SCIP_CALL(SCIPaddRow(scip, row, true, &infeasible));
+            }
+            SCIP_CALL(SCIPaddVarToRow(scip, row, var, 1.0));
+        }
+        else
+        {
+            // Create cut if the vertex conflict does not exist
+            SCIP_Result result; 
+            SCIP_CALL(vertex_conflicts_create_cut(scip, cons, consdata, nt, vars, &result));
+        }
+    }
+
+    // Return.
+    return SCIP_OKAY;
+}
+
 const HashTable<LocationTimepoint, VertexConflict>& vertex_conflicts_get_constraints(
     SCIP_ProbData* probdata    // Problem data
 )
