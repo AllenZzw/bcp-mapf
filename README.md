@@ -64,7 +64,7 @@ Usage
 
 After compiling, run BCP with:
 ```
-./bcp-mapf {PATH TO INSTANCE}
+./bcp-mapf -f {PATH TO INSTANCE} -m {PATH TO MAP}
 ```
 
 You can also set a time limit in seconds:
