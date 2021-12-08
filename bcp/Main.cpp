@@ -309,6 +309,11 @@ SCIP_RETCODE start_solver(
         SCIP_CALL(SCIPsetIntParam(scip, "nodeselection/restartdfs/memsavepriority", 500000));
 #endif
 
+        SCIPsetBoolParam(scip, "lp/cleanupcols", TRUE);
+        SCIPsetBoolParam(scip, "lp/cleanupcolsroot", TRUE);
+        SCIPsetBoolParam(scip, "pricing/delvars", TRUE);
+        SCIPsetBoolParam(scip, "pricing/delvarsroot", TRUE);
+
         // Turn on aggressive primal heuristics.
         SCIP_CALL(SCIPsetHeuristics(scip, SCIP_PARAMSETTING_AGGRESSIVE, TRUE));
 
