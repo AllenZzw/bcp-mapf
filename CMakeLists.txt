@@ -262,10 +262,10 @@ target_compile_options(bcp-mapf PRIVATE -DUSE_GOAL_CONFLICTS)
 target_compile_options(trufflehog PRIVATE -DUSE_GOAL_CONFLICTS)
 
 # Set node selection options.
-#target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
+target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_FIRST_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_DEPTH_FIRST_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_BEST_ESTIMATE_NODE_SELECTION)
-target_compile_options(bcp-mapf PRIVATE -DUSE_HYBRID_ESTIMATE_BOUND_NODE_SELECTION)
+#target_compile_options(bcp-mapf PRIVATE -DUSE_HYBRID_ESTIMATE_BOUND_NODE_SELECTION)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_RESTART_DEPTH_FIRST_NODE_SELECTION)
 
 # Set warnings.
