@@ -45,8 +45,10 @@ Author: Edward Lam <ed@ed-lam.com>
 #define EPS (1e-6)
 #define STALLED_NB_ROUNDS (4)
 #define STALLED_ABSOLUTE_CHANGE (-1)
+#define LNS_STEPS (50)
 #define SMOOTH_FACTOR (0)
-#define MAX_SMOOTH_ROUND (1) 
+#define MAX_SMOOTH_ROUND (0) 
+#define MAX_HEURISTIC_ROUND (10) 
 
 struct PricingOrder
 {
@@ -72,6 +74,7 @@ struct SCIP_PricerData
     Vector<AStar::Data> previous_data;                  // Inputs to the previous run for an agent
 #endif
 
+    int heuristic_round; 
     SCIP_Longint last_solved_node;                      // Location number of the last node pricing
     SCIP_Real last_solved_lp_obj[STALLED_NB_ROUNDS];    // LP objective in the last few rounds of pricing
 };
@@ -96,6 +99,7 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
     new (pricerdata) SCIP_PricerData;
     pricerdata->N = SCIPprobdataGetN(probdata);
     pricerdata->last_solved_node = -1;
+    pricerdata->heuristic_round = MAX_HEURISTIC_ROUND; 
 
     // Find constraint handler for branching decisions.
     pricerdata->vertex_branching_conshdlr = SCIPfindConshdlr(scip, "vertex_branching");
@@ -248,7 +252,8 @@ MasterProblemStatus calculate_agents_order(
 }
 
 static bool run_lns_pricer(
-    SCIP* scip
+    SCIP* scip, 
+    SCIP_PRICER* pricer      // Pricer
 )
 {
     // Get problem data.
@@ -257,6 +262,8 @@ static bool run_lns_pricer(
     auto& lns = SCIPprobdataGetLNS(probdata);
     auto& lns_instance = SCIPprobdataGetLNSInstance(probdata);
     auto& agents_vars = SCIPprobdataGetRobotVars(probdata); 
+    auto pricerdata = SCIPpricerGetData(pricer);
+    auto N = SCIPprobdataGetN(probdata); 
 
     // run LNS to search for new columns 
     bool succ = false; 
@@ -272,17 +279,17 @@ static bool run_lns_pricer(
     }
     else 
     {
-        for (int i = 0; i < 50 && !succ; i++) 
+        for (int i = 0; i < LNS_STEPS && !succ; i++) 
             succ = lns.runOneStepSearch();
     }
     
     if (succ)
     {
         debugln("Run LNS solver get solution with obj {}", lns.sum_of_costs ); 
-        auto& neighbor = lns.getNeighbor(); 
+        auto& neighbor = lns.getNeighbor();  
         for (auto a : neighbor.agents) 
         {
-            Vector<Edge> tmp_path; 
+            Vector<Edge> tmp_path;
             auto& path = lns.getPath(a); 
             Agent agent = lns.agents[a]; 
             auto [y, x] = lns_instance.getCoordinate(agent.path[0].location); 
@@ -317,10 +324,10 @@ static bool run_lns_pricer(
                 if (std::equal(tmp_path.data(), tmp_path.data() + tmp_path.size(), existing_path, existing_path + existing_path_length))
                 {
                     exists = true; 
-                    break; 
+                    SCIPvardataSetLNS(vardata, true);
                 }
                 else 
-                    SCIPvarMarkDeletable(var); 
+                    SCIPvardataSetLNS(vardata, false);
             }
 
             if (!exists)
@@ -329,8 +336,26 @@ static bool run_lns_pricer(
                 SCIP_VAR* var = nullptr;
                 SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, tmp_path.size(), tmp_path.data(), &var));
                 debug_assert(var); 
+                auto vardata = SCIPvarGetData(var);
+                SCIPvardataSetLNS(vardata, true);
             }
         }
+
+        SCIP_SOL * newsol; 
+        SCIP_Bool success;
+        SCIP_CALL(SCIPcreateSol(scip, &newsol, nullptr)); 
+        for (int a = 0; a < N; a++)
+        {
+            for (auto var : agents_vars.at(a))
+            {
+                auto vardata = SCIPvarGetData(var);
+                if ( SCIPvardataGetLNS(vardata)  )
+                    SCIPsetSolVal(scip, newsol, var, 1.0);
+                else
+                    SCIPsetSolVal(scip, newsol, var, 0.0);
+            }
+        }
+        SCIP_CALL(SCIPtrySol(scip, newsol, FALSE, FALSE, TRUE, TRUE, TRUE, &success));
         return true; 
     }
     else
@@ -382,7 +407,7 @@ SCIP_RETCODE run_full_pricer(
     auto& lns = SCIPprobdataGetLNS(probdata);
 
 #ifdef USE_LNS
-    if (SCIPnodeGetNumber(SCIPgetCurrentNode(scip)) == 1 && run_lns_pricer(scip))
+    if (SCIPnodeGetNumber(SCIPgetCurrentNode(scip)) == 1 && run_lns_pricer(scip, pricer))
     {
         *lower_bound = std::max(lns.sum_of_distances, lns.sum_of_costs_lowerbound); 
         *result = SCIP_SUCCESS;
@@ -440,13 +465,6 @@ SCIP_RETCODE run_full_pricer(
                 else
                     debugln("   LP not stalled - start pricing");
             }
-        }
-        else if (master_lp_status == MasterProblemStatus::Integral && SCIPgetLPObjval(scip) < SCIPgetPrimalbound(scip) ) 
-        {
-            debugln("   Better Integral LP with obj {} - skip pricing ", SCIPgetLPObjval(scip));
-            *stopearly = true;
-            *result = SCIP_DIDNOTRUN; 
-            return SCIP_OKAY;
         }
     }
 
@@ -518,6 +536,7 @@ SCIP_RETCODE run_full_pricer(
     }
 
     // Set up reservation table. Reserve vertices of paths with value 1.
+    // comment: cannot use reservation table if we want a valid lower bound 
 #ifdef USE_RESERVATION_TABLE
     auto& restab = astar.reservation_table();
     restab.clear_reservations();
@@ -550,7 +569,7 @@ SCIP_RETCODE run_full_pricer(
 
     // Make edge penalties for all agents.
     EdgePenalties global_edge_penalties;
-
+    double global_dual = 0.0; 
     // Input dual values for vertex conflicts.
     for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
     {
@@ -587,6 +606,7 @@ SCIP_RETCODE run_full_pricer(
                 penalties.wait -= dual;
             }
         }
+        global_dual += dual; 
     }
 
     // Input dual values for edge conflicts.
@@ -602,6 +622,7 @@ SCIP_RETCODE run_full_pricer(
             {
                 auto& penalties = global_edge_penalties.get_edge_penalties(e.n, t);
                 penalties.d[e.d] -= dual;
+                global_dual += dual; 
             }
         }
     }
@@ -611,11 +632,13 @@ SCIP_RETCODE run_full_pricer(
     Int nb_new_cols = 0;
     bool misprice = true;
     int smooth_round = SCIPnodeGetNumber(SCIPgetCurrentNode(scip)) == 1? MAX_SMOOTH_ROUND: 1; 
-    double lb; 
+    double primal_lb, dual_ub; 
     auto agent_priced = pricerdata->agent_priced;
     do { 
-        lb = SCIPgetLPObjval(scip); 
-        for (Int order_idx = 0; order_idx < N && (nb_new_cols < 1 || order[order_idx].must_price) && !SCIPisStopped(scip); ++order_idx)
+        primal_lb = SCIPgetLPObjval(scip); 
+        dual_ub = global_dual; 
+        // for (Int order_idx = 0; order_idx < N && (nb_new_cols < 1 || pricerdata->heuristic_round == 0) && !SCIPisStopped(scip); ++order_idx)
+        for (Int order_idx = 0; order_idx < N && !SCIPisStopped(scip); ++order_idx)
         {
             // Create output.
             Vector<Edge> path;
@@ -643,6 +666,7 @@ SCIP_RETCODE run_full_pricer(
                 const auto dual = is_farkas ? SCIPgetDualfarkasSetppc(scip, cons) : SCIPgetDualsolSetppc(scip, cons);
                 debug_assert(SCIPisGE(scip, dual, 0.0));
                 cost_offset = -dual;
+                dual_ub += dual; 
             }
 
             // Modify edge costs for two-agent robust cuts.
@@ -665,6 +689,7 @@ SCIP_RETCODE run_full_pricer(
                         const auto t = it->t;
                         auto& penalties = edge_penalties.get_edge_penalties(n, t);
                         penalties.d[d] -= dual;
+                        dual_ub += dual; 
 
                         // If a wait edge in a two-agent robust cut corresponds to waiting at the goal, incur the
                         // penalty for staying at the goal because the low-level solver doesn't traverse this edge.
@@ -867,6 +892,8 @@ SCIP_RETCODE run_full_pricer(
             std::tie(path_vertices, path_cost) = astar.solve<is_farkas>();
             if (!path_vertices.empty())
             {
+                primal_lb += path_cost; 
+                dual_ub += path_cost;
                 // Get the solution.
                 for (auto it = path_vertices.begin(); it != path_vertices.end(); ++it)
                 {
@@ -880,7 +907,6 @@ SCIP_RETCODE run_full_pricer(
                 // min_reduced_cost = std::min(min_reduced_cost, path_cost);
                 if (SCIPisSumLT(scip, path_cost, 0.0))
                 {
-                    lb = lb + path_cost; 
                     // Print.
                     debugln("    Found path with length {}, reduced cost {:.6f} ({})",
                             path.size(),
@@ -944,7 +970,26 @@ SCIP_RETCODE run_full_pricer(
     if (!SCIPisStopped(scip))
     {
         pricerdata->last_solved_node = SCIPnodeGetNumber(SCIPgetCurrentNode(scip));
-        debugln("   Price at node {}, stop at smooth round: {}, computed LP obj: {}, expected lower bound: {}, lower bound {}, Added {} new columns", pricerdata->last_solved_node, smooth_round, SCIPgetLPObjval(scip), lb, *lower_bound, nb_new_cols); 
+        if (pricerdata->heuristic_round == 0)
+            pricerdata->heuristic_round = MAX_HEURISTIC_ROUND; 
+        else 
+            pricerdata->heuristic_round--; 
+        // Compute lower bound.
+        if constexpr (!is_farkas)
+        {
+            bool all_agents_priced = true;
+            for (Robot a = 0; a < N; ++a)
+                if (!agent_priced[a])
+                {
+                    all_agents_priced = false;
+                    break;
+                }
+            if (all_agents_priced)
+            {
+                *lower_bound = primal_lb; // todo: correct the dual bound 
+                debugln("   All agent priced at node {}, smooth round: {}, LP obj: {}, primal LB: {}, dual UB: {}, *lower_bound: {}, Added {} columns", pricerdata->last_solved_node, smooth_round, SCIPgetLPObjval(scip), primal_lb, dual_ub, *lower_bound, nb_new_cols); 
+            }
+        }
 
         // Mark as completed.
         *result = SCIP_SUCCESS;
@@ -1591,8 +1636,10 @@ SCIP_RETCODE run_trufflehog_pricer(
 static
 SCIP_DECL_PRICERREDCOST(pricerTruffleHogRedCost)
 {
-    return run_full_pricer(scip, pricer, result, stopearly, lowerbound); 
-    // return run_trufflehog_pricer(scip, pricer, result, stopearly, lowerbound);
+    if ( SCIPnodeGetNumber(SCIPgetCurrentNode(scip)) == 1)
+        return run_full_pricer(scip, pricer, result, stopearly, lowerbound); 
+    else 
+        return run_trufflehog_pricer(scip, pricer, result, stopearly, lowerbound);
 }
 
 // Farkas pricing for infeasible master problem
