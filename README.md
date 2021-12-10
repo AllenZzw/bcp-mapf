@@ -87,4 +87,4 @@ The optimal solution (or feasible solution if a time limit or gap limit is reach
 
 Known Issues
 -----
-- Currently, the solutions from the LNS solver and the BCP solver are not synchronized. The primal solution of BCP is updated mainly by the simple rounding primal heuristic. 
+- ~~Currently, the solutions from the LNS solver and the BCP solver are not synchronized. The primal solution of BCP is updated mainly by the simple rounding primal heuristic.~~ (fixed) 
