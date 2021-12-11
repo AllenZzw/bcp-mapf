@@ -78,26 +78,31 @@ void AStar::Data::smooth(const Data& previous_data, const double alpha)
 {
     cost_offset = alpha * previous_data.cost_offset + (1 - alpha) * cost_offset; 
 
+    for (auto& [nt, edge_costs] : edge_penalties)
+    {
+        edge_costs.north = (1 - alpha) * edge_costs.north; 
+        edge_costs.south = (1 - alpha) * edge_costs.south; 
+        edge_costs.east = (1 - alpha) * edge_costs.east; 
+        edge_costs.west = (1 - alpha) * edge_costs.west; 
+        edge_costs.wait = (1 - alpha) * edge_costs.wait; 
+    }
+
     for (const auto& [nt, previous_edge_costs] : previous_data.edge_penalties)
         if (previous_edge_costs.used)
         {
             auto& current_edge_costs = edge_penalties.get_edge_penalties(nt);
-            current_edge_costs.north = alpha * previous_edge_costs.north + (1 - alpha) * current_edge_costs.north; 
-            current_edge_costs.south = alpha * previous_edge_costs.south + (1 - alpha) * current_edge_costs.south; 
-            current_edge_costs.east = alpha * previous_edge_costs.east + (1 - alpha) * current_edge_costs.east; 
-            current_edge_costs.west = alpha * previous_edge_costs.west + (1 - alpha) * current_edge_costs.west; 
-            current_edge_costs.wait = alpha * previous_edge_costs.wait + (1 - alpha) * current_edge_costs.wait; 
+            current_edge_costs.north += alpha * previous_edge_costs.north; 
+            current_edge_costs.south += alpha * previous_edge_costs.south; 
+            current_edge_costs.east += alpha * previous_edge_costs.east; 
+            current_edge_costs.west += alpha * previous_edge_costs.west; 
+            current_edge_costs.wait += alpha * previous_edge_costs.wait; 
         }
 
     for (auto& cost: finish_time_penalties) 
-    {
         cost = (1 - alpha) * cost; 
-    }
 
     for (Timepoint t = 0; t < static_cast<Timepoint>(previous_data.finish_time_penalties.size()); ++t)
-    {
         finish_time_penalties.add(t, alpha * previous_data.finish_time_penalties[t] ); 
-    }
 
 #ifdef USE_GOAL_CONFLICTS
     for (auto& goal_penalty: goal_penalties)
