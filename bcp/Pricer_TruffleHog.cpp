@@ -47,7 +47,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #define STALLED_ABSOLUTE_CHANGE (-1)
 #define LNS_STEPS (10)
 #define SMOOTH_FACTOR (0.5)
-#define MAX_SMOOTH_ROUND (5)
+#define MAX_SMOOTH_ROUND (3)
 #define MAX_HEURISTIC_ROUND (10) 
 
 struct PricingOrder
@@ -1004,7 +1004,12 @@ SCIP_RETCODE run_full_pricer(
             pricerdata->previous_agent_dual = current_agent_dual; 
             pricerdata->previous_row_dual = current_row_dual; 
         }
-#endif
+        if (misprice)
+        {
+            debugln("   lower bound is set to {}", dual_ub); 
+            *lower_bound = dual_ub; 
+        }
+#endif  
     } while (smooth_round > 0 && misprice); 
     
     // Print.

@@ -35,7 +35,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #define CONSHDLR_SEPAFREQ      1           // frequency for separating cuts; zero means to separate only in the root node
 #define CONSHDLR_EAGERFREQ     1           // frequency for using all instead of only the useful constraints in separation,
                                            // propagation and enforcement, -1 for no eager evaluations, 0 for first only
-#define CONSHDLR_DELAYSEPA     FALSE        // should separation method be delayed, if other separators found cuts?
+#define CONSHDLR_DELAYSEPA     TRUE        // should separation method be delayed, if other separators found cuts?
 #define CONSHDLR_NEEDSCONS     TRUE        // should the constraint handler be skipped, if no constraints are available?
 
 // Data for edge conflicts

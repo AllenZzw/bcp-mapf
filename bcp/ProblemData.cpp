@@ -2146,18 +2146,21 @@ void print_used_paths(
                     {
                         if (t < path_length - 1 && e.n == path[t+1].n)
                         {
-                            fmt::print(fmt::emphasis::bold | fg(colour), "{:>10s}", fmt::format("({},{})", x, y));
+                            // fmt::print(fmt::emphasis::bold | fg(colour), "{:>10s}", fmt::format("({},{})", x, y));
+                            fmt::print("{:>10s}", fmt::format("({},{})", x, y));
                         }
                         else
                         {
-                            fmt::print(fg(colour), "{:>10s}", fmt::format("({},{})", x, y));
+                            // fmt::print(fg(colour), "{:>10s}", fmt::format("({},{})", x, y));
+                            fmt::print("{:>10s}", fmt::format("({},{})", x, y));
                         }
                     }
                     else
                     {
                         if (t < path_length - 1 && e.n == path[t+1].n)
                         {
-                            fmt::print(fmt::emphasis::bold, "{:>10s}", fmt::format("({},{})", x, y));
+                            // fmt::print(fmt::emphasis::bold, "{:>10s}", fmt::format("({},{})", x, y));
+                            fmt::print("{:>10s}", fmt::format("({},{})", x, y));
                         }
                         else
                         {
