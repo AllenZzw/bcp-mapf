@@ -2216,7 +2216,7 @@ void print_vertex_conflicts_dual(
                               0.0;
         if (!SCIPisZero(scip, row_dual))
         {
-            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
+            println("   Dual of {} = {:.4f}", SCIProwGetIndex(row), row_dual);
         }
     }
 }
@@ -2235,7 +2235,7 @@ void print_edge_conflicts_dual(
                               0.0;
         if (!SCIPisZero(scip, row_dual))
         {
-            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
+            println("   Dual of {} = {:.4f}", SCIProwGetIndex(row), row_dual);
         }
     }
 }
@@ -2255,7 +2255,7 @@ void print_two_agent_robust_cuts_dual(
             0.0;
         if (!SCIPisZero(scip, row_dual))
         {
-            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
+            println("   Dual of {} = {:.4f}", SCIProwGetIndex(row), row_dual);
         }
     }
 }
@@ -2276,7 +2276,7 @@ void print_rectangle_clique_conflicts_dual(
             0.0;
         if (!SCIPisZero(scip, row_dual))
         {
-            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
+            println("   Dual of {} = {:.4f}", SCIProwGetIndex(row), row_dual);
         }
     }
 }
@@ -2298,7 +2298,7 @@ void print_goal_conflicts_dual(
             0.0;
         if (!SCIPisZero(scip, row_dual))
         {
-            println("   Dual of {} = {:.4f}", SCIProwGetName(row), row_dual);
+            println("   Dual of {} = {:.4f}", SCIProwGetIndex(row), row_dual);
         }
     }
 }
