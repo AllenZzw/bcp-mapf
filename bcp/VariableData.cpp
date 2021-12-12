@@ -25,7 +25,6 @@ struct SCIP_VarData
 {
     Robot a;             // Robot of the path
     Timepoint path_length;    // Length of the path
-    bool lns_column;    // whether this path is selected by lns
     Edge path[0];        // Edges in the path
 };
 
@@ -46,7 +45,6 @@ SCIP_RETCODE SCIPvardataCreate(
 
     // Copy data about the agent.
     (*vardata)->a = a;
-    (*vardata)->lns_column = false;
 
     // Copy data about the path.
     (*vardata)->path_length = path_length;
@@ -151,24 +149,6 @@ Robot SCIPvardataGetRobot(
     debug_assert(vardata);
     debug_assert(vardata->a >= 0);
     return vardata->a;
-}
-
-// Get the agent of the path
-bool SCIPvardataGetLNS(
-    SCIP_VARDATA* vardata    // Variable data
-)
-{
-    debug_assert(vardata);
-    return vardata->lns_column; 
-}
-
-void SCIPvardataSetLNS(
-    SCIP_VARDATA* vardata,    // Variable data
-    bool val
-)
-{
-    debug_assert(vardata);
-    vardata->lns_column = val;
 }
 
 // Get the length of the path

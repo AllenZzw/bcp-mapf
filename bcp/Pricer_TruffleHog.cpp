@@ -45,9 +45,9 @@ Author: Edward Lam <ed@ed-lam.com>
 #define EPS (1e-6)
 #define STALLED_NB_ROUNDS (4)
 #define STALLED_ABSOLUTE_CHANGE (-1)
-#define LNS_STEPS (50)
-#define SMOOTH_FACTOR (0)
-#define MAX_SMOOTH_ROUND (1) 
+#define LNS_STEPS (10)
+#define SMOOTH_FACTOR (0.5)
+#define MAX_SMOOTH_ROUND (5)
 #define MAX_HEURISTIC_ROUND (10) 
 
 struct PricingOrder
@@ -73,7 +73,9 @@ struct SCIP_PricerData
 #ifdef USE_ASTAR_SOLUTION_CACHING
     Vector<AStar::Data> previous_data;                  // Inputs to the previous run for an agent
 #endif
-
+#ifdef USE_LNS
+    Vector<SCIP_VAR *> lns_vars;                             // variable index for the solution from the lns solver 
+#endif 
 #ifdef USE_DUAL_STABILIZATION
     Vector<SCIP_Real> previous_agent_dual;              // previous dual values for partition constraints 
     HashTable<int, SCIP_Real> previous_row_dual;        // previous dual values for LP rows 
@@ -137,6 +139,11 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
 #ifdef USE_ASTAR_SOLUTION_CACHING
     pricerdata->previous_data.resize(pricerdata->N);
 #endif
+
+    // Create space to store the variable index from the solution of LNS solver 
+#ifdef USE_LNS
+    pricerdata->lns_vars.resize(pricerdata->N); 
+#endif 
 
     // Create space to store dual value for stabilization 
 #ifdef USE_DUAL_STABILIZATION
@@ -224,7 +231,7 @@ MasterProblemStatus calculate_agents_order(
                 if (!SCIPisIntegral(scip, var_val))
                 {
                     master_lp_status = std::min(master_lp_status, MasterProblemStatus::Fractional);
-                    must_price_agent = true;
+                    // must_price_agent = true;
                     break;
                 }
             }
@@ -237,6 +244,7 @@ MasterProblemStatus calculate_agents_order(
     // Price all agents if the master problem solution is integral.
     if (master_lp_status == MasterProblemStatus::Integral)
     {
+        debugln("must price all agent when the master problem solution is integral.");
         for (Robot a = 0; a < N; ++a)
         {
             order[a].must_price = true;
@@ -335,10 +343,9 @@ static bool run_lns_pricer(
                 if (std::equal(tmp_path.data(), tmp_path.data() + tmp_path.size(), existing_path, existing_path + existing_path_length))
                 {
                     exists = true; 
-                    SCIPvardataSetLNS(vardata, true);
+                    pricerdata->lns_vars[a] = var; 
+                    break; 
                 }
-                else 
-                    SCIPvardataSetLNS(vardata, false);
             }
 
             if (!exists)
@@ -348,7 +355,7 @@ static bool run_lns_pricer(
                 SCIP_CALL(SCIPprobdataAddPricedVar(scip, probdata, a, tmp_path.size(), tmp_path.data(), &var));
                 debug_assert(var); 
                 auto vardata = SCIPvarGetData(var);
-                SCIPvardataSetLNS(vardata, true);
+                pricerdata->lns_vars[a] = var; 
             }
         }
 
@@ -360,13 +367,14 @@ static bool run_lns_pricer(
             for (auto var : agents_vars.at(a))
             {
                 auto vardata = SCIPvarGetData(var);
-                if ( SCIPvardataGetLNS(vardata)  )
+                if ( SCIPvarGetIndex(pricerdata->lns_vars[a]) == SCIPvarGetIndex(var) )
                     SCIPsetSolVal(scip, newsol, var, 1.0);
                 else
                     SCIPsetSolVal(scip, newsol, var, 0.0);
             }
         }
-        SCIP_CALL(SCIPtrySol(scip, newsol, FALSE, FALSE, TRUE, TRUE, TRUE, &success));
+        // print_used_paths(scip, newsol); 
+        SCIP_CALL(SCIPtrySol(scip, newsol, FALSE, FALSE, FALSE, FALSE, FALSE, &success));
         return true; 
     }
     else
@@ -989,9 +997,12 @@ SCIP_RETCODE run_full_pricer(
         }
         smooth_round--; 
 #ifdef USE_DUAL_STABILIZATION
-        pricerdata->previous_total_dual = total_dual; 
-        pricerdata->previous_agent_dual = current_agent_dual; 
-        pricerdata->previous_row_dual = current_row_dual; 
+        if (dual_ub >= SCIPgetDualbound(scip))
+        {
+            pricerdata->previous_total_dual = total_dual; 
+            pricerdata->previous_agent_dual = current_agent_dual; 
+            pricerdata->previous_row_dual = current_row_dual; 
+        }
 #endif
     } while (smooth_round > 0 && misprice); 
     

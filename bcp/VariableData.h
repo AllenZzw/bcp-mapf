@@ -45,16 +45,6 @@ Robot SCIPvardataGetRobot(
     SCIP_VARDATA* vardata    // Variable data
 );
 
-// Get the agent of the path
-bool SCIPvardataGetLNS(
-    SCIP_VARDATA* vardata    // Variable data
-);
-
-void SCIPvardataSetLNS(
-    SCIP_VARDATA* vardata,    // Variable data
-    bool val 
-); 
-
 // Get the length of the path
 Timepoint SCIPvardataGetPathLength(
     SCIP_VARDATA* vardata    // Variable data
