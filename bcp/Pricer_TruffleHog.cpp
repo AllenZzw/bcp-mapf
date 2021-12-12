@@ -375,6 +375,7 @@ static bool run_lns_pricer(
         }
         // print_used_paths(scip, newsol); 
         SCIP_CALL(SCIPtrySol(scip, newsol, FALSE, FALSE, FALSE, FALSE, FALSE, &success));
+        debug_assert(success); 
         return true; 
     }
     else
