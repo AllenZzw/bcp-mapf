@@ -45,7 +45,7 @@ Author: Edward Lam <ed@ed-lam.com>
 #define EPS (1e-6)
 #define STALLED_NB_ROUNDS (4)
 #define STALLED_ABSOLUTE_CHANGE (-1)
-#define LNS_STEPS (10)
+#define LNS_STEPS (50)
 #define SMOOTH_FACTOR (0)
 #define MAX_SMOOTH_ROUND (1) 
 #define MAX_HEURISTIC_ROUND (10) 
@@ -74,6 +74,11 @@ struct SCIP_PricerData
     Vector<AStar::Data> previous_data;                  // Inputs to the previous run for an agent
 #endif
 
+#ifdef USE_DUAL_STABILIZATION
+    Vector<SCIP_Real> previous_agent_dual;              // previous dual values for partition constraints 
+    HashTable<int, SCIP_Real> previous_row_dual;        // previous dual values for LP rows 
+    SCIP_Real previous_total_dual;                      // previous total dual values for LP 
+#endif
     int heuristic_round; 
     SCIP_Longint last_solved_node;                      // Location number of the last node pricing
     SCIP_Real last_solved_lp_obj[STALLED_NB_ROUNDS];    // LP objective in the last few rounds of pricing
@@ -131,6 +136,12 @@ SCIP_DECL_PRICERINIT(pricerTruffleHogInit)
     // Create space to store the penalties from the previous failed iteration.
 #ifdef USE_ASTAR_SOLUTION_CACHING
     pricerdata->previous_data.resize(pricerdata->N);
+#endif
+
+    // Create space to store dual value for stabilization 
+#ifdef USE_DUAL_STABILIZATION
+    pricerdata->previous_agent_dual.resize(pricerdata->N);              // previous dual values for partition constraints 
+    pricerdata->previous_total_dual = 0.0; 
 #endif
 
     // Set pointer to pricer data.
@@ -415,7 +426,8 @@ SCIP_RETCODE run_full_pricer(
     }
 
     // Early branching if LP is stalled.
-    if (master_lp_status == MasterProblemStatus::Fractional)
+    if (master_lp_status == MasterProblemStatus::Fractional || SCIPgetLPObjval(scip) != SCIPgetPrimalbound(scip) )
+    // if (master_lp_status == MasterProblemStatus::Fractional )
     {
         const auto current_node = SCIPnodeGetNumber(SCIPgetCurrentNode(scip));
         if (pricerdata->last_solved_node != current_node)
@@ -536,103 +548,134 @@ SCIP_RETCODE run_full_pricer(
 // #endif
 //#endif
 
-    // Set up reservation table. Reserve vertices of paths with value 1.
-    // comment: cannot use reservation table if we want a valid lower bound 
-#ifdef USE_RESERVATION_TABLE
-    auto& restab = astar.reservation_table();
-    restab.clear_reservations();
-    for (auto var : vars)
-    {
-        debug_assert(var);
-        const auto var_val = SCIPgetSolVal(scip, nullptr, var);
-        if (var_val >= 0.5)
-        {
-            // Get the path.
-            auto vardata = SCIPvarGetData(var);
-            const auto path_length = SCIPvardataGetPathLength(vardata);
-            const auto path = SCIPvardataGetPath(vardata);
-
-            // Update reservation table.
-            Location n;
-            Timepoint t = 0;
-            for (; t < path_length; ++t)
-            {
-                n = path[t].n;
-                restab.reserve(LocationTimepoint{n, t});
-            }
-            for (; t < makespan; ++t)
-            {
-                restab.reserve(LocationTimepoint{n, t});
-            }
-        }
-    }
-#endif
-
-    // Make edge penalties for all agents.
-    EdgePenalties global_edge_penalties;
-    // Input dual values for vertex conflicts.
-    for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
-    {
-        const auto& [row] = vertex_conflict;
-        const auto dual = SCIProwGetDualsol(row);
-        debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-        if (SCIPisFeasLT(scip, dual, 0.0))
-        {
-            // Add the dual variable value to the edges leading into the vertex.
-            const auto t = nt.t - 1;
-            {
-                const auto n = map.get_south(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
-                penalties.north -= dual;
-            }
-            {
-                const auto n = map.get_north(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
-                penalties.south -= dual;
-            }
-            {
-                const auto n = map.get_west(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
-                penalties.east -= dual;
-            }
-            {
-                const auto n = map.get_east(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
-                penalties.west -= dual;
-            }
-            {
-                const auto n = map.get_wait(nt.n);
-                auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
-                penalties.wait -= dual;
-            }
-        }
-    }
-
-    // Input dual values for edge conflicts.
-    for (const auto& [et, edge_conflict] : edge_conflicts_conss)
-    {
-        const auto& [row, edges, t] = edge_conflict;
-        const auto dual = SCIProwGetDualsol(row);
-        debug_assert(SCIPisFeasLE(scip, dual, 0.0));
-        if (SCIPisFeasLT(scip, dual, 0.0))
-        {
-            // Add the dual variable value to the edges.
-            for (const auto e : edges)
-            {
-                auto& penalties = global_edge_penalties.get_edge_penalties(e.n, t);
-                penalties.d[e.d] -= dual;
-            }
-        }
-    }
-
     // Price each agent.
     Int nb_new_cols = 0;
-    SCIP_Real primal_lb; 
+    SCIP_Real primal_lb, dual_ub, total_dual; 
+    Vector<SCIP_Real> current_agent_dual(N);              // current dual values for partition constraints 
+    HashTable<int, SCIP_Real> current_row_dual;        // current dual values for LP rows 
     bool misprice = true;
-    int smooth_round = 1; 
+    int smooth_round = pricerdata->last_solved_node != -1? MAX_SMOOTH_ROUND: 1; 
     auto agent_priced = pricerdata->agent_priced;
-    do { 
+    do {
+        if (smooth_round == MAX_SMOOTH_ROUND || smooth_round == 1)
+            total_dual = SCIPgetLPObjval(scip); 
+        if (smooth_round > 1)
+        {
+            total_dual = SMOOTH_FACTOR * pricerdata->previous_total_dual + (1.0 - SMOOTH_FACTOR) * SCIPgetLPObjval(scip); 
+            debugln("       Total dual value at round {} is {}, previous total dual value: {}, smoothed dual value: {}", smooth_round, SCIPgetLPObjval(scip), pricerdata->previous_total_dual, total_dual); 
+        }
+
+        // Set up dual value for agent partition constraint 
+        for (Int a = 0; a < N; ++a)
+        {
+            // Get the constraint.
+            auto cons = agent_part[a];
+            debug_assert(cons);
+
+            // Check that the constraint is not (locally) disabled/redundant.
+            debug_assert(SCIPconsIsEnabled(cons));
+
+            // Check that no variable is fixed to one.
+            debug_assert(SCIPgetNFixedonesSetppc(scip, cons) == 0);
+
+            // Store dual value.
+            if (smooth_round == MAX_SMOOTH_ROUND || smooth_round == 1)
+                current_agent_dual[a] = SCIPgetDualsolSetppc(scip, cons);
+            if (smooth_round > 1)
+            {
+                current_agent_dual[a] = SMOOTH_FACTOR * pricerdata->previous_agent_dual[a] + (1.0 - SMOOTH_FACTOR) * current_agent_dual[a]; 
+                debugln("       Dual value for agent {} at round {} is {}, previous dual value: {}, smoothed dual value: {}", a, smooth_round,SCIPgetDualsolSetppc(scip, cons), pricerdata->previous_agent_dual[a], current_agent_dual[a]); 
+            }
+        }
+
+        // Set up dual for LP rows 
+        current_row_dual.clear();
+        SCIP_ROW ** rows = SCIPgetLPRows(scip); 
+        int row_nb = SCIPgetNLPRows(scip);
+        for (Int i = 0; i < row_nb; i++)
+        {
+            // Get the row 
+            SCIP_ROW * row = rows[i]; 
+            debug_assert(row);
+
+            // Store dual value if it is in LP 
+            if (SCIProwIsInLP(row))
+            {
+                if (smooth_round == MAX_SMOOTH_ROUND || smooth_round == 1)
+                    current_row_dual[SCIProwGetIndex(row)] = SCIProwGetDualsol(row);
+                if (smooth_round > 1)
+                {
+                    current_row_dual[SCIProwGetIndex(row)] = (1.0 - SMOOTH_FACTOR) * current_row_dual[SCIProwGetIndex(row)];
+                    if (pricerdata->previous_row_dual.contains(SCIProwGetIndex(row))) 
+                    {
+                        current_row_dual[SCIProwGetIndex(row)] += SMOOTH_FACTOR * pricerdata->previous_row_dual[SCIProwGetIndex(row)]; 
+                        debugln("       Dual value at round {} for row {} is {}, previous dual value: {}, smoothed dual value: {}", smooth_round, SCIProwGetIndex(row), SCIProwGetDualsol(row), pricerdata->previous_row_dual[SCIProwGetIndex(row)], current_row_dual[SCIProwGetIndex(row)]); 
+                    }
+                }
+            }
+        }
+
+        // Make edge penalties for all agents.
+        EdgePenalties global_edge_penalties;
+        // Input dual values for vertex conflicts.
+        for (const auto& [nt, vertex_conflict] : vertex_conflicts_conss)
+        {
+            const auto& [row] = vertex_conflict;
+            const auto dual = current_row_dual[SCIProwGetIndex(row)];
+            // const auto dual = SCIProwGetDualsol(row);
+            debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+            if (SCIPisFeasLT(scip, dual, 0.0))
+            {
+                // Add the dual variable value to the edges leading into the vertex.
+                const auto t = nt.t - 1;
+                {
+                    const auto n = map.get_south(nt.n);
+                    auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                    penalties.north -= dual;
+                }
+                {
+                    const auto n = map.get_north(nt.n);
+                    auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                    penalties.south -= dual;
+                }
+                {
+                    const auto n = map.get_west(nt.n);
+                    auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                    penalties.east -= dual;
+                }
+                {
+                    const auto n = map.get_east(nt.n);
+                    auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                    penalties.west -= dual;
+                }
+                {
+                    const auto n = map.get_wait(nt.n);
+                    auto& penalties = global_edge_penalties.get_edge_penalties(n, t);
+                    penalties.wait -= dual;
+                }
+            }
+        }
+
+        // Input dual values for edge conflicts.
+        for (const auto& [et, edge_conflict] : edge_conflicts_conss)
+        {
+            const auto& [row, edges, t] = edge_conflict;
+            const auto dual = current_row_dual[SCIProwGetIndex(row)];
+            // const auto dual = SCIProwGetDualsol(row);
+            debug_assert(SCIPisFeasLE(scip, dual, 0.0));
+            if (SCIPisFeasLT(scip, dual, 0.0))
+            {
+                // Add the dual variable value to the edges.
+                for (const auto e : edges)
+                {
+                    auto& penalties = global_edge_penalties.get_edge_penalties(e.n, t);
+                    penalties.d[e.d] -= dual;
+                }
+            }
+        }
+    
         primal_lb = SCIPgetLPObjval(scip); 
+        dual_ub = total_dual; 
         // for (Int order_idx = 0; order_idx < N && (!nb_new_cols < 1 || order[order_idx].must_price) && !SCIPisStopped(scip); ++order_idx)
         for (Int order_idx = 0; order_idx < N && !SCIPisStopped(scip); ++order_idx)
         {
@@ -648,18 +691,8 @@ SCIP_RETCODE run_full_pricer(
 
             // Input the agent partition dual.
             {
-                // Get the constraint.
-                auto cons = agent_part[a];
-                debug_assert(cons);
-
-                // Check that the constraint is not (locally) disabled/redundant.
-                debug_assert(SCIPconsIsEnabled(cons));
-
-                // Check that no variable is fixed to one.
-                debug_assert(SCIPgetNFixedonesSetppc(scip, cons) == 0);
-
                 // Store dual value.
-                const auto dual = SCIPgetDualsolSetppc(scip, cons);
+                const auto dual = current_agent_dual[a]; 
                 debug_assert(SCIPisGE(scip, dual, 0.0));
                 cost_offset = -dual;
             }
@@ -672,7 +705,8 @@ SCIP_RETCODE run_full_pricer(
     #endif
             for (const auto& [row, ets_begin, ets_end] : agent_robust_cuts[a])
             {
-                const auto dual = SCIProwGetDualsol(row);
+                // const auto dual = SCIProwGetDualsol(row);
+                const auto dual = current_row_dual[SCIProwGetIndex(row)];
                 debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                 if (SCIPisFeasLT(scip, dual, 0.0))
                 {
@@ -700,7 +734,8 @@ SCIP_RETCODE run_full_pricer(
             // after the agent has completed its path.
             for (const auto& [t, row] : agent_goal_vertex_conflicts[a])
             {
-                const auto dual = SCIProwGetDualsol(row);
+                // const auto dual = SCIProwGetDualsol(row);
+                const auto dual = current_row_dual[SCIProwGetIndex(row)];
                 debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                 if (SCIPisFeasLT(scip, dual, 0.0))
                 {
@@ -714,7 +749,8 @@ SCIP_RETCODE run_full_pricer(
     #ifdef USE_WAITEDGE_CONFLICTS
             for (const auto& [t, row] : agent_goal_edge_conflicts[a])
             {
-                const auto dual = SCIProwGetDualsol(row);
+                // const auto dual = SCIProwGetDualsol(row);
+                const auto dual = current_row_dual[SCIProwGetIndex(row)];
                 debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                 if (SCIPisFeasLT(scip, dual, 0.0))
                 {
@@ -730,7 +766,8 @@ SCIP_RETCODE run_full_pricer(
     #ifdef USE_GOAL_CONFLICTS
             for (const auto& [t, row] : goal_agent_goal_conflicts[a])
             {
-                const auto dual = SCIProwGetDualsol(row);
+                // const auto dual = SCIProwGetDualsol(row);
+                const auto dual = current_row_dual[SCIProwGetIndex(row)];
                 debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                 if (SCIPisFeasLT(scip, dual, 0.0))
                 {
@@ -739,7 +776,8 @@ SCIP_RETCODE run_full_pricer(
             }
             for (const auto& [nt, row] : crossing_agent_goal_conflicts[a])
             {
-                const auto dual = SCIProwGetDualsol(row);
+                // const auto dual = SCIProwGetDualsol(row);
+                const auto dual = current_row_dual[SCIProwGetIndex(row)];
                 debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                 if (SCIPisFeasLT(scip, dual, 0.0))
                 {
@@ -754,7 +792,8 @@ SCIP_RETCODE run_full_pricer(
                 for (const auto& [nogood_a, t] : latest_finish_times)
                     if (a == nogood_a)
                     {
-                        const auto dual = SCIProwGetDualsol(row);
+                        // const auto dual = SCIProwGetDualsol(row);
+                        const auto dual = current_row_dual[SCIProwGetIndex(row)];
                         debug_assert(SCIPisFeasLE(scip, dual, 0.0));
                         if (SCIPisFeasLT(scip, dual, 0.0))
                         {
@@ -868,12 +907,6 @@ SCIP_RETCODE run_full_pricer(
             // Preprocess input data.
             astar.preprocess_input();
 
-            // use dual value smoothing 
-            if (smooth_round > 1 && pricerdata->last_solved_node != -1)
-            {
-                astar.data().smooth(pricerdata->previous_data[a], SMOOTH_FACTOR); 
-            }
-
             // Skip running A* if the penalties in the last iteration of this agent have stayed the same or worsened.
     #ifdef USE_ASTAR_SOLUTION_CACHING
             if (!astar.data().can_be_better(pricerdata->previous_data[a]))
@@ -887,6 +920,7 @@ SCIP_RETCODE run_full_pricer(
             if (!path_vertices.empty())
             {
                 primal_lb += path_cost; 
+                dual_ub += path_cost; 
                 // Get the solution.
                 for (auto it = path_vertices.begin(); it != path_vertices.end(); ++it)
                 {
@@ -900,7 +934,8 @@ SCIP_RETCODE run_full_pricer(
                 if (SCIPisSumLT(scip, path_cost, 0.0))
                 {
                     // Print.
-                    debugln("    Found path with length {}, reduced cost {:.6f} ({})",
+                    debugln("       Found path for agent {} with length {}, reduced cost {:.6f} ({})",
+                            a, 
                             path.size(),
                             path_cost,
                             format_path(probdata, path.size(), path.data()));
@@ -953,6 +988,11 @@ SCIP_RETCODE run_full_pricer(
     #endif
         }
         smooth_round--; 
+#ifdef USE_DUAL_STABILIZATION
+        pricerdata->previous_total_dual = total_dual; 
+        pricerdata->previous_agent_dual = current_agent_dual; 
+        pricerdata->previous_row_dual = current_row_dual; 
+#endif
     } while (smooth_round > 0 && misprice); 
     
     // Print.
@@ -976,8 +1016,10 @@ SCIP_RETCODE run_full_pricer(
             }
         if (all_agents_priced)
         {
-            *lower_bound = primal_lb; 
-            debugln("   All agent priced at node {}, smooth round: {}, primal LP obj: {}, primal LB: {}, *lower_bound: {}, Added {} columns", pricerdata->last_solved_node, smooth_round, SCIPgetLPObjval(scip), primal_lb, *lower_bound, nb_new_cols); 
+            // *lower_bound = primal_lb; 
+            *lower_bound = dual_ub; 
+            debugln("   All agent priced at node {}, smooth round: {}, primal LP obj: {}, primal LB: {}, total dual: {}, dual UB: {}, *lower_bound: {}, Added {} columns", 
+                        pricerdata->last_solved_node, smooth_round, SCIPgetLPObjval(scip), primal_lb, total_dual, dual_ub, *lower_bound, nb_new_cols); 
         }
 
         // Mark as completed.

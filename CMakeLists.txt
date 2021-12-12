@@ -235,6 +235,7 @@ target_link_libraries(trufflehog fmt::fmt-header-only)
 # Set options.
 target_compile_options(bcp-mapf PRIVATE -DUSE_INITIAL_SOLUTION)
 # target_compile_options(bcp-mapf PRIVATE -DUSE_RESERVATION_TABLE)
+target_compile_options(bcp-mapf PRIVATE -DUSE_DUAL_STABILIZATION)
 target_compile_options(bcp-mapf PRIVATE -DUSE_LNS)
 target_compile_options(bcp-mapf PRIVATE -DUSE_ASTAR_SOLUTION_CACHING)
 #target_compile_options(bcp-mapf PRIVATE -DUSE_PATH_LENGTH_NOGOODS)
